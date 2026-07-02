@@ -63,16 +63,53 @@ export type Block = HeaderBlock | TitleBlock | TextBlock | AiBlock | ResponsesBl
 export interface ConditionRule {
   id: string;
   subject: string;   // 'response' | 'variable'
-  variable: string;  // p1-p11 | variable key
-  subType: string;   // nota/grupo/text/number/email/date/url/mas/menos
+  variable: string;  // real Pregunta id | variable key
+  subType: string;   // nota/grupo/text/number/email/date/url/mas/menos/opcion/comentario/<campo nombre>
+  attribute?: string; // matriz_escalas row/atributo, or the specific option text for a "Comentario" sub-row
   operator: string;
-  value: string;
-  valueB: string;    // second value for range operators
+  value: string | string[];
+  valueB: string | string[]; // second value for range operators
 }
 export interface ConditionGroup {
   id: string;
   connector: 'Y' | 'O';
   rows: ConditionRule[];
+}
+
+export type TipoPregunta =
+  | 'NPS' | 'CES' | 'CLI' | 'CSAT' | 'matriz_escalas' | 'respuesta_abierta' | 'formulario'
+  | 'opcion_simple' | 'dropdown' | 'si_no' | 'seleccion_imagenes_simple'
+  | 'opcion_multiple' | 'seleccion_imagenes_multiple'
+  | 'casilla_verificacion' | 'maxdiff' | 'ranking' | 'rating' | 'cargar_archivo';
+
+export interface CampoFormulario {
+  nombre: string;
+  tipo: 'texto' | 'numero' | 'correo' | 'fecha' | 'url';
+}
+
+export interface OpcionConComentario {
+  texto: string;
+  tieneComentario: boolean;
+}
+
+export interface Pregunta {
+  id: string;
+  texto: string;
+  tipo: TipoPregunta;
+  escala?: [number, number];
+  grupos?: string[];
+  atributos?: string[];
+  opciones?: string[] | OpcionConComentario[];
+  comentarioCategorizable?: boolean;
+  categorizable?: boolean;
+  campos?: CampoFormulario[];
+}
+
+export interface Etiqueta {
+  id: string;
+  n1: string;
+  n2: string;
+  n3: string;
 }
 
 export interface AutoResponse {
