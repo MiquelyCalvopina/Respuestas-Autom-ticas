@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Button, Input, Select, Segmented } from 'antd';
 import { RightOutlined, PlusOutlined, CheckOutlined, DeleteOutlined, CheckCircleFilled, BranchesOutlined } from '@ant-design/icons';
-import { AutoResponse } from './types';
+import { AutoResponse, ConditionGroup, ConditionRule } from './types';
 import { VARIABLES, SENDERS } from './data';
+import { cuid } from './cuid';
 
 interface Props {
   rule: AutoResponse;
@@ -208,20 +209,9 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
   );
 }
 
-// ─── Condition builder types & helpers ───────────────────────────────────────
+// ─── Condition builder helpers ────────────────────────────────────────────────
 
-interface CondRow {
-  id: string;
-  subject: string;   // 'response' | 'variable'
-  variable: string;  // p1-p11 | variable key
-  subType: string;   // intermediate selector (nota/grupo/text/number/email/date/url/mas/menos)
-  operator: string;
-  value: string;
-  valueB: string;    // second value for range operators
-}
-interface CondGroup { id: string; connector: 'Y' | 'O'; rows: CondRow[]; }
-const cuid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-const emptyRow = (): CondRow => ({ id: cuid(), subject: 'response', variable: '', subType: '', operator: '', value: '', valueB: '' });
+const emptyRow = (): ConditionRule => ({ id: cuid(), subject: 'response', variable: '', subType: '', operator: '', value: '', valueB: '' });
 
 // ── Question option lists ──────────────────────────────────────────────────────
 const Q_RESPONSE = [
@@ -277,7 +267,7 @@ const SUBTYPES: Record<string, {value:string;label:string}[]> = {
   p8:  [{ value:'mas',   label:'Más importante' }, { value:'menos', label:'Menos importante' }],
 };
 
-function getOperators(row: CondRow): string[] {
+function getOperators(row: ConditionRule): string[] {
   const { subject, variable, subType } = row;
   if (subject === 'variable') {
     const t = VAR_TYPE[variable] || 'text';
@@ -315,7 +305,7 @@ const RANGE_OPS    = new Set(['Esta entre','Está entre']);
 const LIST_OPS     = new Set(['Está en la lista','No está en la lista','Pertenece a los dominios','No pertenece a los dominios']);
 const NUMBER_OPS_SET = new Set(['Es igual a','No es igual a','Es mayor que','Es mayor o igual a','Es menor que','Es menor o igual a']);
 
-function isRowComplete(r: CondRow): boolean {
+function isRowComplete(r: ConditionRule): boolean {
   if (!r.variable || !r.operator) return false;
   if (NO_VALUE_OPS.has(r.operator)) return true;
   if (RANGE_OPS.has(r.operator)) return r.value.trim() !== '' && r.valueB.trim() !== '';
@@ -325,7 +315,7 @@ function isRowComplete(r: CondRow): boolean {
 // ─── Single condition row ─────────────────────────────────────────────────────
 
 function CondRowUI({ row, onUpdate, onDelete, canDelete }: {
-  row: CondRow; onUpdate: (p: Partial<CondRow>) => void;
+  row: ConditionRule; onUpdate: (p: Partial<ConditionRule>) => void;
   onDelete: () => void; canDelete: boolean;
 }) {
   const subject   = row.subject || 'response';
@@ -439,12 +429,12 @@ function CondRowUI({ row, onUpdate, onDelete, canDelete }: {
 // ─── Condition group ──────────────────────────────────────────────────────────
 
 function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
-  group: CondGroup; index: number;
+  group: ConditionGroup; index: number;
   onDelete: () => void;
-  onUpdateGroup: (g: CondGroup) => void;
+  onUpdateGroup: (g: ConditionGroup) => void;
   canDelete: boolean;
 }) {
-  function updateRow(rowId: string, patch: Partial<CondRow>) {
+  function updateRow(rowId: string, patch: Partial<ConditionRule>) {
     onUpdateGroup({ ...group, rows: group.rows.map(r => r.id === rowId ? { ...r, ...patch } : r) });
   }
   function deleteRow(rowId: string) {
@@ -524,16 +514,17 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
 // ─── Step 2 — Condiciones ─────────────────────────────────────────────────────
 
 function Step2({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoResponse) => void }) {
-  const [groups, setGroups] = useState<CondGroup[]>([]);
+  const groups = rule.condGroups;
 
   function addGroup() {
-    setGroups(prev => [
-      ...prev,
-      { id: cuid(), connector: 'Y', rows: [emptyRow()] },
-    ]);
+    onChange({ ...rule, condGroups: [...groups, { id: cuid(), connector: 'Y', rows: [emptyRow()] }] });
   }
-  function deleteGroup(gid: string) { setGroups(prev => prev.filter(g => g.id !== gid)); }
-  function updateGroup(g: CondGroup) { setGroups(prev => prev.map(x => x.id === g.id ? g : x)); }
+  function deleteGroup(gid: string) {
+    onChange({ ...rule, condGroups: groups.filter(g => g.id !== gid) });
+  }
+  function updateGroup(g: ConditionGroup) {
+    onChange({ ...rule, condGroups: groups.map(x => x.id === g.id ? g : x) });
+  }
 
   return (
     <div style={{ padding: '24px 250px', display: 'flex', flexDirection: 'column', gap: 16, background: '#fff' }}>

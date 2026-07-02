@@ -1,11 +1,16 @@
-import { Dropdown, Button } from 'antd';
-import { PlusOutlined, DownOutlined, FormOutlined, ImportOutlined } from '@ant-design/icons';
+import { Dropdown, Button, Switch } from 'antd';
+import { PlusOutlined, DownOutlined, FormOutlined, ImportOutlined, MailOutlined, EditOutlined, DeleteOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import svgPaths from "@/imports/BoostersPage-1/svg-hnea2jkxqi";
+import { AutoResponse } from './types';
 
 interface Props {
+  rules: AutoResponse[];
   onNew: () => void;
-  onLog: () => void;
+  onEdit: (id: string) => void;
+  onLog: (id: string) => void;
+  onDelete: (id: string) => void;
+  onToggle: (id: string) => void;
   onCopyFromStudy?: () => void;
 }
 
@@ -107,9 +112,115 @@ function LogsIcon() {
   );
 }
 
+// ─── Rule card badges ─────────────────────────────────────────────────────────
+
+function Badge({ tone, children }: { tone: 'warning' | 'success' | 'neutral' | 'ai'; children: React.ReactNode }) {
+  const toneClass = {
+    warning: 'bg-[#fffbe6] border-[#ffe58f] text-[#d48806]',
+    success: 'bg-[#f6ffed] border-[#b7eb8f] text-[#389e0d]',
+    neutral: 'bg-[#fafafa] border-[#d9d9d9] text-[rgba(0,0,0,0.65)]',
+    ai:      'bg-[var(--ds-violet-bg)] border-[var(--ds-violet-mid)] text-[var(--ds-violet)]',
+  }[tone];
+  return (
+    <span
+      className={`inline-flex items-center border border-solid rounded-[4px] px-[8px] leading-[20px] text-[12px] font-['Roboto:Regular',sans-serif] ${toneClass}`}
+      style={{ fontVariationSettings: '"wdth" 100' }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function statusBadge(rule: AutoResponse) {
+  if (!rule.published) return <Badge tone="warning">Borrador</Badge>;
+  if (rule.active) return <Badge tone="success">Activa</Badge>;
+  return <Badge tone="neutral">Inactiva</Badge>;
+}
+
+function triggerBadge(t: AutoResponse['trigger']) {
+  if (t === 'response') return <Badge tone="neutral">Por respuesta nueva</Badge>;
+  if (t === 'farewell') return <Badge tone="neutral">Al llegar despedida</Badge>;
+  return null;
+}
+
+// ─── Rule card ────────────────────────────────────────────────────────────────
+
+function RuleCard({ rule, onEdit, onLog, onDelete, onToggle }: {
+  rule: AutoResponse; onEdit: () => void; onLog: () => void; onDelete: () => void; onToggle: () => void;
+}) {
+  const hasAi = rule.blocks.some(b => b.type === 'ai');
+  const condCount = rule.condGroups.flatMap(g => g.rows).length;
+
+  return (
+    <div className="bg-white border border-[#f0f0f0] border-solid rounded-[8px] p-[16px] flex flex-col gap-[12px] w-full">
+      {/* Title row */}
+      <div className="flex items-center gap-[12px]">
+        <div
+          className="rounded-full flex items-center justify-center shrink-0 size-[32px] border border-solid text-[15px]"
+          style={hasAi
+            ? { background: 'var(--ds-violet-bg)', borderColor: 'var(--ds-violet-mid)', color: 'var(--ds-violet)' }
+            : { background: '#e6f7ff', borderColor: '#91d5ff', color: '#1890ff' }}
+        >
+          {hasAi ? '✦' : <MailOutlined />}
+        </div>
+        <div className="flex-[1_0_0] min-w-px flex flex-col gap-[2px]">
+          <span
+            className="font-['Roboto:Medium',sans-serif] font-medium text-[14px] text-[rgba(0,0,0,0.85)] truncate block"
+            style={{ fontVariationSettings: '"wdth" 100' }}
+          >
+            {rule.name}
+          </span>
+          <span
+            className="font-['Roboto:Regular',sans-serif] font-normal text-[12px] text-[rgba(0,0,0,0.45)]"
+            style={{ fontVariationSettings: '"wdth" 100' }}
+          >
+            {rule.sender || '—'} · {rule.blocks.length} bloque{rule.blocks.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+        <Switch checked={rule.active} onChange={onToggle} size="small" />
+      </div>
+
+      {/* Badges */}
+      <div className="flex flex-wrap gap-[8px]">
+        {statusBadge(rule)}
+        {triggerBadge(rule.trigger)}
+        {condCount > 0 && <Badge tone="neutral">{condCount} condici{condCount !== 1 ? 'ones' : 'ón'}</Badge>}
+        {hasAi && <Badge tone="ai"><ThunderboltOutlined style={{ marginRight: 4 }} />Bloque IA</Badge>}
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-[8px] pt-[4px]">
+        <button
+          onClick={onEdit}
+          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[4px] items-center px-[9px] py-[8px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
+          style={{ fontVariationSettings: '"wdth" 100' }}
+        >
+          <EditOutlined style={{ fontSize: 12 }} /> Editar
+        </button>
+        <button
+          onClick={onLog}
+          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[4px] items-center px-[9px] py-[8px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
+          style={{ fontVariationSettings: '"wdth" 100' }}
+        >
+          <LogsIcon /> Ver ejecuciones
+        </button>
+        <button
+          onClick={onDelete}
+          className="bg-white border border-[#ffccc7] border-solid cursor-pointer flex items-center justify-center px-[9px] py-[8px] rounded-[8px] text-[#ff4d4f]"
+          aria-label="Eliminar"
+        >
+          <DeleteOutlined style={{ fontSize: 14 }} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── ListPage ─────────────────────────────────────────────────────────────────
 
-export default function ListPage({ onNew, onLog, onCopyFromStudy }: Props) {
+export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onToggle, onCopyFromStudy }: Props) {
+  const goToFirstRuleLog = () => { if (rules[0]) onLog(rules[0].id); };
+
   return (
     <div className="bg-white flex-[1_0_0] min-h-px relative w-full z-[1]">
       <div className="content-stretch flex flex-col gap-[24px] isolate items-start pb-[16px] pt-[24px] px-[32px] relative size-full">
@@ -122,7 +233,7 @@ export default function ListPage({ onNew, onLog, onCopyFromStudy }: Props) {
             {/* Breadcrumb */}
             <div className="content-stretch flex items-center overflow-clip relative shrink-0">
               <button
-                onClick={onLog}
+                onClick={goToFirstRuleLog}
                 className="[word-break:break-word] bg-transparent border-0 cursor-pointer flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] p-0 relative shrink-0 text-[#1890ff] text-[14px] whitespace-nowrap"
                 style={{ fontVariationSettings: '"wdth" 100' }}
               >
@@ -156,9 +267,12 @@ export default function ListPage({ onNew, onLog, onCopyFromStudy }: Props) {
 
           {/* Action buttons */}
           <div className="content-stretch flex gap-[8px] items-center relative shrink-0">
+            {rules.length > 0 && (
+              <AgregarReglaButton onNew={onNew} onCopyFromStudy={onCopyFromStudy} />
+            )}
             {/* Ver logs */}
             <button
-              onClick={onLog}
+              onClick={goToFirstRuleLog}
               className="bg-white border border-[#d9d9d9] border-solid content-stretch cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[4px] items-center justify-center px-[9px] py-[8px] relative rounded-[8px] shrink-0"
             >
               <LogsIcon />
@@ -173,33 +287,49 @@ export default function ListPage({ onNew, onLog, onCopyFromStudy }: Props) {
           </div>
         </div>
 
-        {/* Empty state */}
-        <div className="w-full">
-          <div className="flex flex-col gap-[16px] items-center py-[80px] w-full">
-              <IdeasFlowIllustration />
+        {rules.length === 0 ? (
+          /* Empty state */
+          <div className="w-full">
+            <div className="flex flex-col gap-[16px] items-center py-[80px] w-full">
+                <IdeasFlowIllustration />
 
-              {/* Title + subtitle */}
-              <div
-                className="[word-break:break-word] content-stretch flex flex-col gap-[8px] items-center justify-center leading-[0] relative shrink-0 text-[rgba(0,0,0,0.45)] text-center w-full"
-              >
+                {/* Title + subtitle */}
                 <div
-                  className="flex flex-col font-['Roboto:Medium',sans-serif] font-medium justify-center relative shrink-0 text-[20px] w-full"
-                  style={{ fontVariationSettings: '"wdth" 100' }}
+                  className="[word-break:break-word] content-stretch flex flex-col gap-[8px] items-center justify-center leading-[0] relative shrink-0 text-[rgba(0,0,0,0.45)] text-center w-full"
                 >
-                  <p className="leading-[normal]">Respuestas Automáticas</p>
+                  <div
+                    className="flex flex-col font-['Roboto:Medium',sans-serif] font-medium justify-center relative shrink-0 text-[20px] w-full"
+                    style={{ fontVariationSettings: '"wdth" 100' }}
+                  >
+                    <p className="leading-[normal]">Respuestas Automáticas</p>
+                  </div>
+                  <div
+                    className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center relative shrink-0 text-[14px] w-full"
+                    style={{ fontVariationSettings: '"wdth" 100' }}
+                  >
+                    <p className="leading-[normal]">Configura reglas para enviar correos automáticos a tus encuestados.</p>
+                  </div>
                 </div>
-                <div
-                  className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center relative shrink-0 text-[14px] w-full"
-                  style={{ fontVariationSettings: '"wdth" 100' }}
-                >
-                  <p className="leading-[normal]">Configura reglas para enviar correos automáticos a tus encuestados.</p>
-                </div>
-              </div>
 
-              {/* CTA */}
-              <AgregarReglaButton onNew={onNew} onCopyFromStudy={onCopyFromStudy} />
+                {/* CTA */}
+                <AgregarReglaButton onNew={onNew} onCopyFromStudy={onCopyFromStudy} />
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Rules list */
+          <div className="flex flex-col gap-[12px] w-full">
+            {rules.map(rule => (
+              <RuleCard
+                key={rule.id}
+                rule={rule}
+                onEdit={() => onEdit(rule.id)}
+                onLog={() => onLog(rule.id)}
+                onDelete={() => onDelete(rule.id)}
+                onToggle={() => onToggle(rule.id)}
+              />
+            ))}
+          </div>
+        )}
 
       </div>
     </div>

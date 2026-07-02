@@ -62,13 +62,17 @@ export type Block = HeaderBlock | TitleBlock | TextBlock | AiBlock | ResponsesBl
 
 export interface ConditionRule {
   id: string;
-  field: string;
+  subject: string;   // 'response' | 'variable'
+  variable: string;  // p1-p11 | variable key
+  subType: string;   // nota/grupo/text/number/email/date/url/mas/menos
   operator: string;
   value: string;
+  valueB: string;    // second value for range operators
 }
 export interface ConditionGroup {
   id: string;
-  rules: ConditionRule[];
+  connector: 'Y' | 'O';
+  rows: ConditionRule[];
 }
 
 export interface AutoResponse {

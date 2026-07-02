@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { App } from 'antd';
 import { toast } from 'sonner';
 import { AutoResponse, ModuleView } from './types';
+import { cuid } from './cuid';
 import ListPage from './ListPage';
 import WizardView from './WizardView';
 import EditorView from './EditorView';
@@ -14,12 +15,12 @@ interface Props {
 
 function emptyRule(): AutoResponse {
   return {
-    id: Date.now().toString(),
+    id: cuid(),
     name: 'Nueva regla',
     trigger: null,
     active: false,
     published: false,
-    condGroups: [{ id: '1', rules: [] }],
+    condGroups: [],
     sender: 'cx@hircasa.com',
     recipientVariable: 'correo_electronico',
     replyTo: '',
@@ -117,8 +118,12 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
 
   return (
     <ListPage
+      rules={rules}
       onNew={openNew}
-      onLog={() => setView('log')}
+      onEdit={openEdit}
+      onLog={openLog}
+      onDelete={deleteRule}
+      onToggle={toggleRule}
     />
   );
 }

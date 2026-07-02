@@ -45,9 +45,9 @@ export const DEFAULT_RESTRICTIONS = ['No prometer tiempos de resolución', 'No m
 
 export const buildAiPrompt = (
   block: { objetivo: string; tone: string; customTone: string; datoPriorizar: string; restricciones: string[] },
-  condGroups: { rules: { field: string; operator: string; value: string }[] }[],
+  condGroups: { rows: { variable: string; operator: string; value: string }[] }[],
 ): string => {
-  const condText = condGroups.flatMap(g => g.rules).map(r => `${r.field} ${r.operator} ${r.value}`).join(', ') || 'ninguna';
+  const condText = condGroups.flatMap(g => g.rows).map(r => `${r.variable} ${r.operator} ${r.value}`).join(', ') || 'ninguna';
   const tono = block.tone === 'custom' ? block.customTone : TONOS[block.tone] || '';
   let prompt = `Eres el asistente de comunicación de ${SETUP.empresa}, empresa de ${SETUP.industria}.\n${SETUP.descripcion}\n\nGenera UN SOLO párrafo para un correo automático enviado a un encuestado que cumple: ${condText}.\n\nObjetivo: ${block.objetivo}\nTono: ${tono}.`;
   if (block.datoPriorizar) prompt += `\nPriorizar este dato si está disponible: ${block.datoPriorizar}.`;
