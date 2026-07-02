@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Button, Input, Select, Segmented, Radio, DatePicker, InputNumber } from 'antd';
+import { Button, Input, Select, Segmented, Radio, DatePicker, InputNumber, Popconfirm } from 'antd';
 import { RightOutlined, PlusOutlined, CheckOutlined, DeleteOutlined, CheckCircleFilled, BranchesOutlined, HolderOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { AutoResponse, ConditionGroup, ConditionRule, Pregunta, OpcionConComentario, SubCondition } from './types';
+import { AutoResponse, ConditionGroup, ConditionRule, Pregunta, OpcionConComentario, SubCondition, AiBlock } from './types';
 import { VARIABLES, PREGUNTAS_EJEMPLO, ETIQUETAS_CATEGORIZACION } from './data';
 import { cuid } from './cuid';
 
@@ -583,6 +583,28 @@ function renderValueInput(
   );
 }
 
+// ─── Confirmación de eliminar (condición / subcondición) ──────────────────────
+
+function DeleteConfirm({ what, onConfirm, children }: { what: string; onConfirm: () => void; children: React.ReactNode }) {
+  return (
+    <Popconfirm
+      title={`¿Está seguro de eliminar ${what}?`}
+      okText="Sí, seguro"
+      cancelText="Cancelar"
+      onConfirm={onConfirm}
+      okButtonProps={{ shape: 'round' }}
+      cancelButtonProps={{ shape: 'round' }}
+      icon={
+        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: '#fff1f0', flexShrink: 0 }}>
+          <DeleteOutlined style={{ color: '#ff4d4f', fontSize: 12 }} />
+        </span>
+      }
+    >
+      {children}
+    </Popconfirm>
+  );
+}
+
 function CondRowUI({ row, onUpdate, onDelete, canDelete }: {
   row: ConditionRule; onUpdate: (p: Partial<ConditionRule>) => void;
   onDelete: () => void; canDelete: boolean;
@@ -604,7 +626,8 @@ function CondRowUI({ row, onUpdate, onDelete, canDelete }: {
   return (
     <div style={{ position: 'relative' }}>
       <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 2, background: '#bae7ff', borderRadius: '2px 0 0 2px' }} />
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: 16 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', flex: 1, minWidth: 0 }}>
 
         {/* Subject */}
         <Select
@@ -697,11 +720,15 @@ function CondRowUI({ row, onUpdate, onDelete, canDelete }: {
         {/* Value input(s) — shown when operator needs a value */}
         {row.operator && !NO_VALUE_OPS.has(row.operator) && renderValueInput(row, onUpdate, q, selStyle, inputStyle, rangeError)}
 
+        </div>
+
         {/* Delete */}
         {canDelete && (
-          <button onClick={onDelete} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ff4d4f', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-            <DeleteOutlined style={{ fontSize: 14 }} />
-          </button>
+          <DeleteConfirm what="esta condición" onConfirm={onDelete}>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ff4d4f', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+              <DeleteOutlined style={{ fontSize: 14 }} />
+            </button>
+          </DeleteConfirm>
         )}
       </div>
 
@@ -745,7 +772,7 @@ function SubConditionUI({ subCondition, onUpdateRow, onSetConnector, onDelete }:
   const selStyle:   React.CSSProperties = { minWidth: 160, borderRadius: 8 };
 
   return (
-    <div style={{ borderLeft: '2px solid #e6f7ff', paddingLeft: 16, padding: '8px 0 8px 16px', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+    <div style={{ borderLeft: '2px solid #e6f7ff', padding: '8px 0 8px 16px', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
         <div style={{ background: 'rgba(0,0,0,0.04)', padding: 4, borderRadius: 8, display: 'flex', alignItems: 'center' }}>
           {(['Y', 'O'] as const).map(opt => (
@@ -768,9 +795,11 @@ function SubConditionUI({ subCondition, onUpdateRow, onSetConnector, onDelete }:
         <span style={{ flex: 1, fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)' }}>
           se cumple que...
         </span>
-        <button onClick={onDelete} style={{ background: '#fff', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)', flexShrink: 0 }}>
-          <DeleteOutlined style={{ fontSize: 12, color: '#ff4d4f' }} />
-        </button>
+        <DeleteConfirm what="esta sub-condición" onConfirm={onDelete}>
+          <button style={{ background: '#fff', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)', flexShrink: 0 }}>
+            <DeleteOutlined style={{ fontSize: 12, color: '#ff4d4f' }} />
+          </button>
+        </DeleteConfirm>
       </div>
 
       {/* Subject */}
@@ -1064,13 +1093,81 @@ function Step2({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
   );
 }
 
-// ─── Step 3 placeholder ───────────────────────────────────────────────────────
+// ─── Step 3 — Mensaje ─────────────────────────────────────────────────────────
 
-function StepPlaceholder({ title, subtitle }: { title: string; subtitle: string }) {
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div style={{ padding: '48px 250px', background: '#fff' }}>
-      <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 20, color: 'rgba(0,0,0,0.45)', margin: '0 0 8px 0' }}>{title}</p>
-      <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.45)', margin: 0 }}>{subtitle}</p>
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', width: 100, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)' }}>{value}</span>
+    </div>
+  );
+}
+
+function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () => void }) {
+  const aiBlock = rule.blocks.find((b): b is AiBlock => b.type === 'ai');
+  const aiNeedsConfig = !!aiBlock && !aiBlock.objetivo.trim();
+  const triggerLabel = rule.trigger === 'farewell' ? 'Cuando el encuestado llega a una despedida' : 'Por cada respuesta nueva';
+
+  return (
+    <div style={{ padding: '24px 250px', display: 'flex', flexDirection: 'column', gap: 16, background: '#fff' }}>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 20, color: 'rgba(0,0,0,0.45)', margin: 0, lineHeight: 'normal' }}>
+          Diseña el mensaje
+        </p>
+        <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.45)', margin: 0, lineHeight: 'normal' }}>
+          Configura el contenido del correo que enviará esta regla. Los bloques se arman en el editor de correo.
+        </p>
+      </div>
+
+      <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: 0 }}>
+          Correo configurado
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <InfoRow label="Asunto" value={rule.subject.trim() || 'Sin asunto configurado'} />
+          <InfoRow label="Enviar a" value={rule.recipientVariable} />
+          <InfoRow label="Remitente" value={rule.sender} />
+          <InfoRow label="Disparador" value={triggerLabel} />
+          <InfoRow
+            label="Bloques"
+            value={
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                {rule.blocks.length}
+                {aiBlock && (
+                  <span style={{ background: 'var(--ds-violet-bg, #f9f0ff)', color: 'var(--ds-violet, #722ed1)', border: '1px solid var(--ds-violet-mid, #d3adf7)', borderRadius: 100, padding: '0px 8px', fontSize: 12 }}>
+                    ✦ Bloque IA
+                  </span>
+                )}
+              </span>
+            }
+          />
+        </div>
+        <Button onClick={onOpenEditor} style={{ alignSelf: 'flex-start', borderRadius: 8 }}>
+          Abrir editor de correo
+        </Button>
+      </div>
+
+      {aiNeedsConfig && (
+        <div style={{ background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 8, padding: 12 }}>
+          <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, color: '#874d00' }}>
+            Tienes un bloque IA sin objetivo configurado. Complétalo en el editor antes de activar.
+          </span>
+        </div>
+      )}
+      {!aiNeedsConfig && rule.blocks.length > 0 && (
+        <div style={{ background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 8, padding: 12 }}>
+          <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, color: '#389e0d' }}>
+            ✓ Listo para activar.
+          </span>
+        </div>
+      )}
+      {rule.blocks.length === 0 && (
+        <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: 0 }}>
+          Aún no agregaste bloques al mensaje.
+        </p>
+      )}
     </div>
   );
 }
@@ -1128,7 +1225,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: '#fff' }}>
         {current === 0 && <Step1 rule={rule} onChange={onChange} />}
         {current === 1 && <Step2 rule={rule} onChange={onChange} />}
-        {current === 2 && <StepPlaceholder title="Mensaje" subtitle="Diseña el correo que se enviará al encuestado." />}
+        {current === 2 && <Step3 rule={rule} onOpenEditor={onOpenEditor} />}
       </div>
 
       {/* Footer */}
