@@ -1,4 +1,4 @@
-import { Pregunta, Etiqueta } from './types';
+import { Pregunta, Etiqueta, AiBlock } from './types';
 
 export const SETUP = {
   empresa: 'HIR Casa',
@@ -59,6 +59,28 @@ export const buildAiPrompt = (
   prompt += `\n\nReglas:\n- Solo el párrafo, sin saludo ni firma\n- Máximo 3 oraciones concisas\n- En español, segunda persona (tú)\n- Sonido genuino y humano, no plantilla genérica\n- No iniciar con el nombre de la empresa`;
   return prompt;
 };
+
+const TONE_OPENERS: Record<string, string> = {
+  empatico: 'Entendemos cómo te sentiste y queremos acompañarte en esto.',
+  formal: 'Le escribimos para darle seguimiento a su experiencia reciente con nosotros.',
+  calido: '¡Qué gusto saber de ti! Gracias por compartir tu experiencia.',
+  directo: 'Vamos directo al punto sobre tu experiencia reciente.',
+  custom: 'Gracias por compartir tu experiencia con nosotros.',
+};
+
+// Generador simulado en el cliente — NO llama a ninguna API real. Es un prototipo Figma Make
+// sin backend, así que "Enviar prueba" solo necesita mostrar un texto plausible y determinístico.
+export function mockGenerateAiText(block: AiBlock, responseSummary: string): string {
+  const tono = block.tone === 'custom' ? (block.customTone.trim() || 'cercano') : (TONOS[block.tone] || '');
+  const opener = TONE_OPENERS[block.tone] || TONE_OPENERS.custom;
+  const objetivo = block.objetivo.trim() || 'darte seguimiento personalizado';
+  let text = `${opener} Basado en tu respuesta (${responseSummary}), nuestro equipo se enfoca en ${objetivo.toLowerCase()}.`;
+  if (block.datoPriorizar.trim()) {
+    text += ` Queremos destacar especialmente: ${block.datoPriorizar.trim()}.`;
+  }
+  text += ` Seguimos comprometidos en brindarte una experiencia ${tono || 'cercana y profesional'}.`;
+  return text;
+}
 
 export const SIMULATED_RESPONSES: Record<string, string | number> = {
   q1: 4,

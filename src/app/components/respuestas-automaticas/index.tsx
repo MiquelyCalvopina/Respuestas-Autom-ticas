@@ -7,7 +7,6 @@ import ListPage from './ListPage';
 import WizardView from './WizardView';
 import EditorView from './EditorView';
 import LogView from './LogView';
-import TestModal from './TestModal';
 
 interface Props {
   onBack: () => void;
@@ -26,6 +25,8 @@ function emptyRule(): AutoResponse {
     replyTo: '',
     subject: '',
     blocks: [],
+    blocksUpdatedAt: null,
+    customHtml: null,
   };
 }
 
@@ -35,7 +36,6 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
   const [rules, setRules] = useState<AutoResponse[]>([]);
   const [currentRule, setCurrentRule] = useState<AutoResponse>(emptyRule());
   const [logRule, setLogRule] = useState<AutoResponse | null>(null);
-  const [showTestModal, setShowTestModal] = useState(false);
 
   function openNew() {
     setCurrentRule(emptyRule());
@@ -82,21 +82,11 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
 
   if (view === 'editor') {
     return (
-      <>
-        <EditorView
-          rule={currentRule}
-          onChange={setCurrentRule}
-          onBack={() => setView('wizard')}
-          onSendTest={() => setShowTestModal(true)}
-        />
-        {showTestModal && (
-          <TestModal
-            rule={currentRule}
-            onClose={() => setShowTestModal(false)}
-            onSend={(email) => { message.success(`Correo de prueba enviado a ${email} ✓`); }}
-          />
-        )}
-      </>
+      <EditorView
+        rule={currentRule}
+        onChange={setCurrentRule}
+        onBack={() => setView('wizard')}
+      />
     );
   }
 

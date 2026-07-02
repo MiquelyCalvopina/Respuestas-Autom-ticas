@@ -4,7 +4,7 @@ import { RightOutlined, PlusOutlined, CheckOutlined, DeleteOutlined, CheckCircle
 import dayjs from 'dayjs';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { AutoResponse, ConditionGroup, ConditionRule, Pregunta, OpcionConComentario, SubCondition, AiBlock } from './types';
+import { AutoResponse, ConditionGroup, ConditionRule, Pregunta, OpcionConComentario, SubCondition } from './types';
 import { VARIABLES, PREGUNTAS_EJEMPLO, ETIQUETAS_CATEGORIZACION } from './data';
 import { cuid } from './cuid';
 
@@ -354,6 +354,13 @@ function isRowComplete(r: ConditionRule): boolean {
     return rangeValid(r, getPregunta(r));
   }
   return nonEmpty(r.value);
+}
+
+function allConditionsComplete(condGroups: ConditionGroup[]): boolean {
+  return condGroups.every(g =>
+    g.rows.every(isRowComplete) &&
+    (g.subConditions ?? []).every(sc => isRowComplete(sc.row))
+  );
 }
 
 // ─── Habla de / No habla de ────────────────────────────────────────────────────
@@ -1104,9 +1111,26 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+function VariablePill({ value }: { value: string }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 2,
+      background: 'var(--ds-violet-bg)', color: 'var(--ds-violet)',
+      border: '1px solid var(--ds-violet-mid)', borderRadius: 100,
+      padding: '1px 10px', fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
+    }}>
+      @{value}
+    </span>
+  );
+}
+
+function formatTemplateDate(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })} ${d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`;
+}
+
 function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () => void }) {
-  const aiBlock = rule.blocks.find((b): b is AiBlock => b.type === 'ai');
-  const aiNeedsConfig = !!aiBlock && !aiBlock.objetivo.trim();
   const triggerLabel = rule.trigger === 'farewell' ? 'Cuando el encuestado llega a una despedida' : 'Por cada respuesta nueva';
 
   return (
@@ -1127,47 +1151,26 @@ function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () =>
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <InfoRow label="Asunto" value={rule.subject.trim() || 'Sin asunto configurado'} />
-          <InfoRow label="Enviar a" value={rule.recipientVariable} />
+          <InfoRow label="Enviar a" value={<VariablePill value={rule.recipientVariable} />} />
           <InfoRow label="Remitente" value={rule.sender} />
           <InfoRow label="Disparador" value={triggerLabel} />
           <InfoRow
-            label="Bloques"
+            label="Plantilla de correo"
             value={
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                {rule.blocks.length}
-                {aiBlock && (
-                  <span style={{ background: 'var(--ds-violet-bg, #f9f0ff)', color: 'var(--ds-violet, #722ed1)', border: '1px solid var(--ds-violet-mid, #d3adf7)', borderRadius: 100, padding: '0px 8px', fontSize: 12 }}>
-                    ✦ Bloque IA
-                  </span>
-                )}
-              </span>
+              rule.blocks.length === 0 ? (
+                <Button type="link" onClick={onOpenEditor} style={{ padding: 0, height: 'auto' }}>
+                  Diseñar plantilla de correo
+                </Button>
+              ) : (
+                <Button type="link" onClick={onOpenEditor} style={{ padding: 0, height: 'auto' }}>
+                  Editar plantilla — últ. creación {formatTemplateDate(rule.blocksUpdatedAt)}
+                </Button>
+              )
             }
           />
         </div>
-        <Button onClick={onOpenEditor} style={{ alignSelf: 'flex-start', borderRadius: 8 }}>
-          Abrir editor de correo
-        </Button>
       </div>
 
-      {aiNeedsConfig && (
-        <div style={{ background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 8, padding: 12 }}>
-          <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, color: '#874d00' }}>
-            Tienes un bloque IA sin objetivo configurado. Complétalo en el editor antes de activar.
-          </span>
-        </div>
-      )}
-      {!aiNeedsConfig && rule.blocks.length > 0 && (
-        <div style={{ background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 8, padding: 12 }}>
-          <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, color: '#389e0d' }}>
-            ✓ Listo para activar.
-          </span>
-        </div>
-      )}
-      {rule.blocks.length === 0 && (
-        <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: 0 }}>
-          Aún no agregaste bloques al mensaje.
-        </p>
-      )}
     </div>
   );
 }
@@ -1189,7 +1192,9 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
   const replyToValid = rule.replyTo === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rule.replyTo);
   const canNext = current === 0
     ? (rule.name.trim() !== '' && rule.trigger !== null && rule.sender !== '' && replyToValid)
-    : true;
+    : current === 1
+    ? allConditionsComplete(rule.condGroups)
+    : rule.blocks.length > 0;
   const isLast  = current === 2;
 
   return (

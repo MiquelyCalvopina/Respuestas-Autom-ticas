@@ -1,3 +1,12 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './ds-tokens.css';
+
+/* Scrollable container with the scrollbar hidden (scroll stays functional) */
+.rf-scroll-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.rf-scroll-hidden::-webkit-scrollbar {
+  display: none;
+}

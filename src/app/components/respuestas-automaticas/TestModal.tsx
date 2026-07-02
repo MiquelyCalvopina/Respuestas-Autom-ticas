@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Modal, Steps, Input, Button, Alert, Radio, Tag, Slider, Rate, Typography } from 'antd';
-import { SendOutlined, WarningOutlined } from '@ant-design/icons';
-import { AutoResponse } from './types';
-import { PREGUNTAS } from './data';
+import { Modal, Steps, Input, Button, Alert, Radio, Segmented, Select, Slider, Rate, Typography } from 'antd';
+import { SendOutlined, LeftOutlined } from '@ant-design/icons';
+import { AutoResponse, AiBlock } from './types';
+import { PREGUNTAS, SIMULATED_RESPONSES, mockGenerateAiText } from './data';
 
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -10,26 +10,42 @@ const { TextArea } = Input;
 interface Props {
   rule: AutoResponse;
   onClose: () => void;
-  onSend: (email: string, data: Record<string, unknown>) => void;
+  onSend: (email: string, generatedText: string | null) => void;
 }
 
+const MOCK_RESPONSES: { id: string; label: string; summary: string }[] = [
+  { id: '4821', label: '4821 — NPS 9, promotor entusiasta', summary: 'NPS 9, promotor entusiasta' },
+  { id: '4798', label: '4798 — NPS 4, detractor por demoras', summary: 'NPS 4, detractor por demoras en el proceso' },
+  { id: '5103', label: '5103 — CSAT 5, muy satisfecho', summary: 'CSAT 5, muy satisfecho con la atención' },
+];
+
 export default function TestModal({ rule, onClose, onSend }: Props) {
+  const aiBlock = rule.blocks.find((b): b is AiBlock => b.type === 'ai');
   const hasAiOrResponses = rule.blocks.some(b => b.type === 'ai' || b.type === 'responses');
   const totalSteps = hasAiOrResponses ? 2 : 1;
   const [step, setStep] = useState(0);
   const [email, setEmail] = useState('');
   const [dataMode, setDataMode] = useState<'real' | 'synthetic'>('synthetic');
-  const [responseId, setResponseId] = useState('');
-  const [syntheticData, setSyntheticData] = useState<Record<string, string | number>>({});
+  const [responseId, setResponseId] = useState(MOCK_RESPONSES[0].id);
+  const [syntheticData, setSyntheticData] = useState<Record<string, string | number>>(() => ({ ...SIMULATED_RESPONSES }));
   const [sending, setSending] = useState(false);
 
   const validEmail = email.trim() !== '' && /\S+@\S+\.\S+/.test(email);
-  const canSend = step === 0 ? validEmail : (dataMode === 'real' ? responseId.trim() !== '' : PREGUNTAS.every(q => syntheticData[q.id] !== undefined && syntheticData[q.id] !== ''));
+  const canSend = step === 0
+    ? validEmail
+    : (dataMode === 'real' ? !!responseId : PREGUNTAS.every(q => syntheticData[q.id] !== undefined && syntheticData[q.id] !== ''));
 
   async function handleSend() {
     setSending(true);
-    await new Promise(r => setTimeout(r, 1000));
-    onSend(email, dataMode === 'real' ? { responseId } : syntheticData);
+    await new Promise(r => setTimeout(r, 900));
+    let generatedText: string | null = null;
+    if (aiBlock) {
+      const summary = dataMode === 'real'
+        ? (MOCK_RESPONSES.find(r => r.id === responseId)?.summary ?? 'respuesta simulada')
+        : PREGUNTAS.map(q => `${q.texto}: ${syntheticData[q.id]}`).join(' · ');
+      generatedText = mockGenerateAiText(aiBlock, summary);
+    }
+    onSend(email, generatedText);
     setSending(false);
     onClose();
   }
@@ -38,7 +54,7 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
       <Button onClick={onClose}>Cancelar</Button>
       <div style={{ display: 'flex', gap: 8 }}>
-        {step === 1 && <Button icon={<SendOutlined />} onClick={() => setStep(0)}>Anterior</Button>}
+        {step === 1 && <Button icon={<LeftOutlined />} onClick={() => setStep(0)}>Anterior</Button>}
         {step < totalSteps - 1 ? (
           <Button type="primary" disabled={!validEmail} onClick={() => setStep(1)}>Siguiente →</Button>
         ) : (
@@ -65,94 +81,92 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
       }
       onCancel={onClose}
       footer={footer}
-      width={500}
+      width={520}
     >
-      {step === 0 && (
-        <div style={{ paddingTop: 16 }}>
-          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>Correo destino *</Text>
-          <Input
-            autoFocus type="email" value={email} onChange={e => setEmail(e.target.value)}
-            placeholder="tu@correo.com"
-          />
-          <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 4 }}>
-            Recibirás el correo tal como lo verá el encuestado.
-          </Text>
-        </div>
-      )}
+      <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: 4 }}>
+        {step === 0 && (
+          <div style={{ paddingTop: 16 }}>
+            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>Correo destino *</Text>
+            <Input
+              autoFocus type="email" value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="tu@correo.com"
+            />
+            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 4 }}>
+              Recibirás el correo tal como lo verá el encuestado.
+            </Text>
+          </div>
+        )}
 
-      {step === 1 && (
-        <div style={{ paddingTop: 16 }}>
-          <Paragraph strong style={{ marginBottom: 4 }}>¿Qué respuesta simulamos?</Paragraph>
-          <Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 14 }}>
-            Los bloques ✦ IA y 📋 Respuestas necesitan datos para generar el correo de prueba.
-          </Paragraph>
+        {step === 1 && (
+          <div style={{ paddingTop: 16 }}>
+            <Paragraph strong style={{ marginBottom: 4 }}>¿Qué respuesta simulamos?</Paragraph>
+            <Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 12 }}>
+              Los bloques ✦ IA y 📋 Respuestas necesitan datos para generar el correo de prueba.
+            </Paragraph>
 
-          <Radio.Group value={dataMode} onChange={e => setDataMode(e.target.value)} style={{ width: '100%' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
-              {/* Option A */}
-              <div style={{ border: `1px solid ${dataMode === 'real' ? '#1890ff' : '#d9d9d9'}`, borderRadius: 8, padding: 12, background: dataMode === 'real' ? '#e6f7ff' : '#fff', cursor: 'pointer' }} onClick={() => setDataMode('real')}>
-                <Radio value="real" style={{ fontWeight: 500 }}>Usar una respuesta existente</Radio>
-                <Paragraph type="secondary" style={{ fontSize: 12, margin: '4px 0 0 22px' }}>
-                  Ingresa el ID de una respuesta guardada. El correo usará sus datos reales.
-                </Paragraph>
-                {dataMode === 'real' && (
-                  <div style={{ marginTop: 10, marginLeft: 22 }}>
-                    <Input
-                      value={responseId} onChange={e => setResponseId(e.target.value)}
-                      placeholder="ID de respuesta (ej: 4821)"
-                      onClick={e => e.stopPropagation()}
-                    />
-                    <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 3 }}>El ID lo encuentras en el módulo de Descarga de Resultados.</Text>
-                    <Alert
-                      type="warning" showIcon icon={<WarningOutlined />}
-                      title="Si la respuesta no cumple las condiciones, el resultado puede no tener sentido contextual."
-                      style={{ marginTop: 8, fontSize: 11 }}
-                    />
-                  </div>
-                )}
+            <Segmented
+              block
+              value={dataMode}
+              onChange={v => setDataMode(v as 'real' | 'synthetic')}
+              options={[
+                { label: 'Usar respuesta existente', value: 'real' },
+                { label: 'Responder aquí', value: 'synthetic' },
+              ]}
+              style={{ marginBottom: 14 }}
+            />
+
+            {dataMode === 'real' && (
+              <div>
+                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>
+                  Elige una respuesta simulada guardada:
+                </Text>
+                <Select
+                  value={responseId}
+                  onChange={setResponseId}
+                  style={{ width: '100%' }}
+                  options={MOCK_RESPONSES.map(r => ({ value: r.id, label: r.label }))}
+                />
+                <Alert
+                  type="warning" showIcon
+                  message="Si la respuesta no cumple las condiciones de la regla, el resultado puede no tener sentido contextual."
+                  style={{ marginTop: 10, fontSize: 12 }}
+                />
               </div>
+            )}
 
-              {/* Option B */}
-              <div style={{ border: `1px solid ${dataMode === 'synthetic' ? '#1890ff' : '#d9d9d9'}`, borderRadius: 8, padding: 12, background: dataMode === 'synthetic' ? '#e6f7ff' : '#fff', cursor: 'pointer' }} onClick={() => setDataMode('synthetic')}>
-                <Radio value="synthetic" style={{ fontWeight: 500 }}>Responder el formulario aquí</Radio>
-                <Paragraph type="secondary" style={{ fontSize: 12, margin: '4px 0 0 22px' }}>
-                  Completa las preguntas para ver cómo quedaría el correo.
-                </Paragraph>
-                {dataMode === 'synthetic' && (
-                  <div style={{ marginTop: 12, marginLeft: 22, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
-                    {PREGUNTAS.map(q => (
-                      <div key={q.id}>
-                        <Text style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>{q.texto}</Text>
-                        {q.tipo === 'NPS' && (
-                          <>
-                            <Slider min={0} max={10} value={syntheticData[q.id] as number ?? 5} onChange={v => setSyntheticData(p => ({ ...p, [q.id]: v }))} />
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <Text type="secondary" style={{ fontSize: 11 }}>0 — Muy poco</Text>
-                              <Tag color="blue">{syntheticData[q.id] ?? 5}</Tag>
-                              <Text type="secondary" style={{ fontSize: 11 }}>10 — Muy probable</Text>
-                            </div>
-                          </>
-                        )}
-                        {q.tipo === 'texto_abierto' && (
-                          <TextArea rows={2} value={syntheticData[q.id] as string ?? ''} onChange={e => setSyntheticData(p => ({ ...p, [q.id]: e.target.value }))} />
-                        )}
-                        {q.tipo === 'CSAT' && (
-                          <Rate count={5} value={syntheticData[q.id] as number ?? 0} onChange={v => setSyntheticData(p => ({ ...p, [q.id]: v }))} />
-                        )}
-                        {q.tipo === 'seleccion_simple' && q.opciones && (
-                          <Radio.Group value={syntheticData[q.id]} onChange={e => setSyntheticData(p => ({ ...p, [q.id]: e.target.value }))} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                            {q.opciones.map(opt => <Radio key={opt} value={opt} style={{ fontSize: 12 }}>{opt}</Radio>)}
-                          </Radio.Group>
-                        )}
-                      </div>
-                    ))}
+            {dataMode === 'synthetic' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {PREGUNTAS.map(q => (
+                  <div key={q.id}>
+                    <Text style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>{q.texto}</Text>
+                    {q.tipo === 'NPS' && (
+                      <>
+                        <Slider min={0} max={10} value={syntheticData[q.id] as number} onChange={v => setSyntheticData(p => ({ ...p, [q.id]: v }))} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Text type="secondary" style={{ fontSize: 11 }}>0 — Muy poco</Text>
+                          <Text type="secondary" style={{ fontSize: 11 }}>{syntheticData[q.id]}</Text>
+                          <Text type="secondary" style={{ fontSize: 11 }}>10 — Muy probable</Text>
+                        </div>
+                      </>
+                    )}
+                    {q.tipo === 'texto_abierto' && (
+                      <TextArea rows={2} value={syntheticData[q.id] as string} onChange={e => setSyntheticData(p => ({ ...p, [q.id]: e.target.value }))} />
+                    )}
+                    {q.tipo === 'CSAT' && (
+                      <Rate count={5} value={syntheticData[q.id] as number} onChange={v => setSyntheticData(p => ({ ...p, [q.id]: v }))} />
+                    )}
+                    {q.tipo === 'seleccion_simple' && q.opciones && (
+                      <Radio.Group value={syntheticData[q.id]} onChange={e => setSyntheticData(p => ({ ...p, [q.id]: e.target.value }))} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {q.opciones.map(opt => <Radio key={opt} value={opt} style={{ fontSize: 12 }}>{opt}</Radio>)}
+                      </Radio.Group>
+                    )}
                   </div>
-                )}
+                ))}
               </div>
-            </div>
-          </Radio.Group>
-        </div>
-      )}
+            )}
+          </div>
+        )}
+      </div>
     </Modal>
   );
 }

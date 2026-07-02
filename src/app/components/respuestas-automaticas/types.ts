@@ -7,8 +7,16 @@ export type RuleStatus = 'draft' | 'active' | 'inactive';
 export interface BlockDesign {
   paddingTop: number;
   paddingBottom: number;
+  paddingLeft?: number;
+  paddingRight?: number;
   textAlign: TextAlign;
   bgColor: string;
+  widthPercent?: number;
+  boxed?: boolean;
+  borderColor?: string;
+  borderWidth?: number;
+  borderStyle?: 'solid' | 'dashed' | 'none';
+  hideMobile?: boolean;
 }
 
 export interface HeaderBlock {
@@ -130,6 +138,8 @@ export interface AutoResponse {
   replyTo: string;
   subject: string;
   blocks: Block[];
+  blocksUpdatedAt: string | null;
+  customHtml?: string | null;
 }
 
 export type ModuleView = 'list' | 'wizard' | 'editor' | 'log';
