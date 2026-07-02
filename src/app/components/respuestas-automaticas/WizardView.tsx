@@ -4,7 +4,7 @@ import { RightOutlined, PlusOutlined, CheckOutlined, DeleteOutlined, CheckCircle
 import dayjs from 'dayjs';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { AutoResponse, ConditionGroup, ConditionRule, Pregunta, OpcionConComentario } from './types';
+import { AutoResponse, ConditionGroup, ConditionRule, Pregunta, OpcionConComentario, SubCondition } from './types';
 import { VARIABLES, PREGUNTAS_EJEMPLO, ETIQUETAS_CATEGORIZACION } from './data';
 import { cuid } from './cuid';
 
@@ -723,6 +723,158 @@ function CondRowUI({ row, onUpdate, onDelete, canDelete }: {
   );
 }
 
+// ─── Sub-condition (agregada vía el botón Branch del grupo) ───────────────────
+
+function SubConditionUI({ subCondition, onUpdateRow, onSetConnector, onDelete }: {
+  subCondition: SubCondition;
+  onUpdateRow: (p: Partial<ConditionRule>) => void;
+  onSetConnector: (c: 'Y' | 'O') => void;
+  onDelete: () => void;
+}) {
+  const row = subCondition.row;
+  const subject = row.subject || 'response';
+  const q = getPregunta(row);
+  const operators = getOperators(row).map(o => ({ value: o, label: o }));
+  const rangeError = RANGE_OPS.has(row.operator)
+    && (Array.isArray(row.value) ? row.value.length > 0 : row.value.trim() !== '')
+    && (Array.isArray(row.valueB) ? row.valueB.length > 0 : row.valueB.trim() !== '')
+    && !rangeValid(row, q);
+  const commentable = q && (SINGLE_CHOICE.has(q.tipo) || MULTI_CHOICE.has(q.tipo)) ? commentableOptions(q) : [];
+
+  const inputStyle: React.CSSProperties = { flex: 1, minWidth: 140, borderRadius: 8 };
+  const selStyle:   React.CSSProperties = { minWidth: 160, borderRadius: 8 };
+
+  return (
+    <div style={{ borderLeft: '2px solid #e6f7ff', paddingLeft: 16, padding: '8px 0 8px 16px', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+        <div style={{ background: 'rgba(0,0,0,0.04)', padding: 4, borderRadius: 8, display: 'flex', alignItems: 'center' }}>
+          {(['Y', 'O'] as const).map(opt => (
+            <button
+              key={opt}
+              onClick={() => onSetConnector(opt)}
+              style={{
+                background: subCondition.connector === opt ? '#fff' : 'transparent',
+                boxShadow: subCondition.connector === opt ? '0px 2px 8px 0px rgba(0,0,0,0.05)' : 'none',
+                borderRadius: 100, border: 'none', cursor: 'pointer', padding: '2px 8px',
+                color: subCondition.connector === opt ? '#1890ff' : 'rgba(0,0,0,0.45)',
+                fontFamily: "'Roboto', sans-serif", fontSize: 14, lineHeight: 'normal',
+                transition: 'all .15s',
+              }}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+        <span style={{ flex: 1, fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)' }}>
+          se cumple que...
+        </span>
+        <button onClick={onDelete} style={{ background: '#fff', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)', flexShrink: 0 }}>
+          <DeleteOutlined style={{ fontSize: 12, color: '#ff4d4f' }} />
+        </button>
+      </div>
+
+      {/* Subject */}
+      <Select
+        value={subject}
+        onChange={v => onUpdateRow({ subject: v, variable: '', subType: '', attribute: '', operator: '', value: '', valueB: '' })}
+        style={{ width: 180, borderRadius: 8 }}
+        options={[{ value: 'response', label: 'La respuesta a' }, { value: 'variable', label: 'La variable' }]}
+      />
+
+      {/* Question / variable select */}
+      <Select
+        value={row.variable || undefined}
+        onChange={v => onUpdateRow({ variable: v, subType: '', attribute: '', operator: '', value: '', valueB: '' })}
+        placeholder={subject === 'variable' ? 'Selecciona una variable...' : 'Selecciona una pregunta...'}
+        style={{ ...selStyle, flex: 1 }}
+        options={subject === 'variable' ? Q_VARIABLE : Q_RESPONSE}
+      />
+
+      {/* Matriz de escalas — selector de atributo/fila */}
+      {q?.tipo === 'matriz_escalas' && (
+        <Select
+          value={row.attribute || undefined}
+          onChange={v => onUpdateRow({ attribute: v, subType: '', operator: '', value: '', valueB: '' })}
+          placeholder="Selecciona un atributo..." style={selStyle}
+          options={(q.atributos ?? []).map(a => ({ value: a, label: a }))}
+        />
+      )}
+
+      {/* NPS/CES/CLI/CSAT/Matriz — selector Nota/Grupo */}
+      {q && (NOTA_GRUPO_TIPOS.has(q.tipo) || (q.tipo === 'matriz_escalas' && row.attribute)) && (
+        <Select
+          value={row.subType || undefined}
+          onChange={v => onUpdateRow({ subType: v, operator: '', value: '', valueB: '' })}
+          placeholder="Evalúa..." style={selStyle}
+          options={[{ value: 'nota', label: 'Nota' }, { value: 'grupo', label: 'Grupo' }]}
+        />
+      )}
+
+      {/* Opción simple/múltiple — selector Opción/Comentario */}
+      {q && (SINGLE_CHOICE.has(q.tipo) || MULTI_CHOICE.has(q.tipo)) && commentable.length > 0 && (
+        <>
+          <Select
+            value={row.subType || undefined}
+            onChange={v => onUpdateRow({ subType: v, attribute: '', operator: '', value: '', valueB: '' })}
+            placeholder="Evalúa..." style={selStyle}
+            options={[{ value: 'opcion', label: 'Opción' }, { value: 'comentario', label: 'Comentario' }]}
+          />
+          {row.subType === 'comentario' && (
+            <Select
+              value={row.attribute || undefined}
+              onChange={v => onUpdateRow({ attribute: v, operator: '', value: '', valueB: '' })}
+              placeholder="¿De qué opción?" style={selStyle}
+              options={commentable.map(o => ({ value: o, label: o }))}
+            />
+          )}
+        </>
+      )}
+
+      {/* Formulario — selector de campo real */}
+      {q?.tipo === 'formulario' && (
+        <Select
+          value={row.subType || undefined}
+          onChange={v => onUpdateRow({ subType: v, operator: '', value: '', valueB: '' })}
+          placeholder="Selecciona un campo..." style={selStyle}
+          options={(q.campos ?? []).map(c => ({ value: c.nombre, label: `${c.nombre} (${c.tipo})` }))}
+        />
+      )}
+
+      {/* MaxDiff — selector Más/Menos importante */}
+      {q?.tipo === 'maxdiff' && (
+        <Select
+          value={row.subType || undefined}
+          onChange={v => onUpdateRow({ subType: v, operator: '', value: '', valueB: '' })}
+          placeholder="Evalúa..." style={selStyle}
+          options={[{ value: 'mas', label: 'Más importante' }, { value: 'menos', label: 'Menos importante' }]}
+        />
+      )}
+
+      {/* Operator */}
+      {row.variable && operators.length > 0 && (
+        <Select
+          value={row.operator || undefined}
+          onChange={v => onUpdateRow({ operator: v, value: '', valueB: '' })}
+          placeholder="Condición..."
+          style={selStyle}
+          options={operators}
+        />
+      )}
+
+      {/* Value input(s) */}
+      {row.operator && !NO_VALUE_OPS.has(row.operator) && renderValueInput(row, onUpdateRow, q, selStyle, inputStyle, rangeError)}
+
+      {rangeError && (
+        <div style={{ width: '100%' }}>
+          <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: '#ff4d4f' }}>
+            El primer valor debe ser menor o igual al segundo.
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Condition group ──────────────────────────────────────────────────────────
 
 function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
@@ -739,6 +891,21 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
   }
   function addRow() {
     onUpdateGroup({ ...group, rows: [...group.rows, emptyRow()] });
+  }
+  function addSubCondition() {
+    onUpdateGroup({
+      ...group,
+      subConditions: [...(group.subConditions ?? []), { id: cuid(), connector: 'O', row: emptyRow() }],
+    });
+  }
+  function updateSubCondition(scId: string, patch: Partial<ConditionRule>) {
+    onUpdateGroup({ ...group, subConditions: (group.subConditions ?? []).map(sc => sc.id === scId ? { ...sc, row: { ...sc.row, ...patch } } : sc) });
+  }
+  function setSubConditionConnector(scId: string, connector: 'Y' | 'O') {
+    onUpdateGroup({ ...group, subConditions: (group.subConditions ?? []).map(sc => sc.id === scId ? { ...sc, connector } : sc) });
+  }
+  function deleteSubCondition(scId: string) {
+    onUpdateGroup({ ...group, subConditions: (group.subConditions ?? []).filter(sc => sc.id !== scId) });
   }
 
   return (
@@ -768,7 +935,7 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
           <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', flex: 1 }}>
             se cumple que...
           </span>
-          <button style={{ background: 'white', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)' }}>
+          <button onClick={addSubCondition} style={{ background: 'white', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)' }}>
             <BranchesOutlined style={{ fontSize: 12, color: '#434343', transform: 'rotate(90deg)' }} />
           </button>
           {canDelete && (
@@ -784,7 +951,7 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
           <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', flex: 1 }}>
             Dispara una respuesta automática cuando:
           </span>
-          <button style={{ background: 'white', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)' }}>
+          <button onClick={addSubCondition} style={{ background: 'white', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)' }}>
             <BranchesOutlined style={{ fontSize: 12, color: '#434343', transform: 'rotate(90deg)' }} />
           </button>
           {canDelete && (
@@ -802,6 +969,16 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
           onUpdate={patch => updateRow(row.id, patch)}
           onDelete={() => deleteRow(row.id)}
           canDelete={group.rows.length > 1}
+        />
+      ))}
+      {/* Sub-conditions — added via the group's Branch button */}
+      {(group.subConditions ?? []).map(sc => (
+        <SubConditionUI
+          key={sc.id}
+          subCondition={sc}
+          onUpdateRow={patch => updateSubCondition(sc.id, patch)}
+          onSetConnector={c => setSubConditionConnector(sc.id, c)}
+          onDelete={() => deleteSubCondition(sc.id)}
         />
       ))}
     </div>

@@ -70,10 +70,16 @@ export interface ConditionRule {
   value: string | string[];
   valueB: string | string[]; // second value for range operators
 }
+export interface SubCondition {
+  id: string;
+  connector: 'Y' | 'O'; // conector respecto al ítem anterior de la cadena (grupo o subcondición previa)
+  row: ConditionRule;
+}
 export interface ConditionGroup {
   id: string;
   connector: 'Y' | 'O';
   rows: ConditionRule[];
+  subConditions?: SubCondition[];
 }
 
 export type TipoPregunta =
