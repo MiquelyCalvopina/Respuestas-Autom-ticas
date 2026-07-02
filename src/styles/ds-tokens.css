@@ -1,0 +1,13 @@
+/* ─── Plugthem Design System — violet/AI tokens ─────────────────────── */
+/* Primary actions inherit from the kit's --primary (#1890ff Ant Design)  */
+:root {
+  /* Violet — AI blocks only */
+  --ds-violet:      #7C3AED;
+  --ds-violet-sec:  #8B5CF6;
+  --ds-violet-bg:   #F5F3FF;
+  --ds-violet-mid:  #DDD6FE;
+  --ds-violet-dark: #4C1D95;
+
+  /* Monospace */
+  --ds-font-mono: 'JetBrains Mono', monospace;
+}
