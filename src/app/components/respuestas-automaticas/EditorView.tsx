@@ -345,8 +345,8 @@ function ComponentBox({ component, index, columnId, selected, onSelect, onRemove
         <ActionOverlay dragHandleRef={handleRef} onInsertAfter={onInsertAfter} onDuplicate={onDuplicate} onRemove={onRemove} />
       </div>
       <div
-        onClick={onSelect}
-        style={{ cursor: 'pointer', ...pad, background: bg, border, outline: selected ? '2px solid #1890ff' : '2px solid transparent', outlineOffset: -1, transition: 'outline .1s' }}
+        onClick={e => { e.stopPropagation(); onSelect(); }}
+        style={{ cursor: 'pointer', ...pad, background: bg, border, boxShadow: selected ? 'inset 0 0 0 2px #1890ff' : 'none', transition: 'box-shadow .1s' }}
       >
         {renderComponentContent(component)}
       </div>
@@ -441,8 +441,8 @@ function RowBox({ row, index, selected, onSelectRow, selectedComponentId, onSele
         <ActionOverlay dragHandleRef={handleRef} onInsertAfter={onInsertRowAfter} onDuplicate={onDuplicateRow} onRemove={onRemoveRow} />
       </div>
       <div
-        onClick={onSelectRow}
-        style={{ cursor: 'pointer', ...pad, background: bg, border, textAlign: d.textAlign ?? 'left', outline: selected ? '2px solid #1890ff' : '2px solid transparent', outlineOffset: -1, transition: 'outline .1s' }}
+        onClick={e => { e.stopPropagation(); onSelectRow(); }}
+        style={{ cursor: 'pointer', ...pad, background: bg, border, textAlign: d.textAlign ?? 'left', boxShadow: selected ? 'inset 0 0 0 2px #1890ff' : 'none', transition: 'box-shadow .1s' }}
       >
         <div style={{ display: 'flex', gap: 8 }}>
           {row.columns.map(col => (
@@ -553,13 +553,13 @@ function ColorPickerField({ value, onChange, allowTransparent, full }: { value: 
   );
 
   return (
-    <div ref={wrapRef} style={{ position: 'relative', width: full ? '100%' : undefined }}>
+    <div ref={wrapRef} style={{ position: 'relative', width: full ? '100%' : undefined, flexShrink: 0 }}>
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
         style={{
-          width: full ? '100%' : 36, height: 36, borderRadius: 8, border: '1px solid #d9d9d9', cursor: 'pointer',
-          padding: full ? '0 10px' : 0, display: 'flex', alignItems: 'center', gap: 8, background: '#fff',
+          width: full ? '100%' : 32, height: 32, borderRadius: 8, border: '1px solid #d9d9d9', cursor: 'pointer',
+          padding: full ? '0 10px' : 0, display: 'flex', alignItems: 'center', justifyContent: full ? 'flex-start' : 'center', gap: 8, background: '#fff', boxSizing: 'border-box',
         }}
       >
         {swatch}
@@ -570,7 +570,7 @@ function ColorPickerField({ value, onChange, allowTransparent, full }: { value: 
         )}
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: 40, left: 0, zIndex: 30, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,.12)', padding: 10, width: 200 }}>
+        <div style={{ position: 'absolute', top: 36, left: 0, zIndex: 30, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,.12)', padding: 10, width: 200 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 8 }}>
             {COLOR_PRESETS.map(c => (
               <button
@@ -602,7 +602,7 @@ function CollapsibleSection({ title, children }: { title: string; children: Reac
   return (
     <div style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 16, marginBottom: 16 }}>
       <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open ? 14 : 0 }}>
-        <Text strong style={{ fontSize: 14 }}>{title}</Text>
+        <Text style={{ fontSize: 14, fontWeight: 500 }}>{title}</Text>
         <span style={{ color: 'rgba(0,0,0,.35)', fontSize: 11 }}>{open ? '▲' : '▼'}</span>
       </div>
       {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>{children}</div>}
@@ -619,7 +619,7 @@ function PaddingField({ label, value, onChange }: { label: string; value: number
   return (
     <div>
       <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>{label}</Text>
-      <InputNumber value={value} onChange={v => onChange(v ?? 0)} style={{ width: '100%', borderRadius: 8 }} min={0} addonAfter="px" />
+      <InputNumber value={value} onChange={v => onChange(v ?? 0)} style={{ width: '100%' }} min={0} addonAfter="px" />
     </div>
   );
 }
@@ -630,9 +630,9 @@ function BorderFields({ borderColor, borderWidth, borderStyle, onUpdate }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <FieldLabel>Borde</FieldLabel>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <ColorPickerField value={borderColor} onChange={c => onUpdate({ borderColor: c })} />
-        <InputNumber min={0} value={borderWidth} onChange={v => onUpdate({ borderWidth: v ?? 0 })} style={{ flex: 1, borderRadius: 8 }} addonAfter="px" />
+        <InputNumber min={0} value={borderWidth} onChange={v => onUpdate({ borderWidth: v ?? 0 })} style={{ flex: 1 }} addonAfter="px" />
       </div>
       <Radio.Group value={borderStyle} onChange={e => onUpdate({ borderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
         <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
@@ -662,7 +662,7 @@ function LayoutConfigFields({ layout, onUpdate }: { layout: EmailLayoutConfig; o
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <FieldLabel>Ancho del contenido</FieldLabel>
-        <InputNumber value={layout.widthPercent} min={10} max={100} addonAfter="%" onChange={v => onUpdate({ widthPercent: v ?? 100 })} style={{ width: '100%', borderRadius: 8 }} />
+        <InputNumber value={layout.widthPercent} min={10} max={100} addonAfter="%" onChange={v => onUpdate({ widthPercent: v ?? 100 })} style={{ width: '100%' }} />
       </div>
       <div>
         <FieldLabel>Estilo del contenedor</FieldLabel>
@@ -1145,7 +1145,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     : { width: '100%', background: '#fff', overflow: 'hidden', minHeight: 180 };
 
   const subjectBar = (
-    <div style={{ maxWidth: cardMaxWidth, margin: '0 auto 12px', display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', background: '#fff', borderRadius: 6, border: '1px solid #f0f0f0' }}>
+    <div style={{ maxWidth: cardMaxWidth, margin: '0 auto 10px', display: 'flex', alignItems: 'center', gap: 10, padding: '5px 12px', background: '#fff', borderRadius: 6, border: '1px solid #f0f0f0' }}>
       <Text type="secondary" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', flexShrink: 0 }}>ASUNTO</Text>
       {editingSubject ? (
         <Input
@@ -1166,7 +1166,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
   );
 
   const tabStrip = (
-    <div style={{ width: 288, display: 'flex', borderLeft: '1px solid #f0f0f0', flexShrink: 0 }}>
+    <div style={{ width: 328, display: 'flex', borderLeft: '1px solid #f0f0f0', flexShrink: 0 }}>
       {(['elementos', 'configuracion', 'diseno'] as const).map(tab => (
         <button
           key={tab}
@@ -1188,8 +1188,8 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     <ConfigProvider theme={EDITOR_THEME}>
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f5f5f5', overflow: 'hidden', fontFamily: "'Roboto', sans-serif" }}>
       {/* Header fila 1 — título + acciones */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        <Text strong style={{ fontSize: 15, whiteSpace: 'nowrap' }}>Diseño del correo de respuesta</Text>
+      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '9px 24px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <Text style={{ fontSize: 15, fontWeight: 500, whiteSpace: 'nowrap' }}>Diseño del correo de respuesta</Text>
         <div style={{ flex: 1 }} />
         <Button icon={<SendOutlined />} onClick={() => setShowTestModal(true)} style={{ borderColor: '#13c2c2', color: '#13c2c2', background: '#e6fffb' }}>
           Enviar prueba
@@ -1203,7 +1203,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
       </div>
 
       {/* Header fila 2 — últ. actualización + toggle de modo + pestañas alineadas con el sidebar */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'stretch', flexShrink: 0, height: 48 }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'stretch', flexShrink: 0, height: 44 }}>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16, padding: '0 24px', minWidth: 0 }}>
           <Text type="secondary" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
             Últ. actualización: {formatDate(draft.blocksUpdatedAt)}
@@ -1222,7 +1222,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
       {mode === 'html' ? (
         <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
           {/* Vista previa en vivo */}
-          <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 24px 20px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
+          <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 20px 16px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
             {subjectBar}
             <div style={cardStyle}
               dangerouslySetInnerHTML={{ __html: htmlValue }}
@@ -1249,7 +1249,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
         <DndProvider backend={HTML5Backend}>
           <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
             {/* Canvas */}
-            <div ref={canvasRef} className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 24px 20px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
+            <div ref={canvasRef} className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 20px 16px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
               {subjectBar}
               <div style={cardStyle}>
                 {rows.length === 0 ? (
@@ -1289,7 +1289,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
             </div>
 
             {/* Sidebar */}
-            <div style={{ width: 288, background: '#fff', borderLeft: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', flexShrink: 0, minHeight: 0 }}>
+            <div style={{ width: 328, background: '#fff', borderLeft: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', flexShrink: 0, minHeight: 0 }}>
               <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 12px' }}>
                 {activeTab === 'elementos' && (
                   <div id="palette-section">
