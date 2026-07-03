@@ -76,15 +76,21 @@ export interface ButtonComponent {
 export interface SpacerComponent {
   id: string; type: 'spacer';
   height: number;
+  design: ComponentDesign;
 }
-export type SocialNetworkKey = 'facebook' | 'instagram' | 'x' | 'linkedin' | 'whatsapp';
-export interface SocialNetwork {
+export type SocialNetworkKey = 'facebook' | 'instagram' | 'linkedin' | 'youtube' | 'x' | 'pinterest';
+export interface SocialNetworkEntry {
   network: SocialNetworkKey;
+  included: boolean;
   url: string;
 }
 export interface SocialComponent {
   id: string; type: 'social';
-  networks: SocialNetwork[];
+  style: 'negro' | 'blanco' | 'color';
+  size: number;
+  gap: number;
+  shape: 'square' | 'rounded' | 'circle';
+  networks: SocialNetworkEntry[];
   design: ComponentDesign;
 }
 
@@ -99,8 +105,7 @@ export interface Column {
 }
 
 export interface RowDesign {
-  widthPercent?: number;
-  boxed?: boolean;
+  textAlign?: TextAlign;
   bgColor: string;
   borderColor?: string;
   borderWidth?: number;
@@ -110,6 +115,12 @@ export interface RowDesign {
   paddingLeft?: number;
   paddingRight?: number;
   hideMobile?: boolean;
+}
+
+export interface EmailLayoutConfig {
+  widthPercent: number; // 10-100, "Ancho del contenido"
+  boxed: boolean;       // "Estilo del contenedor": true = con margen, false = ancho completo
+  bgColor: string;      // color detrás de la tarjeta del correo
 }
 
 export interface Row {
@@ -188,6 +199,7 @@ export interface AutoResponse {
   replyTo: string;
   subject: string;
   rows: Row[];
+  layout: EmailLayoutConfig;
   blocksUpdatedAt: string | null;
   customHtml?: string | null;
 }

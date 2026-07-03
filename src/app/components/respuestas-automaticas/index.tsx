@@ -25,6 +25,7 @@ function emptyRule(): AutoResponse {
     replyTo: '',
     subject: '',
     rows: [],
+    layout: { widthPercent: 100, boxed: true, bgColor: '#f5f5f5' },
     blocksUpdatedAt: null,
     customHtml: null,
   };

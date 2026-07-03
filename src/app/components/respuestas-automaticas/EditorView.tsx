@@ -14,7 +14,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import CodeMirror from '@uiw/react-codemirror';
 import { html as htmlLang } from '@codemirror/lang-html';
 import {
-  AutoResponse, Row, RowDesign, Component, ComponentType, ComponentDesign,
+  AutoResponse, Row, RowDesign, Component, ComponentType, ComponentDesign, EmailLayoutConfig, TextAlign,
   AiBlock, TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, FooterBlock,
   ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey, Tone,
 } from './types';
@@ -52,8 +52,8 @@ function makeComponent(type: ComponentType): Component {
     case 'footer':    return { id, type, text: 'Para darte de baja, responde a este correo con el asunto "Baja".\n\n© HIR Casa · Ciudad de México', design };
     case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, design };
     case 'button':    return { id, type, text: 'Responder estudio', url: '', bgColor: '#1890ff', textColor: '#ffffff', design };
-    case 'spacer':    return { id, type, height: 24 };
-    case 'social':    return { id, type, networks: [], design };
+    case 'spacer':    return { id, type, height: 24, design };
+    case 'social':    return { id, type, style: 'negro', size: 26, gap: 8, shape: 'square', networks: SOCIAL_KEYS.map(k => ({ network: k, included: false, url: '' })), design };
     default: return { id, type: 'divider', design };
   }
 }
@@ -62,7 +62,7 @@ function makeRow(widths: number[]): Row {
   return {
     id: cuid(),
     columns: widths.map(w => ({ id: cuid(), widthPercent: w, components: [] })),
-    design: { bgColor: 'transparent', paddingTop: 16, paddingBottom: 16, paddingLeft: 0, paddingRight: 0, widthPercent: 100, boxed: true, borderStyle: 'none', borderWidth: 0, borderColor: '#000000', hideMobile: false },
+    design: { bgColor: 'transparent', textAlign: 'left', paddingTop: 16, paddingBottom: 16, paddingLeft: 0, paddingRight: 0, borderStyle: 'none', borderWidth: 0, borderColor: '#000000', hideMobile: false },
   };
 }
 function makeSingleComponentRow(type: ComponentType): Row {
@@ -97,9 +97,9 @@ const COMPONENT_PALETTE: { type: ComponentType; label: string; sub: string; icon
   { type: 'footer', label: 'Footer legal', sub: 'Texto legal + baja', icon: <FileTextOutlined /> },
 ];
 
-const SOCIAL_ICONS: Record<SocialNetworkKey, string> = { facebook: '📘', instagram: '📷', x: '✖️', linkedin: '💼', whatsapp: '💬' };
-const SOCIAL_LABELS: Record<SocialNetworkKey, string> = { facebook: 'Facebook', instagram: 'Instagram', x: 'X (Twitter)', linkedin: 'LinkedIn', whatsapp: 'WhatsApp' };
-const SOCIAL_KEYS: SocialNetworkKey[] = ['facebook', 'instagram', 'x', 'linkedin', 'whatsapp'];
+const SOCIAL_ICONS: Record<SocialNetworkKey, string> = { facebook: '📘', instagram: '📷', linkedin: '💼', youtube: '▶️', x: '✖️', pinterest: '📌' };
+const SOCIAL_LABELS: Record<SocialNetworkKey, string> = { facebook: 'Facebook', instagram: 'Instagram', linkedin: 'Linkedin', youtube: 'Youtube', x: 'X (Twitter)', pinterest: 'Pinterest' };
+const SOCIAL_KEYS: SocialNetworkKey[] = ['facebook', 'instagram', 'linkedin', 'youtube', 'x', 'pinterest'];
 
 function renderVars(text: string) {
   return text.replace(/\{\{(\w+)\}\}/g, (_, v) =>
@@ -114,27 +114,37 @@ function formatDate(iso: string | null | undefined): string {
 }
 
 function componentToHtml(c: Component): string {
-  const d = c.type === 'spacer' ? undefined : c.design;
-  const style = d ? `padding:${d.paddingTop}px ${d.paddingRight ?? 0}px ${d.paddingBottom}px ${d.paddingLeft ?? 0}px;text-align:${d.textAlign};${d.bgColor !== 'transparent' ? `background:${d.bgColor};` : ''}` : '';
+  const d = c.design;
+  const border = d.borderStyle && d.borderStyle !== 'none' && (d.borderWidth ?? 0) > 0 ? `border:${d.borderWidth}px ${d.borderStyle} ${d.borderColor ?? '#000'};` : '';
+  const style = `padding:${d.paddingTop}px ${d.paddingRight ?? 0}px ${d.paddingBottom}px ${d.paddingLeft ?? 0}px;text-align:${d.textAlign};${d.bgColor !== 'transparent' ? `background:${d.bgColor};` : ''}${border}`;
   switch (c.type) {
     case 'header':    return `<div style="${style}background:${c.bgColor};text-align:center;"><span style="font-weight:700;font-size:22px;color:#fff;">${c.name}</span></div>`;
     case 'title':     return `<div style="${style}"><h2 style="font-weight:700;font-size:21px;color:#000;margin:0;">${c.text}</h2></div>`;
     case 'text':      return `<div style="${style}"><p style="font-size:13.5px;line-height:1.75;color:#333;white-space:pre-line;margin:0;">${c.content}</p></div>`;
     case 'ai':        return `<div style="${style}"><p style="font-size:13px;line-height:1.7;color:#4C1D95;font-style:italic;margin:0;">${c.generatedText || '[Texto generado pendiente — envía una prueba]'}</p></div>`;
     case 'responses': return `<div style="${style}"><p style="font-size:12px;color:#666;">[Bloque de respuestas del encuestado]</p></div>`;
-    case 'divider':   return `<hr style="margin:${d?.paddingTop ?? 0}px 26px ${d?.paddingBottom ?? 0}px;" />`;
+    case 'divider':   return `<hr style="margin:${d.paddingTop}px 26px ${d.paddingBottom}px;" />`;
     case 'footer':    return `<div style="${style}"><p style="font-size:11.5px;color:#999;text-align:center;white-space:pre-line;margin:0;">${c.text}</p></div>`;
     case 'image':     return `<div style="${style}text-align:center;">${c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : ''}</div>`;
     case 'button':    return `<div style="${style}text-align:center;"><a href="${c.url}" style="display:inline-block;padding:10px 24px;border-radius:6px;background:${c.bgColor};color:${c.textColor};font-weight:600;text-decoration:none;">${c.text}</a></div>`;
-    case 'spacer':    return `<div style="height:${c.height}px;"></div>`;
-    case 'social':    return `<div style="${style}text-align:center;">${c.networks.map(n => `<a href="${n.url}" style="margin:0 6px;">${SOCIAL_LABELS[n.network]}</a>`).join('')}</div>`;
+    case 'spacer':    return `<div style="${style}height:${c.height}px;"></div>`;
+    case 'social': {
+      const radius = c.shape === 'circle' ? '50%' : c.shape === 'rounded' ? '6px' : '0';
+      const iconBg = c.style === 'negro' ? '#000' : c.style === 'blanco' ? '#fff' : '#1890ff';
+      const iconColor = c.style === 'blanco' ? '#000' : '#fff';
+      const icons = c.networks.filter(n => n.included).map(n =>
+        `<a href="${n.url}" style="display:inline-block;width:${c.size}px;height:${c.size}px;line-height:${c.size}px;text-align:center;background:${iconBg};color:${iconColor};border-radius:${radius};margin:0 ${c.gap / 2}px;text-decoration:none;">${SOCIAL_ICONS[n.network]}</a>`
+      ).join('');
+      return `<div style="${style}text-align:center;">${icons}</div>`;
+    }
     default: return '';
   }
 }
 function renderRowsToHtml(rows: Row[]): string {
   return rows.map(r => {
     const d = r.design;
-    const style = `padding:${d.paddingTop}px ${d.paddingRight ?? 0}px ${d.paddingBottom}px ${d.paddingLeft ?? 0}px;${d.bgColor !== 'transparent' ? `background:${d.bgColor};` : ''}`;
+    const border = d.borderStyle && d.borderStyle !== 'none' && (d.borderWidth ?? 0) > 0 ? `border:${d.borderWidth}px ${d.borderStyle} ${d.borderColor ?? '#000'};` : '';
+    const style = `padding:${d.paddingTop}px ${d.paddingRight ?? 0}px ${d.paddingBottom}px ${d.paddingLeft ?? 0}px;text-align:${d.textAlign ?? 'left'};${d.bgColor !== 'transparent' ? `background:${d.bgColor};` : ''}${border}`;
     const cols = r.columns.map(c => `<td style="width:${c.widthPercent}%;vertical-align:top;">${c.components.map(componentToHtml).join('')}</td>`).join('');
     return `<table role="presentation" width="100%" style="${style}"><tr>${cols}</tr></table>`;
   }).join('\n');
@@ -174,7 +184,7 @@ const ROW_ITEM = 'row-item';
 const COMPONENT_ITEM = 'component-item';
 
 function renderComponentContent(component: Component): React.ReactNode {
-  const align = component.type === 'spacer' ? 'left' : component.design.textAlign;
+  const align = component.design.textAlign;
   if (component.type === 'header') {
     return (
       <div style={{ background: component.bgColor, padding: '20px 32px', textAlign: 'center' }}>
@@ -253,11 +263,23 @@ function renderComponentContent(component: Component): React.ReactNode {
   }
   if (component.type === 'spacer') return <div style={{ height: component.height }} />;
   if (component.type === 'social') {
+    const included = component.networks.filter(n => n.included);
+    const radius = component.shape === 'circle' ? '50%' : component.shape === 'rounded' ? 6 : 0;
+    const iconBg = component.style === 'negro' ? '#000' : component.style === 'blanco' ? '#fff' : '#1890ff';
+    const iconColor = component.style === 'blanco' ? '#000' : '#fff';
     return (
-      <div style={{ display: 'flex', gap: 12, justifyContent: 'center', padding: '8px 32px', fontSize: 20 }}>
-        {component.networks.length === 0
+      <div style={{ display: 'flex', gap: component.gap, justifyContent: 'center', padding: '8px 32px' }}>
+        {included.length === 0
           ? <Text type="secondary" style={{ fontSize: 12 }}>Sin redes configuradas</Text>
-          : component.networks.map(n => <span key={n.network} title={SOCIAL_LABELS[n.network]}>{SOCIAL_ICONS[n.network]}</span>)}
+          : included.map(n => (
+            <span key={n.network} title={SOCIAL_LABELS[n.network]} style={{
+              width: component.size, height: component.size, lineHeight: `${component.size}px`,
+              textAlign: 'center', background: iconBg, color: iconColor, borderRadius: radius,
+              display: 'inline-block', fontSize: component.size * 0.55, border: component.style === 'blanco' ? '1px solid #e0e0e0' : undefined,
+            }}>
+              {SOCIAL_ICONS[n.network]}
+            </span>
+          ))}
       </div>
     );
   }
@@ -296,10 +318,10 @@ function ComponentBox({ component, index, columnId, selected, onSelect, onRemove
   drag(handleRef);
   drop(ref);
 
-  const d = component.type === 'spacer' ? undefined : component.design;
-  const pad = d ? { paddingTop: d.paddingTop, paddingBottom: d.paddingBottom, paddingLeft: d.paddingLeft ?? 0, paddingRight: d.paddingRight ?? 0 } : {};
-  const bg = d && d.bgColor !== 'transparent' ? d.bgColor : undefined;
-  const border = d && d.borderStyle && d.borderStyle !== 'none' && (d.borderWidth ?? 0) > 0 ? `${d.borderWidth}px ${d.borderStyle} ${d.borderColor ?? '#000'}` : undefined;
+  const d = component.design;
+  const pad = { paddingTop: d.paddingTop, paddingBottom: d.paddingBottom, paddingLeft: d.paddingLeft ?? 0, paddingRight: d.paddingRight ?? 0 };
+  const bg = d.bgColor !== 'transparent' ? d.bgColor : undefined;
+  const border = d.borderStyle && d.borderStyle !== 'none' && (d.borderWidth ?? 0) > 0 ? `${d.borderWidth}px ${d.borderStyle} ${d.borderColor ?? '#000'}` : undefined;
 
   return (
     <div
@@ -396,8 +418,6 @@ function RowBox({ row, index, selected, onSelectRow, selectedComponentId, onSele
   const pad = { paddingTop: d.paddingTop, paddingBottom: d.paddingBottom, paddingLeft: d.paddingLeft ?? 0, paddingRight: d.paddingRight ?? 0 };
   const bg = d.bgColor !== 'transparent' ? d.bgColor : undefined;
   const border = d.borderStyle && d.borderStyle !== 'none' && (d.borderWidth ?? 0) > 0 ? `${d.borderWidth}px ${d.borderStyle} ${d.borderColor ?? '#000'}` : undefined;
-  const widthPercent = d.widthPercent ?? 100;
-  const boxed = d.boxed ?? true;
 
   return (
     <div
@@ -411,9 +431,9 @@ function RowBox({ row, index, selected, onSelectRow, selectedComponentId, onSele
       </div>
       <div
         onClick={onSelectRow}
-        style={{ cursor: 'pointer', ...pad, background: bg, border, outline: selected ? '2px solid #1890ff' : '2px solid transparent', outlineOffset: -1, transition: 'outline .1s' }}
+        style={{ cursor: 'pointer', ...pad, background: bg, border, textAlign: d.textAlign ?? 'left', outline: selected ? '2px solid #1890ff' : '2px solid transparent', outlineOffset: -1, transition: 'outline .1s' }}
       >
-        <div style={{ width: `${widthPercent}%`, margin: boxed ? '0 auto' : '0', display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
           {row.columns.map(col => (
             <div key={col.id} style={{ width: `${col.widthPercent}%`, display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
               {col.components.length === 0 ? (
@@ -478,6 +498,25 @@ function ColumnLayoutPicker({ onPick, onClose }: { onPick: (widths: number[]) =>
   );
 }
 
+// Sección "Columnas y tamaños" del tab "Diseño" para una fila ya creada
+function ColumnsAndSizesField({ row, onChange }: { row: Row; onChange: (widths: number[]) => void }) {
+  const currentWidths = row.columns.map(c => c.widthPercent);
+  const isActive = (widths: number[]) => widths.length === currentWidths.length && widths.every((w, i) => Math.abs(w - currentWidths[i]) < 0.5);
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+      {COLUMN_LAYOUTS.map(l => (
+        <button key={l.label} onClick={() => onChange(l.widths)} title={l.label} style={{
+          display: 'flex', gap: 2, borderRadius: 6, padding: 6, cursor: 'pointer',
+          border: isActive(l.widths) ? '1.5px solid #1890ff' : '1px solid #d9d9d9',
+          background: isActive(l.widths) ? '#e6f4ff' : '#fff',
+        }}>
+          {l.widths.map((w, i) => <div key={i} style={{ flex: w, height: 24, background: isActive(l.widths) ? '#1890ff' : '#e6f4ff', borderRadius: 2 }} />)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ─── Selector de color propio (nunca la ventana nativa del SO) ───────────────
 
 const COLOR_PRESETS = ['#1890ff', '#7C3AED', '#059669', '#DC2626', '#0F172A', '#D97706', '#0D9488', '#ffffff', '#000000', '#f5f5f5'];
@@ -533,6 +572,21 @@ function ColorPickerField({ value, onChange, allowTransparent }: { value: string
   );
 }
 
+// ─── Sección colapsable — usada en toda la pestaña "Diseño" ──────────────────
+
+function CollapsibleSection({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <div style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 14, marginBottom: 14 }}>
+      <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open ? 12 : 0 }}>
+        <Text strong style={{ fontSize: 13 }}>{title}</Text>
+        <span style={{ color: 'rgba(0,0,0,.45)', fontSize: 11 }}>{open ? '▲' : '▼'}</span>
+      </div>
+      {open && children}
+    </div>
+  );
+}
+
 // ─── Campos compartidos de diseño (fila / componente) ────────────────────────
 
 function FieldLabel({ children, inline }: { children: React.ReactNode; inline?: boolean }) {
@@ -579,18 +633,18 @@ function PaddingGrid({ design, onUpdate }: { design: { paddingTop: number; paddi
   );
 }
 
-// Tab "Configuración" para una FILA seleccionada
-function RowConfigFields({ design, onUpdate }: { design: RowDesign; onUpdate: (p: Partial<RowDesign>) => void }) {
+// Tab "Configuración" — layout global del correo (fijo, no depende de la selección)
+function LayoutConfigFields({ layout, onUpdate }: { layout: EmailLayoutConfig; onUpdate: (p: Partial<EmailLayoutConfig>) => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', gap: 8 }}>
         <div style={{ flex: 1 }}>
           <FieldLabel>Ancho del contenido</FieldLabel>
-          <InputNumber size="small" value={design.widthPercent ?? 100} min={10} max={100} addonAfter="%" onChange={v => onUpdate({ widthPercent: v ?? 100 })} style={{ width: '100%' }} />
+          <InputNumber size="small" value={layout.widthPercent} min={10} max={100} addonAfter="%" onChange={v => onUpdate({ widthPercent: v ?? 100 })} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1 }}>
           <FieldLabel>Estilo del contenedor</FieldLabel>
-          <Radio.Group size="small" value={design.boxed ?? true} onChange={e => onUpdate({ boxed: e.target.value })} style={{ display: 'flex' }}>
+          <Radio.Group size="small" value={layout.boxed} onChange={e => onUpdate({ boxed: e.target.value })} style={{ display: 'flex' }}>
             <Tooltip title="Con margen"><Radio.Button value={true} style={{ flex: 1, textAlign: 'center' }}>▢</Radio.Button></Tooltip>
             <Tooltip title="Ancho completo"><Radio.Button value={false} style={{ flex: 1, textAlign: 'center' }}>▭</Radio.Button></Tooltip>
           </Radio.Group>
@@ -598,35 +652,28 @@ function RowConfigFields({ design, onUpdate }: { design: RowDesign; onUpdate: (p
       </div>
       <div>
         <FieldLabel>Color de fondo</FieldLabel>
-        <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c })} allowTransparent />
+        <ColorPickerField value={layout.bgColor} onChange={c => onUpdate({ bgColor: c })} allowTransparent />
       </div>
     </div>
   );
 }
-// Tab "Diseño" para una FILA seleccionada
-function RowDesignFields({ design, onUpdate }: { design: RowDesign; onUpdate: (p: Partial<RowDesign>) => void }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <BorderFields borderColor={design.borderColor ?? '#000000'} borderWidth={design.borderWidth ?? 0} borderStyle={design.borderStyle ?? 'none'} onUpdate={onUpdate} />
-      <PaddingGrid design={design} onUpdate={onUpdate} />
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <FieldLabel inline>Ocultar en móvil</FieldLabel>
-        <Switch size="small" checked={design.hideMobile ?? false} onChange={v => onUpdate({ hideMobile: v })} />
-      </div>
-    </div>
-  );
-}
-// Tab "Diseño" para un COMPONENTE seleccionado
-function ComponentDesignFields({ design, onUpdate }: { design: ComponentDesign; onUpdate: (p: Partial<ComponentDesign>) => void }) {
+
+// Sección "Bloque" del tab "Diseño" — igual para una fila o un componente seleccionado
+function BlockFields<T extends {
+  bgColor: string; textAlign?: TextAlign;
+  borderColor?: string; borderWidth?: number; borderStyle?: 'solid' | 'dotted' | 'none';
+  paddingTop: number; paddingBottom: number; paddingLeft?: number; paddingRight?: number;
+  hideMobile?: boolean;
+}>({ design, onUpdate }: { design: T; onUpdate: (p: Partial<T>) => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div>
         <FieldLabel>Color de fondo</FieldLabel>
-        <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c })} allowTransparent />
+        <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent />
       </div>
       <div>
         <FieldLabel>Alineación</FieldLabel>
-        <Radio.Group size="small" value={design.textAlign} onChange={e => onUpdate({ textAlign: e.target.value })}>
+        <Radio.Group size="small" value={design.textAlign ?? 'left'} onChange={e => onUpdate({ textAlign: e.target.value } as Partial<T>)}>
           <Radio.Button value="left"><AlignLeftOutlined /></Radio.Button>
           <Radio.Button value="center"><AlignCenterOutlined /></Radio.Button>
           <Radio.Button value="right"><AlignRightOutlined /></Radio.Button>
@@ -636,7 +683,7 @@ function ComponentDesignFields({ design, onUpdate }: { design: ComponentDesign; 
       <PaddingGrid design={design} onUpdate={onUpdate} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <FieldLabel inline>Ocultar en móvil</FieldLabel>
-        <Switch size="small" checked={design.hideMobile ?? false} onChange={v => onUpdate({ hideMobile: v })} />
+        <Switch size="small" checked={design.hideMobile ?? false} onChange={v => onUpdate({ hideMobile: v } as Partial<T>)} />
       </div>
     </div>
   );
@@ -821,32 +868,69 @@ function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUp
 function SpacerContentFields({ block, onUpdate }: { block: SpacerComponent; onUpdate: (b: Component) => void }) {
   return (
     <div>
-      <FieldLabel>Alto</FieldLabel>
+      <FieldLabel>Tamaño</FieldLabel>
       <InputNumber size="small" min={4} max={200} value={block.height} addonAfter="px" onChange={v => onUpdate({ ...block, height: v ?? 24 })} style={{ width: '100%' }} />
     </div>
   );
 }
+const SHAPE_ICON: Record<'square' | 'rounded' | 'circle', string> = { square: '▢', rounded: '▢', circle: '◯' };
 function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUpdate: (b: Component) => void }) {
-  function setUrl(network: SocialNetworkKey, url: string) {
-    const exists = block.networks.find(n => n.network === network);
-    const next = url.trim() === ''
-      ? block.networks.filter(n => n.network !== network)
-      : exists ? block.networks.map(n => n.network === network ? { ...n, url } : n) : [...block.networks, { network, url }];
-    onUpdate({ ...block, networks: next });
+  function setEntry(network: SocialNetworkKey, patch: { included?: boolean; url?: string }) {
+    onUpdate({ ...block, networks: block.networks.map(n => n.network === network ? { ...n, ...patch } : n) });
   }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {SOCIAL_KEYS.map(k => (
-        <div key={k}>
-          <FieldLabel>{SOCIAL_ICONS[k]} {SOCIAL_LABELS[k]}</FieldLabel>
-          <Input size="small" value={block.networks.find(n => n.network === k)?.url ?? ''} onChange={e => setUrl(k, e.target.value)} placeholder="https:// (vacío = oculto)" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div>
+        <FieldLabel>Tipo</FieldLabel>
+        <Radio.Group size="small" value={block.style} onChange={e => onUpdate({ ...block, style: e.target.value })} style={{ width: '100%', display: 'flex' }}>
+          <Radio.Button value="negro" style={{ flex: 1, textAlign: 'center' }}>Negro</Radio.Button>
+          <Radio.Button value="blanco" style={{ flex: 1, textAlign: 'center' }}>Blanco</Radio.Button>
+          <Radio.Button value="color" style={{ flex: 1, textAlign: 'center' }}>Color</Radio.Button>
+        </Radio.Group>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Tamaño</FieldLabel>
+          <InputNumber size="small" min={12} max={64} value={block.size} addonAfter="px" onChange={v => onUpdate({ ...block, size: v ?? 26 })} style={{ width: '100%' }} />
         </div>
-      ))}
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Espacio entre íconos</FieldLabel>
+          <InputNumber size="small" min={0} max={40} value={block.gap} addonAfter="px" onChange={v => onUpdate({ ...block, gap: v ?? 8 })} style={{ width: '100%' }} />
+        </div>
+      </div>
+      <div>
+        <FieldLabel>Estilo del borde</FieldLabel>
+        <Radio.Group size="small" value={block.shape} onChange={e => onUpdate({ ...block, shape: e.target.value })} style={{ display: 'flex' }}>
+          <Radio.Button value="square" style={{ flex: 1, textAlign: 'center' }}>{SHAPE_ICON.square}</Radio.Button>
+          <Radio.Button value="rounded" style={{ flex: 1, textAlign: 'center', borderRadius: 6 }}>{SHAPE_ICON.rounded}</Radio.Button>
+          <Radio.Button value="circle" style={{ flex: 1, textAlign: 'center' }}>{SHAPE_ICON.circle}</Radio.Button>
+        </Radio.Group>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {block.networks.map(entry => (
+          <div key={entry.network}>
+            <Checkbox checked={entry.included} onChange={e => setEntry(entry.network, { included: e.target.checked })}>
+              <Text style={{ fontSize: 12 }}>{SOCIAL_ICONS[entry.network]} {SOCIAL_LABELS[entry.network]}</Text>
+            </Checkbox>
+            <Input
+              size="small" addonBefore="https://" maxLength={2048} showCount
+              value={entry.url} onChange={e => setEntry(entry.network, { url: e.target.value })}
+              placeholder={`https://www.${SOCIAL_LABELS[entry.network]}.com`}
+              style={{ marginTop: 4 }}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-function ComponentContentConfig({ component, onUpdate }: { component: Component; onUpdate: (c: Component) => void }) {
+const TYPE_SECTION_TITLE: Partial<Record<ComponentType, string>> = {
+  header: 'Encabezado', title: 'Título', text: 'Texto', ai: 'Bloque IA', responses: 'Bloque de respuestas',
+  footer: 'Footer', image: 'Imagen', button: 'Botón', spacer: 'Espaciador', social: 'Redes Sociales',
+};
+
+function ComponentTypeFields({ component, onUpdate }: { component: Component; onUpdate: (c: Component) => void }) {
   if (component.type === 'text')      return <TextContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'ai')        return <AiContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'header')    return <HeaderContentFields block={component} onUpdate={onUpdate} />;
@@ -895,7 +979,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     const row = makeRow(widths);
     updateRows([...rows, row]);
     setSelection({ kind: 'row', rowId: row.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
     setColumnPickerOpen(false);
     scrollToBottom();
   }
@@ -904,33 +988,41 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     const i = rows.findIndex(r => r.id === rowId);
     updateRows(i < 0 ? [...rows, row] : [...rows.slice(0, i + 1), row, ...rows.slice(i + 1)]);
     setSelection({ kind: 'row', rowId: row.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
   }
   function addComponentRow(type: ComponentType) {
     const row = makeSingleComponentRow(type);
     updateRows([...rows, row]);
     const comp = row.columns[0].components[0];
     setSelection({ kind: 'component', rowId: row.id, columnId: row.columns[0].id, componentId: comp.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
     scrollToBottom();
   }
   function addComponentToColumn(type: ComponentType, rowId: string, columnId: string) {
     const comp = makeComponent(type);
     updateRows(rows.map(r => r.id !== rowId ? r : { ...r, columns: r.columns.map(c => c.id !== columnId ? c : { ...c, components: [...c.components, comp] }) }));
     setSelection({ kind: 'component', rowId, columnId, componentId: comp.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
   }
   function insertComponentAfter(rowId: string, columnId: string, atIndex: number) {
     const comp = makeComponent('text');
     updateRows(rows.map(r => r.id !== rowId ? r : { ...r, columns: r.columns.map(c => c.id !== columnId ? c : { ...c, components: [...c.components.slice(0, atIndex + 1), comp, ...c.components.slice(atIndex + 1)] }) }));
     setSelection({ kind: 'component', rowId, columnId, componentId: comp.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
   }
   function updateComponent(rowId: string, columnId: string, comp: Component) {
     updateRows(rows.map(r => r.id !== rowId ? r : { ...r, columns: r.columns.map(c => c.id !== columnId ? c : { ...c, components: c.components.map(x => x.id === comp.id ? comp : x) }) }));
   }
   function updateRowDesign(rowId: string, patch: Partial<RowDesign>) {
     updateRows(rows.map(r => r.id === rowId ? { ...r, design: { ...r.design, ...patch } } : r));
+  }
+  function setRowColumns(rowId: string, widths: number[]) {
+    updateRows(rows.map(r => {
+      if (r.id !== rowId) return r;
+      if (widths.length === r.columns.length) return { ...r, columns: r.columns.map((c, i) => ({ ...c, widthPercent: widths[i] })) };
+      const allComponents = r.columns.flatMap(c => c.components);
+      return { ...r, columns: widths.map((w, i) => ({ id: cuid(), widthPercent: w, components: i === 0 ? allComponents : [] })) };
+    }));
   }
   function removeRow(rowId: string) {
     updateRows(rows.filter(r => r.id !== rowId));
@@ -1026,8 +1118,13 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
 
   const htmlValue = draft.customHtml ?? renderRowsToHtml(draft.rows);
 
+  const cardMaxWidth = 6 * draft.layout.widthPercent;
+  const cardStyle: React.CSSProperties = draft.layout.boxed
+    ? { maxWidth: cardMaxWidth, margin: '0 auto', background: '#fff', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,.12)', overflow: 'hidden', minHeight: 180 }
+    : { width: '100%', background: '#fff', overflow: 'hidden', minHeight: 180 };
+
   const subjectBar = (
-    <div style={{ maxWidth: 580, margin: '12px auto 0', display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', background: '#fff', borderRadius: 6, border: '1px solid #f0f0f0' }}>
+    <div style={{ maxWidth: cardMaxWidth, margin: '12px auto 0', display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', background: '#fff', borderRadius: 6, border: '1px solid #f0f0f0' }}>
       <Text type="secondary" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', flexShrink: 0 }}>ASUNTO</Text>
       {editingSubject ? (
         <Input
@@ -1047,20 +1144,31 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     </div>
   );
 
+  const tabStrip = (
+    <div style={{ width: 288, display: 'flex', borderLeft: '1px solid #f0f0f0', flexShrink: 0 }}>
+      {(['elementos', 'configuracion', 'diseno'] as const).map(tab => (
+        <button
+          key={tab}
+          onClick={() => setActiveTab(tab)}
+          style={{
+            flex: 1, border: 'none', background: 'none', cursor: 'pointer',
+            borderBottom: activeTab === tab ? '2px solid #1890ff' : '2px solid transparent',
+            color: activeTab === tab ? '#1890ff' : 'rgba(0,0,0,.45)',
+            fontSize: 12, fontWeight: activeTab === tab ? 600 : 400,
+          }}
+        >
+          {tab === 'elementos' ? 'Elementos' : tab === 'configuracion' ? 'Configuración' : 'Diseño'}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f5f5f5', overflow: 'hidden' }}>
-      {/* Topbar */}
-      <div style={{ background: '#1f2937', padding: '0 20px', display: 'flex', alignItems: 'center', gap: 12, height: 56, flexShrink: 0, zIndex: 20 }}>
-        <Text style={{ color: '#fff', fontWeight: 500, fontSize: 14, whiteSpace: 'nowrap' }}>Diseño del correo de respuesta</Text>
-        <Segmented
-          value={mode}
-          onChange={v => handleModeChange(v as 'visual' | 'html')}
-          options={[{ label: 'Editor visual', value: 'visual' }, { label: 'Editor HTML', value: 'html' }]}
-        />
+      {/* Header fila 1 — título + acciones */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <Text strong style={{ fontSize: 15, whiteSpace: 'nowrap' }}>Diseño del correo de respuesta</Text>
         <div style={{ flex: 1 }} />
-        <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, whiteSpace: 'nowrap' }}>
-          Últ. actualización: {formatDate(draft.blocksUpdatedAt)}
-        </Text>
         <Button icon={<SendOutlined />} onClick={() => setShowTestModal(true)} style={{ borderColor: '#13c2c2', color: '#13c2c2', background: '#e6fffb' }}>
           Enviar prueba
         </Button>
@@ -1072,14 +1180,31 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
         </Tooltip>
       </div>
 
+      {/* Header fila 2 — últ. actualización + toggle de modo + pestañas alineadas con el sidebar */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'stretch', flexShrink: 0, height: 48 }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16, padding: '0 24px', minWidth: 0 }}>
+          <Text type="secondary" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+            Últ. actualización: {formatDate(draft.blocksUpdatedAt)}
+          </Text>
+          <div style={{ flex: 1 }} />
+          <Segmented
+            value={mode}
+            onChange={v => handleModeChange(v as 'visual' | 'html')}
+            options={[{ label: 'Editor visual', value: 'visual' }, { label: 'Editor HTML', value: 'html' }]}
+          />
+          <div style={{ flex: 1 }} />
+        </div>
+        {mode === 'visual' && tabStrip}
+      </div>
+
       {/* Asunto — visible en ambos modos (fix: antes desaparecía en Editor HTML) */}
       {subjectBar}
 
       {mode === 'html' ? (
         <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden', marginTop: 12 }}>
           {/* Vista previa en vivo */}
-          <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 24px 20px', background: '#f5f5f5' }}>
-            <div style={{ maxWidth: 580, margin: '0 auto', background: '#fff', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,.12)', overflow: 'hidden', minHeight: 180 }}
+          <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 24px 20px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
+            <div style={cardStyle}
               dangerouslySetInnerHTML={{ __html: htmlValue }}
             />
           </div>
@@ -1104,8 +1229,8 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
         <DndProvider backend={HTML5Backend}>
           <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
             {/* Canvas */}
-            <div ref={canvasRef} className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 24px 20px' }}>
-              <div style={{ maxWidth: 580, margin: '0 auto', background: '#fff', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,.12)', overflow: 'hidden', minHeight: 180 }}>
+            <div ref={canvasRef} className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 24px 20px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
+              <div style={cardStyle}>
                 {rows.length === 0 ? (
                   <div style={{ padding: '48px 32px', textAlign: 'center', color: 'rgba(0,0,0,.25)' }}>
                     <PlusOutlined style={{ fontSize: 24, display: 'block', margin: '0 auto 8px' }} />
@@ -1117,9 +1242,9 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                       <RowBox
                         key={row.id} row={row} index={i}
                         selected={selection?.kind === 'row' && selection.rowId === row.id}
-                        onSelectRow={() => { setSelection({ kind: 'row', rowId: row.id }); setActiveTab('configuracion'); }}
+                        onSelectRow={() => { setSelection({ kind: 'row', rowId: row.id }); setActiveTab('diseno'); }}
                         selectedComponentId={selection?.kind === 'component' && selection.rowId === row.id ? selection.componentId : null}
-                        onSelectComponent={(columnId, componentId) => { setSelection({ kind: 'component', rowId: row.id, columnId, componentId }); setActiveTab('configuracion'); }}
+                        onSelectComponent={(columnId, componentId) => { setSelection({ kind: 'component', rowId: row.id, columnId, componentId }); setActiveTab('diseno'); }}
                         onRemoveRow={() => removeRow(row.id)}
                         onDuplicateRow={() => duplicateRow(row.id)}
                         onInsertRowAfter={() => addRowAfter(row.id, [100])}
@@ -1144,22 +1269,6 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
 
             {/* Sidebar */}
             <div style={{ width: 288, background: '#fff', borderLeft: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', flexShrink: 0, minHeight: 0 }}>
-              <div style={{ display: 'flex', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
-                {(['elementos', 'configuracion', 'diseno'] as const).map(tab => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    style={{
-                      flex: 1, padding: '10px 4px', border: 'none', background: 'none', cursor: 'pointer',
-                      borderBottom: activeTab === tab ? '2px solid #1890ff' : '2px solid transparent',
-                      color: activeTab === tab ? '#1890ff' : 'rgba(0,0,0,.45)',
-                      fontSize: 12, fontWeight: activeTab === tab ? 600 : 400,
-                    }}
-                  >
-                    {tab === 'elementos' ? 'Elementos' : tab === 'configuracion' ? 'Configuración' : 'Diseño'}
-                  </button>
-                ))}
-              </div>
               <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 12px' }}>
                 {activeTab === 'elementos' && (
                   <div id="palette-section">
@@ -1177,18 +1286,30 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                   </div>
                 )}
                 {activeTab === 'configuracion' && (
-                  selection?.kind === 'row' && selectedRow
-                    ? <RowConfigFields design={selectedRow.design} onUpdate={p => updateRowDesign(selectedRow.id, p)} />
-                    : selection?.kind === 'component' && selectedComponent
-                    ? <ComponentContentConfig component={selectedComponent} onUpdate={c => updateComponent(selection.rowId, selection.columnId, c)} />
-                    : <Text type="secondary" style={{ fontSize: 12 }}>Selecciona una fila o un componente del canvas para configurarlo aquí.</Text>
+                  <LayoutConfigFields layout={draft.layout} onUpdate={p => updateDraft({ layout: { ...draft.layout, ...p } })} />
                 )}
                 {activeTab === 'diseno' && (
-                  selection?.kind === 'row' && selectedRow
-                    ? <RowDesignFields design={selectedRow.design} onUpdate={p => updateRowDesign(selectedRow.id, p)} />
-                    : selection?.kind === 'component' && selectedComponent && selectedComponent.type !== 'spacer'
-                    ? <ComponentDesignFields design={selectedComponent.design} onUpdate={p => updateComponent(selection.rowId, selection.columnId, { ...selectedComponent, design: { ...selectedComponent.design, ...p } })} />
-                    : <Text type="secondary" style={{ fontSize: 12 }}>Selecciona una fila o un componente del canvas para configurar su diseño aquí.</Text>
+                  selection?.kind === 'row' && selectedRow ? (
+                    <>
+                      <CollapsibleSection title="Bloque">
+                        <BlockFields design={selectedRow.design} onUpdate={p => updateRowDesign(selectedRow.id, p)} />
+                      </CollapsibleSection>
+                      <CollapsibleSection title="Columnas y tamaños">
+                        <ColumnsAndSizesField row={selectedRow} onChange={widths => setRowColumns(selectedRow.id, widths)} />
+                      </CollapsibleSection>
+                    </>
+                  ) : selection?.kind === 'component' && selectedComponent ? (
+                    <>
+                      <CollapsibleSection title="Bloque">
+                        <BlockFields design={selectedComponent.design} onUpdate={p => updateComponent(selection.rowId, selection.columnId, { ...selectedComponent, design: { ...selectedComponent.design, ...p } })} />
+                      </CollapsibleSection>
+                      {TYPE_SECTION_TITLE[selectedComponent.type] && (
+                        <CollapsibleSection title={TYPE_SECTION_TITLE[selectedComponent.type]!}>
+                          <ComponentTypeFields component={selectedComponent} onUpdate={c => updateComponent(selection.rowId, selection.columnId, c)} />
+                        </CollapsibleSection>
+                      )}
+                    </>
+                  ) : <Text type="secondary" style={{ fontSize: 12 }}>Selecciona una fila o un componente del canvas para configurar su diseño aquí.</Text>
                 )}
               </div>
             </div>
