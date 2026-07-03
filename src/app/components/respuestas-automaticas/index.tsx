@@ -72,6 +72,15 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
     message.success('Respuesta automática activada ✓');
   }
 
+  function saveDraft() {
+    setRules(prev => {
+      const exists = prev.find(r => r.id === currentRule.id);
+      return exists ? prev.map(r => r.id === currentRule.id ? currentRule : r) : [...prev, currentRule];
+    });
+    setView('list');
+    message.success('Guardado como borrador');
+  }
+
   function backToList() {
     setView('list');
   }
@@ -97,11 +106,8 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
         rule={currentRule}
         onChange={setCurrentRule}
         onSaveAndActivate={saveAndActivate}
-        onBack={() => {
-          const isNew = !rules.find(r => r.id === currentRule.id);
-          if (isNew) backToList();
-          else backToList();
-        }}
+        onBack={backToList}
+        onSaveDraft={saveDraft}
         onOpenEditor={() => setView('editor')}
       />
     );

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Button, Input, Select, Segmented, Radio, DatePicker, InputNumber, Popconfirm } from 'antd';
+import { Button, Input, Select, Segmented, Radio, DatePicker, InputNumber, Popconfirm, Modal } from 'antd';
 import { RightOutlined, PlusOutlined, CheckOutlined, DeleteOutlined, CheckCircleFilled, BranchesOutlined, HolderOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
@@ -13,6 +13,7 @@ interface Props {
   onChange: (r: AutoResponse) => void;
   onSaveAndActivate: () => void;
   onBack: () => void;
+  onSaveDraft: () => void;
   onOpenEditor: () => void;
 }
 
@@ -601,6 +602,7 @@ function DeleteConfirm({ what, onConfirm, children }: { what: string; onConfirm:
       onConfirm={onConfirm}
       okButtonProps={{ shape: 'round' }}
       cancelButtonProps={{ shape: 'round' }}
+      overlayStyle={{ maxWidth: 320 }}
       icon={
         <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: '#fff1f0', flexShrink: 0 }}>
           <DeleteOutlined style={{ color: '#ff4d4f', fontSize: 12 }} />
@@ -1191,8 +1193,9 @@ function BreadcrumbChevron() {
 
 // ─── WizardView ───────────────────────────────────────────────────────────────
 
-export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, onOpenEditor }: Props) {
+export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, onSaveDraft, onOpenEditor }: Props) {
   const [current, setCurrent] = useState(0);
+  const [showExitDialog, setShowExitDialog] = useState(false);
   const replyToValid = rule.replyTo === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rule.replyTo);
   const canNext = current === 0
     ? (rule.name.trim() !== '' && rule.trigger !== null && rule.sender !== '' && replyToValid)
@@ -1212,7 +1215,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <button
-            onClick={onBack}
+            onClick={() => setShowExitDialog(true)}
             style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
             Respuestas Automáticas
@@ -1226,6 +1229,23 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
         </div>
         <Button onClick={() => {}}>Guardar borrador</Button>
       </div>
+
+      <Modal
+        open={showExitDialog}
+        onCancel={() => setShowExitDialog(false)}
+        title="¿Salir de la creación de esta regla?"
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <Button onClick={() => setShowExitDialog(false)}>Seguir editando</Button>
+            <Button danger onClick={onBack}>Descartar y salir</Button>
+            <Button type="primary" onClick={() => { onSaveDraft(); }}>Guardar como borrador y salir</Button>
+          </div>
+        }
+      >
+        <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.65)', margin: 0 }}>
+          Puedes descartar el avance, guardarlo como borrador para continuar después, o seguir editando ahora.
+        </p>
+      </Modal>
 
       {/* Step indicator */}
       <NavigationSteps current={current} />
