@@ -1,16 +1,16 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   App, Button, Input, Card, Typography, Divider, Switch, Tag,
-  InputNumber, Radio, Checkbox, Tooltip, Segmented, Tabs, Modal,
+  InputNumber, Radio, Checkbox, Tooltip, Segmented, Modal,
 } from 'antd';
 import {
   SendOutlined, UpOutlined, DownOutlined, CopyOutlined,
   CloseOutlined, PlusOutlined, BoldOutlined, AlignLeftOutlined,
   AlignCenterOutlined, AlignRightOutlined, MinusOutlined, FileTextOutlined, UnorderedListOutlined,
-  ThunderboltOutlined,
+  ThunderboltOutlined, LeftOutlined,
 } from '@ant-design/icons';
 import { AutoResponse, Block, BlockType, AiBlock, TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, FooterBlock, TextAlign, Tone } from './types';
-import { VARIABLES, PREGUNTAS, TONO_LABELS, HEADER_COLORS, DEFAULT_RESTRICTIONS, SETUP } from './data';
+import { VARIABLES, PREGUNTAS, TONO_LABELS, HEADER_COLORS, DEFAULT_RESTRICTIONS, SETUP, mockGenerateAiText } from './data';
 import { cuid } from './cuid';
 import TestModal from './TestModal';
 
@@ -205,9 +205,64 @@ function PaletteItem({ icon, label, sub, onClick, violet }: { icon: React.ReactN
 
 // ─── Block config panels ──────────────────────────────────────────────────────
 
+const COLOR_PRESETS = ['#1890ff', '#7C3AED', '#059669', '#DC2626', '#0F172A', '#D97706', '#0D9488', '#ffffff', '#000000', '#f5f5f5'];
+
+// Popover custom en el DOM — nunca abre la ventana nativa de color del sistema operativo.
+function ColorPickerField({ value, onChange, allowTransparent }: { value: string; onChange: (c: string) => void; allowTransparent?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocMouseDown(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: 30, height: 26, borderRadius: 4, border: '1px solid #d9d9d9', cursor: 'pointer', padding: 0,
+          background: value === 'transparent'
+            ? 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 8px 8px'
+            : value,
+        }}
+      />
+      {open && (
+        <div style={{ position: 'absolute', top: 30, left: 0, zIndex: 30, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,.12)', padding: 10, width: 180 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 8 }}>
+            {COLOR_PRESETS.map(c => (
+              <button
+                key={c} type="button" onClick={() => { onChange(c); setOpen(false); }}
+                style={{ width: 24, height: 24, borderRadius: 4, background: c, border: '1px solid #f0f0f0', cursor: 'pointer', padding: 0 }}
+              />
+            ))}
+          </div>
+          <Input
+            size="small" placeholder="#RRGGBB"
+            value={value === 'transparent' ? '' : value}
+            onChange={e => onChange(e.target.value)}
+          />
+          {allowTransparent && (
+            <Button size="small" block style={{ marginTop: 6 }} onClick={() => { onChange('transparent'); setOpen(false); }}>
+              Transparente
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DesignPanel({ block, onUpdate }: { block: Block; onUpdate: (p: Partial<Block['design']>) => void }) {
   const [open, setOpen] = useState(true);
   const d = block.design;
+  const showAlignment = block.type !== 'header' && block.type !== 'divider' && block.type !== 'footer';
   return (
     <div style={{ borderTop: '1px solid #f0f0f0', marginTop: 12, paddingTop: 10 }}>
       <button
@@ -234,10 +289,7 @@ function DesignPanel({ block, onUpdate }: { block: Block; onUpdate: (p: Partial<
           </div>
           <div>
             <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 3 }}>Color de fondo</Text>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <input type="color" value={d.bgColor === 'transparent' ? '#ffffff' : d.bgColor} onChange={e => onUpdate({ bgColor: e.target.value })} style={{ width: 30, height: 26, border: '1px solid #d9d9d9', borderRadius: 4, cursor: 'pointer', padding: 2 }} />
-              <Button size="small" onClick={() => onUpdate({ bgColor: 'transparent' })}>Transparente</Button>
-            </div>
+            <ColorPickerField value={d.bgColor} onChange={c => onUpdate({ bgColor: c })} allowTransparent />
           </div>
           <div>
             <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 3 }}>Relleno</Text>
@@ -260,22 +312,24 @@ function DesignPanel({ block, onUpdate }: { block: Block; onUpdate: (p: Partial<
               </div>
             </div>
           </div>
-          <div>
-            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 3 }}>Alineación</Text>
-            <Radio.Group size="small" value={d.textAlign} onChange={e => onUpdate({ textAlign: e.target.value })}>
-              <Radio.Button value="left"><AlignLeftOutlined /></Radio.Button>
-              <Radio.Button value="center"><AlignCenterOutlined /></Radio.Button>
-              <Radio.Button value="right"><AlignRightOutlined /></Radio.Button>
-            </Radio.Group>
-          </div>
+          {showAlignment && (
+            <div>
+              <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 3 }}>Alineación</Text>
+              <Radio.Group size="small" value={d.textAlign} onChange={e => onUpdate({ textAlign: e.target.value })}>
+                <Radio.Button value="left"><AlignLeftOutlined /></Radio.Button>
+                <Radio.Button value="center"><AlignCenterOutlined /></Radio.Button>
+                <Radio.Button value="right"><AlignRightOutlined /></Radio.Button>
+              </Radio.Group>
+            </div>
+          )}
           <div>
             <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 3 }}>Borde</Text>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <input type="color" value={d.borderColor ?? '#000000'} onChange={e => onUpdate({ borderColor: e.target.value })} style={{ width: 30, height: 26, border: '1px solid #d9d9d9', borderRadius: 4, cursor: 'pointer', padding: 2 }} />
+              <ColorPickerField value={d.borderColor ?? '#000000'} onChange={c => onUpdate({ borderColor: c })} />
               <InputNumber size="small" min={0} value={d.borderWidth ?? 0} onChange={v => onUpdate({ borderWidth: v ?? 0 })} style={{ width: 56 }} addonAfter="px" />
               <Radio.Group size="small" value={d.borderStyle ?? 'none'} onChange={e => onUpdate({ borderStyle: e.target.value })}>
                 <Radio.Button value="solid">Sólido</Radio.Button>
-                <Radio.Button value="dashed">Guiones</Radio.Button>
+                <Radio.Button value="dotted">Punteado</Radio.Button>
                 <Radio.Button value="none">Ninguno</Radio.Button>
               </Radio.Group>
             </div>
@@ -469,7 +523,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
   const [testValidated, setTestValidated] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   const [mode, setMode] = useState<'visual' | 'html'>(rule.customHtml ? 'html' : 'visual');
-  const [activeTab, setActiveTab] = useState<'elementos' | 'configuracion'>('elementos');
+  const [showPalette, setShowPalette] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingSubject, setEditingSubject] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -486,7 +540,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     const nb = atIndex == null ? [...blocks, b] : [...blocks.slice(0, atIndex + 1), b, ...blocks.slice(atIndex + 1)];
     updateDraft({ blocks: nb });
     setSelectedId(b.id);
-    setActiveTab('configuracion');
+    setShowPalette(false);
     if (atIndex == null) setTimeout(() => canvasRef.current?.scrollTo({ top: canvasRef.current.scrollHeight, behavior: 'smooth' }), 50);
   }
   function updateBlock(b: Block) { updateDraft({ blocks: blocks.map(x => x.id === b.id ? b : x) }); }
@@ -499,9 +553,9 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     const clone = { ...blocks[i], id: cuid() };
     updateDraft({ blocks: [...blocks.slice(0, i + 1), clone, ...blocks.slice(i + 1)] });
     setSelectedId(clone.id);
-    setActiveTab('configuracion');
+    setShowPalette(false);
   }
-  function selectBlock(id: string) { setSelectedId(id); setActiveTab('configuracion'); }
+  function selectBlock(id: string) { setSelectedId(id); setShowPalette(false); }
   const selectedBlock = blocks.find(b => b.id === selectedId) ?? null;
 
   function handleExit() {
@@ -517,6 +571,10 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
   }
 
   function handleSaveDesign() {
+    if (draft.blocks.length === 0) {
+      Modal.warning({ title: 'Acción no permitida', content: 'Debes agregar contenido al correo antes de guardarlo.' });
+      return;
+    }
     onChange({ ...draft, blocksUpdatedAt: new Date().toISOString() });
     onBack();
   }
@@ -536,12 +594,10 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     setMode(next);
   }
 
-  function handleTestSent(email: string, generatedText: string | null) {
+  function handleTestSent(email: string, summary: string | null) {
     setDraft(d => {
-      if (!generatedText) return d;
-      const aiBlock = d.blocks.find((b): b is AiBlock => b.type === 'ai');
-      if (!aiBlock) return d;
-      return { ...d, blocks: d.blocks.map(b => b.id === aiBlock.id ? { ...b, generatedText } : b) };
+      if (!summary) return d;
+      return { ...d, blocks: d.blocks.map(b => b.type === 'ai' ? { ...b, generatedText: mockGenerateAiText(b, summary) } : b) };
     });
     setDirty(true);
     setTestValidated(true);
@@ -577,15 +633,26 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
       </div>
 
       {mode === 'html' ? (
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: 20, gap: 8 }}>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            Edita el HTML del correo directamente. Al volver al editor visual se descartarán estos cambios manuales.
-          </Text>
-          <TextArea
-            value={htmlValue}
-            onChange={e => updateDraft({ customHtml: e.target.value })}
-            style={{ flex: 1, fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, background: '#1f2937', color: '#e5e7eb', resize: 'none' }}
-          />
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
+          {/* Código */}
+          <div style={{ width: '45%', display: 'flex', flexDirection: 'column', padding: 16, gap: 8, borderRight: '1px solid #f0f0f0' }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              Edita el HTML del correo directamente. La vista previa de la derecha se actualiza en
+              tiempo real, igual que en el editor visual. Al volver al editor visual se descartarán
+              estos cambios manuales.
+            </Text>
+            <TextArea
+              value={htmlValue}
+              onChange={e => updateDraft({ customHtml: e.target.value })}
+              style={{ flex: 1, fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, background: '#1f2937', color: '#e5e7eb', resize: 'none' }}
+            />
+          </div>
+          {/* Vista previa en vivo */}
+          <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 24px', background: '#f5f5f5' }}>
+            <div style={{ maxWidth: 580, margin: '0 auto', background: '#fff', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,.12)', overflow: 'hidden', minHeight: 180 }}
+              dangerouslySetInnerHTML={{ __html: htmlValue }}
+            />
+          </div>
         </div>
       ) : (
         <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
@@ -627,7 +694,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                       onDuplicate={() => duplicateBlock(b.id)} onInsertAfter={() => addBlock('text', i)} />
                   ))}
                   <div
-                    onClick={() => { setActiveTab('elementos'); requestAnimationFrame(() => document.getElementById('palette-section')?.scrollIntoView({ behavior: 'smooth' })); }}
+                    onClick={() => { setShowPalette(true); requestAnimationFrame(() => document.getElementById('palette-section')?.scrollIntoView({ behavior: 'smooth' })); }}
                     style={{ padding: 14, textAlign: 'center', cursor: 'pointer', borderTop: '1px dashed #d9d9d9' }}
                   >
                     <Text type="secondary" style={{ fontSize: 12 }}><PlusOutlined style={{ marginRight: 4 }} />Agregar bloque</Text>
@@ -637,34 +704,37 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div style={{ width: 280, background: '#fff', borderLeft: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', flexShrink: 0, minHeight: 0 }}>
-            <Tabs
-              activeKey={activeTab}
-              onChange={k => setActiveTab(k as 'elementos' | 'configuracion')}
-              centered
-              items={[{ key: 'elementos', label: 'Elementos' }, { key: 'configuracion', label: 'Configuración' }]}
-              style={{ padding: '0 12px', flexShrink: 0 }}
-            />
-            <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '4px 12px 14px' }}>
-              {activeTab === 'elementos' ? (
-                <div id="palette-section">
-                  <Text type="secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '6px 0 4px' }}>Estructura</Text>
-                  <PaletteItem icon={<BoldOutlined />} label="Header de marca" sub="Logo y color corporativo" onClick={() => addBlock('header')} />
-                  <PaletteItem icon="T" label="Título" sub="Texto grande destacado" onClick={() => addBlock('title')} />
-                  <PaletteItem icon={<AlignLeftOutlined />} label="Texto libre" sub="Con variables del encuestado" onClick={() => addBlock('text')} />
-                  <Text type="secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '10px 0 4px' }}>Contenido dinámico</Text>
-                  <PaletteItem icon="✦" label="Bloque IA" sub="Texto único por encuestado" onClick={() => addBlock('ai')} violet />
-                  <PaletteItem icon={<UnorderedListOutlined />} label="Bloque de respuestas" sub="Las respuestas del encuestado" onClick={() => addBlock('responses')} />
-                  <Text type="secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '10px 0 4px' }}>Otros</Text>
-                  <PaletteItem icon={<MinusOutlined />} label="Divisor" sub="Línea separadora" onClick={() => addBlock('divider')} />
-                  <PaletteItem icon={<FileTextOutlined />} label="Footer legal" sub="Texto legal + baja" onClick={() => addBlock('footer')} />
+          {/* Sidebar — dos zonas fijas sin pestañas: paleta arriba (ocultable), configuración debajo */}
+          <div className="rf-scroll-hidden" style={{ width: 280, background: '#fff', borderLeft: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', flexShrink: 0, minHeight: 0, overflowY: 'auto' }}>
+            {showPalette && (
+              <div id="palette-section" style={{ padding: '14px 12px', borderBottom: '1px solid #f0f0f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <Text type="secondary" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Bloques</Text>
+                  <Button size="small" type="text" onClick={() => setShowPalette(false)}>Ocultar</Button>
                 </div>
-              ) : (
-                selectedBlock
-                  ? <BlockConfig block={selectedBlock} onUpdate={updateBlock} />
-                  : <Text type="secondary" style={{ fontSize: 12 }}>Selecciona un bloque del canvas para configurarlo aquí.</Text>
+                <Text type="secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '6px 0 4px' }}>Estructura</Text>
+                <PaletteItem icon={<BoldOutlined />} label="Header de marca" sub="Logo y color corporativo" onClick={() => addBlock('header')} />
+                <PaletteItem icon="T" label="Título" sub="Texto grande destacado" onClick={() => addBlock('title')} />
+                <PaletteItem icon={<AlignLeftOutlined />} label="Texto libre" sub="Con variables del encuestado" onClick={() => addBlock('text')} />
+                <Text type="secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '10px 0 4px' }}>Contenido dinámico</Text>
+                <PaletteItem icon="✦" label="Bloque IA" sub="Texto único por encuestado" onClick={() => addBlock('ai')} violet />
+                <PaletteItem icon={<UnorderedListOutlined />} label="Bloque de respuestas" sub="Las respuestas del encuestado" onClick={() => addBlock('responses')} />
+                <Text type="secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '10px 0 4px' }}>Otros</Text>
+                <PaletteItem icon={<MinusOutlined />} label="Divisor" sub="Línea separadora" onClick={() => addBlock('divider')} />
+                <PaletteItem icon={<FileTextOutlined />} label="Footer legal" sub="Texto legal + baja" onClick={() => addBlock('footer')} />
+              </div>
+            )}
+            <div style={{ padding: '14px 12px', flex: 1 }}>
+              {!showPalette && (
+                <Button size="small" type="text" icon={<LeftOutlined />} onClick={() => setShowPalette(true)} style={{ marginBottom: 10, paddingLeft: 0 }}>
+                  Ver bloques
+                </Button>
               )}
+              <Text type="secondary" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>Configuración</Text>
+              {selectedBlock
+                ? <BlockConfig block={selectedBlock} onUpdate={updateBlock} />
+                : <Text type="secondary" style={{ fontSize: 12 }}>Selecciona un bloque del canvas para configurarlo aquí.</Text>
+              }
             </div>
           </div>
         </div>

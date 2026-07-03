@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Modal, Steps, Input, Button, Alert, Radio, Segmented, Select, Slider, Rate, Typography } from 'antd';
+import { Modal, Steps, Input, Button, Alert, Radio, Segmented, AutoComplete, Rate, Typography } from 'antd';
 import { SendOutlined, LeftOutlined } from '@ant-design/icons';
-import { AutoResponse, AiBlock } from './types';
-import { PREGUNTAS, SIMULATED_RESPONSES, mockGenerateAiText } from './data';
+import { AutoResponse } from './types';
+import { PREGUNTAS, SIMULATED_RESPONSES } from './data';
 
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -10,7 +10,7 @@ const { TextArea } = Input;
 interface Props {
   rule: AutoResponse;
   onClose: () => void;
-  onSend: (email: string, generatedText: string | null) => void;
+  onSend: (email: string, summary: string | null) => void;
 }
 
 const MOCK_RESPONSES: { id: string; label: string; summary: string }[] = [
@@ -19,33 +19,37 @@ const MOCK_RESPONSES: { id: string; label: string; summary: string }[] = [
   { id: '5103', label: '5103 — CSAT 5, muy satisfecho', summary: 'CSAT 5, muy satisfecho con la atención' },
 ];
 
+const NPS_BUTTONS = Array.from({ length: 11 }, (_, i) => i);
+
 export default function TestModal({ rule, onClose, onSend }: Props) {
-  const aiBlock = rule.blocks.find((b): b is AiBlock => b.type === 'ai');
   const hasAiOrResponses = rule.blocks.some(b => b.type === 'ai' || b.type === 'responses');
   const totalSteps = hasAiOrResponses ? 2 : 1;
   const [step, setStep] = useState(0);
   const [email, setEmail] = useState('');
   const [dataMode, setDataMode] = useState<'real' | 'synthetic'>('synthetic');
-  const [responseId, setResponseId] = useState(MOCK_RESPONSES[0].id);
+  const [responseId, setResponseId] = useState('');
   const [syntheticData, setSyntheticData] = useState<Record<string, string | number>>(() => ({ ...SIMULATED_RESPONSES }));
   const [sending, setSending] = useState(false);
 
   const validEmail = email.trim() !== '' && /\S+@\S+\.\S+/.test(email);
   const canSend = step === 0
     ? validEmail
-    : (dataMode === 'real' ? !!responseId : PREGUNTAS.every(q => syntheticData[q.id] !== undefined && syntheticData[q.id] !== ''));
+    : (dataMode === 'real' ? responseId.trim() !== '' : PREGUNTAS.every(q => syntheticData[q.id] !== undefined && syntheticData[q.id] !== ''));
+
+  const responseOptions = MOCK_RESPONSES
+    .filter(r => r.id.includes(responseId) || r.label.toLowerCase().includes(responseId.toLowerCase()))
+    .map(r => ({ value: r.id, label: r.label }));
 
   async function handleSend() {
     setSending(true);
     await new Promise(r => setTimeout(r, 900));
-    let generatedText: string | null = null;
-    if (aiBlock) {
-      const summary = dataMode === 'real'
-        ? (MOCK_RESPONSES.find(r => r.id === responseId)?.summary ?? 'respuesta simulada')
+    let summary: string | null = null;
+    if (hasAiOrResponses) {
+      summary = dataMode === 'real'
+        ? (MOCK_RESPONSES.find(r => r.id === responseId)?.summary ?? `ID de respuesta ${responseId}`)
         : PREGUNTAS.map(q => `${q.texto}: ${syntheticData[q.id]}`).join(' · ');
-      generatedText = mockGenerateAiText(aiBlock, summary);
     }
-    onSend(email, generatedText);
+    onSend(email, summary);
     setSending(false);
     onClose();
   }
@@ -118,14 +122,18 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
             {dataMode === 'real' && (
               <div>
                 <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>
-                  Elige una respuesta simulada guardada:
+                  Ingresa o busca un ID de respuesta:
                 </Text>
-                <Select
+                <AutoComplete
                   value={responseId}
                   onChange={setResponseId}
+                  options={responseOptions}
                   style={{ width: '100%' }}
-                  options={MOCK_RESPONSES.map(r => ({ value: r.id, label: r.label }))}
+                  placeholder="Escribe o busca un ID (ej: 4821)"
                 />
+                <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 3 }}>
+                  El ID lo encuentras en el módulo de Descarga de Resultados.
+                </Text>
                 <Alert
                   type="warning" showIcon
                   message="Si la respuesta no cumple las condiciones de la regla, el resultado puede no tener sentido contextual."
@@ -140,14 +148,18 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
                   <div key={q.id}>
                     <Text style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>{q.texto}</Text>
                     {q.tipo === 'NPS' && (
-                      <>
-                        <Slider min={0} max={10} value={syntheticData[q.id] as number} onChange={v => setSyntheticData(p => ({ ...p, [q.id]: v }))} />
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Text type="secondary" style={{ fontSize: 11 }}>0 — Muy poco</Text>
-                          <Text type="secondary" style={{ fontSize: 11 }}>{syntheticData[q.id]}</Text>
-                          <Text type="secondary" style={{ fontSize: 11 }}>10 — Muy probable</Text>
-                        </div>
-                      </>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                        {NPS_BUTTONS.map(n => (
+                          <Button
+                            key={n} size="small"
+                            type={syntheticData[q.id] === n ? 'primary' : 'default'}
+                            onClick={() => setSyntheticData(p => ({ ...p, [q.id]: n }))}
+                            style={{ minWidth: 32 }}
+                          >
+                            {n}
+                          </Button>
+                        ))}
+                      </div>
                     )}
                     {q.tipo === 'texto_abierto' && (
                       <TextArea rows={2} value={syntheticData[q.id] as string} onChange={e => setSyntheticData(p => ({ ...p, [q.id]: e.target.value }))} />

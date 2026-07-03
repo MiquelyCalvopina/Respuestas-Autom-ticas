@@ -15,7 +15,7 @@ export interface BlockDesign {
   boxed?: boolean;
   borderColor?: string;
   borderWidth?: number;
-  borderStyle?: 'solid' | 'dashed' | 'none';
+  borderStyle?: 'solid' | 'dotted' | 'none';
   hideMobile?: boolean;
 }
 
