@@ -1076,7 +1076,7 @@ function Step2({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
               index={i}
               onDelete={() => deleteGroup(group.id)}
               onUpdateGroup={updateGroup}
-              canDelete={groups.length > 1}
+              canDelete
             />
           ))}
 
