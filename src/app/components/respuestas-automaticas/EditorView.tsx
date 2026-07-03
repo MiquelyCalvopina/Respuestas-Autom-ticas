@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   App, Button, Input, Card, Typography, Divider, Switch, Tag,
-  InputNumber, Radio, Checkbox, Tooltip, Segmented, Modal,
+  InputNumber, Radio, Checkbox, Tooltip, Segmented, Modal, ConfigProvider,
 } from 'antd';
 import {
   SendOutlined, CopyOutlined, CloseOutlined, PlusOutlined, BoldOutlined, AlignLeftOutlined,
@@ -30,6 +30,17 @@ interface Props {
   onChange: (r: AutoResponse) => void;
   onBack: () => void;
 }
+
+// Tema local del editor: tipografía Roboto/14px y esquinas redondeadas para
+// todos los controles AntD del panel de propiedades, sin afectar el resto de la app.
+const EDITOR_THEME = {
+  token: {
+    fontFamily: "'Roboto', sans-serif",
+    fontSize: 14,
+    fontSizeSM: 14,
+    borderRadius: 8,
+  },
+};
 
 // ─── Construcción de filas/columnas/componentes ───────────────────────────────
 
@@ -521,7 +532,7 @@ function ColumnsAndSizesField({ row, onChange }: { row: Row; onChange: (widths: 
 
 const COLOR_PRESETS = ['#1890ff', '#7C3AED', '#059669', '#DC2626', '#0F172A', '#D97706', '#0D9488', '#ffffff', '#000000', '#f5f5f5'];
 
-function ColorPickerField({ value, onChange, allowTransparent }: { value: string; onChange: (c: string) => void; allowTransparent?: boolean }) {
+function ColorPickerField({ value, onChange, allowTransparent, full }: { value: string; onChange: (c: string) => void; allowTransparent?: boolean; full?: boolean }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -534,35 +545,47 @@ function ColorPickerField({ value, onChange, allowTransparent }: { value: string
     return () => document.removeEventListener('mousedown', onDocMouseDown);
   }, [open]);
 
+  const swatch = (
+    <span style={{
+      width: 20, height: 20, borderRadius: 6, flexShrink: 0, border: '1px solid rgba(0,0,0,.1)',
+      background: value === 'transparent' ? 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 8px 8px' : value,
+    }} />
+  );
+
   return (
-    <div ref={wrapRef} style={{ position: 'relative' }}>
+    <div ref={wrapRef} style={{ position: 'relative', width: full ? '100%' : undefined }}>
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
         style={{
-          width: 30, height: 26, borderRadius: 4, border: '1px solid #d9d9d9', cursor: 'pointer', padding: 0,
-          background: value === 'transparent'
-            ? 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 8px 8px'
-            : value,
+          width: full ? '100%' : 36, height: 36, borderRadius: 8, border: '1px solid #d9d9d9', cursor: 'pointer',
+          padding: full ? '0 10px' : 0, display: 'flex', alignItems: 'center', gap: 8, background: '#fff',
         }}
-      />
+      >
+        {swatch}
+        {full && (
+          <span style={{ fontSize: 13, color: 'rgba(0,0,0,.65)', fontFamily: "'JetBrains Mono', monospace" }}>
+            {value === 'transparent' ? 'Transparente' : value}
+          </span>
+        )}
+      </button>
       {open && (
-        <div style={{ position: 'absolute', top: 30, left: 0, zIndex: 30, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,.12)', padding: 10, width: 180 }}>
+        <div style={{ position: 'absolute', top: 40, left: 0, zIndex: 30, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,.12)', padding: 10, width: 200 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 8 }}>
             {COLOR_PRESETS.map(c => (
               <button
                 key={c} type="button" onClick={() => { onChange(c); setOpen(false); }}
-                style={{ width: 24, height: 24, borderRadius: 4, background: c, border: '1px solid #f0f0f0', cursor: 'pointer', padding: 0 }}
+                style={{ width: 26, height: 26, borderRadius: 6, background: c, border: '1px solid #f0f0f0', cursor: 'pointer', padding: 0 }}
               />
             ))}
           </div>
           <Input
-            size="small" placeholder="#RRGGBB"
+            placeholder="#RRGGBB"
             value={value === 'transparent' ? '' : value}
             onChange={e => onChange(e.target.value)}
           />
           {allowTransparent && (
-            <Button size="small" block style={{ marginTop: 6 }} onClick={() => { onChange('transparent'); setOpen(false); }}>
+            <Button block style={{ marginTop: 8 }} onClick={() => { onChange('transparent'); setOpen(false); }}>
               Transparente
             </Button>
           )}
@@ -577,12 +600,12 @@ function ColorPickerField({ value, onChange, allowTransparent }: { value: string
 function CollapsibleSection({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
   return (
-    <div style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 14, marginBottom: 14 }}>
-      <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open ? 12 : 0 }}>
-        <Text strong style={{ fontSize: 13 }}>{title}</Text>
-        <span style={{ color: 'rgba(0,0,0,.45)', fontSize: 11 }}>{open ? '▲' : '▼'}</span>
+    <div style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 16, marginBottom: 16 }}>
+      <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open ? 14 : 0 }}>
+        <Text strong style={{ fontSize: 14 }}>{title}</Text>
+        <span style={{ color: 'rgba(0,0,0,.35)', fontSize: 11 }}>{open ? '▲' : '▼'}</span>
       </div>
-      {open && children}
+      {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>{children}</div>}
     </div>
   );
 }
@@ -590,13 +613,13 @@ function CollapsibleSection({ title, children }: { title: string; children: Reac
 // ─── Campos compartidos de diseño (fila / componente) ────────────────────────
 
 function FieldLabel({ children, inline }: { children: React.ReactNode; inline?: boolean }) {
-  return <Text type="secondary" style={{ fontSize: 11, display: inline ? 'inline' : 'block', marginBottom: inline ? 0 : 3 }}>{children}</Text>;
+  return <Text style={{ fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,.65)', display: inline ? 'inline' : 'block', marginBottom: inline ? 0 : 6 }}>{children}</Text>;
 }
 function PaddingField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
     <div>
-      <Text type="secondary" style={{ fontSize: 10, display: 'block', marginBottom: 2 }}>{label}</Text>
-      <InputNumber size="small" value={value} onChange={v => onChange(v ?? 0)} style={{ width: '100%' }} min={0} />
+      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>{label}</Text>
+      <InputNumber value={value} onChange={v => onChange(v ?? 0)} style={{ width: '100%', borderRadius: 8 }} min={0} addonAfter="px" />
     </div>
   );
 }
@@ -605,17 +628,17 @@ function BorderFields({ borderColor, borderWidth, borderStyle, onUpdate }: {
   onUpdate: (p: { borderColor?: string; borderWidth?: number; borderStyle?: 'solid' | 'dotted' | 'none' }) => void;
 }) {
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <FieldLabel>Borde</FieldLabel>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 8 }}>
         <ColorPickerField value={borderColor} onChange={c => onUpdate({ borderColor: c })} />
-        <InputNumber size="small" min={0} value={borderWidth} onChange={v => onUpdate({ borderWidth: v ?? 0 })} style={{ width: 56 }} addonAfter="px" />
-        <Radio.Group size="small" value={borderStyle} onChange={e => onUpdate({ borderStyle: e.target.value })}>
-          <Radio.Button value="solid">Sólido</Radio.Button>
-          <Radio.Button value="dotted">Punteado</Radio.Button>
-          <Radio.Button value="none">Ninguno</Radio.Button>
-        </Radio.Group>
+        <InputNumber min={0} value={borderWidth} onChange={v => onUpdate({ borderWidth: v ?? 0 })} style={{ flex: 1, borderRadius: 8 }} addonAfter="px" />
       </div>
+      <Radio.Group value={borderStyle} onChange={e => onUpdate({ borderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+        <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
+        <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
+        <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
+      </Radio.Group>
     </div>
   );
 }
@@ -623,7 +646,7 @@ function PaddingGrid({ design, onUpdate }: { design: { paddingTop: number; paddi
   return (
     <div>
       <FieldLabel>Relleno</FieldLabel>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <PaddingField label="Arriba" value={design.paddingTop} onChange={v => onUpdate({ paddingTop: v })} />
         <PaddingField label="Abajo" value={design.paddingBottom} onChange={v => onUpdate({ paddingBottom: v })} />
         <PaddingField label="Izquierda" value={design.paddingLeft ?? 0} onChange={v => onUpdate({ paddingLeft: v })} />
@@ -636,23 +659,21 @@ function PaddingGrid({ design, onUpdate }: { design: { paddingTop: number; paddi
 // Tab "Configuración" — layout global del correo (fijo, no depende de la selección)
 function LayoutConfigFields({ layout, onUpdate }: { layout: EmailLayoutConfig; onUpdate: (p: Partial<EmailLayoutConfig>) => void }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Ancho del contenido</FieldLabel>
-          <InputNumber size="small" value={layout.widthPercent} min={10} max={100} addonAfter="%" onChange={v => onUpdate({ widthPercent: v ?? 100 })} style={{ width: '100%' }} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Estilo del contenedor</FieldLabel>
-          <Radio.Group size="small" value={layout.boxed} onChange={e => onUpdate({ boxed: e.target.value })} style={{ display: 'flex' }}>
-            <Tooltip title="Con margen"><Radio.Button value={true} style={{ flex: 1, textAlign: 'center' }}>▢</Radio.Button></Tooltip>
-            <Tooltip title="Ancho completo"><Radio.Button value={false} style={{ flex: 1, textAlign: 'center' }}>▭</Radio.Button></Tooltip>
-          </Radio.Group>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div>
+        <FieldLabel>Ancho del contenido</FieldLabel>
+        <InputNumber value={layout.widthPercent} min={10} max={100} addonAfter="%" onChange={v => onUpdate({ widthPercent: v ?? 100 })} style={{ width: '100%', borderRadius: 8 }} />
+      </div>
+      <div>
+        <FieldLabel>Estilo del contenedor</FieldLabel>
+        <Radio.Group value={layout.boxed} onChange={e => onUpdate({ boxed: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+          <Radio.Button value={true} style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Con margen</Radio.Button>
+          <Radio.Button value={false} style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ancho completo</Radio.Button>
+        </Radio.Group>
       </div>
       <div>
         <FieldLabel>Color de fondo</FieldLabel>
-        <ColorPickerField value={layout.bgColor} onChange={c => onUpdate({ bgColor: c })} allowTransparent />
+        <ColorPickerField value={layout.bgColor} onChange={c => onUpdate({ bgColor: c })} allowTransparent full />
       </div>
     </div>
   );
@@ -666,24 +687,24 @@ function BlockFields<T extends {
   hideMobile?: boolean;
 }>({ design, onUpdate }: { design: T; onUpdate: (p: Partial<T>) => void }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <FieldLabel>Color de fondo</FieldLabel>
-        <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent />
+        <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent full />
       </div>
       <div>
         <FieldLabel>Alineación</FieldLabel>
-        <Radio.Group size="small" value={design.textAlign ?? 'left'} onChange={e => onUpdate({ textAlign: e.target.value } as Partial<T>)}>
-          <Radio.Button value="left"><AlignLeftOutlined /></Radio.Button>
-          <Radio.Button value="center"><AlignCenterOutlined /></Radio.Button>
-          <Radio.Button value="right"><AlignRightOutlined /></Radio.Button>
+        <Radio.Group value={design.textAlign ?? 'left'} onChange={e => onUpdate({ textAlign: e.target.value } as Partial<T>)} style={{ display: 'flex', width: '100%' }}>
+          <Radio.Button value="left" style={{ flex: 1, textAlign: 'center' }}><AlignLeftOutlined /></Radio.Button>
+          <Radio.Button value="center" style={{ flex: 1, textAlign: 'center' }}><AlignCenterOutlined /></Radio.Button>
+          <Radio.Button value="right" style={{ flex: 1, textAlign: 'center' }}><AlignRightOutlined /></Radio.Button>
         </Radio.Group>
       </div>
       <BorderFields borderColor={design.borderColor ?? '#000000'} borderWidth={design.borderWidth ?? 0} borderStyle={design.borderStyle ?? 'none'} onUpdate={onUpdate} />
       <PaddingGrid design={design} onUpdate={onUpdate} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <FieldLabel inline>Ocultar en móvil</FieldLabel>
-        <Switch size="small" checked={design.hideMobile ?? false} onChange={v => onUpdate({ hideMobile: v } as Partial<T>)} />
+        <Switch checked={design.hideMobile ?? false} onChange={v => onUpdate({ hideMobile: v } as Partial<T>)} />
       </div>
     </div>
   );
@@ -858,10 +879,10 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
 function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUpdate: (b: Component) => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div><FieldLabel>Texto del botón</FieldLabel><Input size="small" value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} /></div>
-      <div><FieldLabel>URL de destino</FieldLabel><Input size="small" value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })} placeholder="https://..." /></div>
-      <div><FieldLabel>Color de fondo</FieldLabel><ColorPickerField value={block.bgColor} onChange={c => onUpdate({ ...block, bgColor: c })} /></div>
-      <div><FieldLabel>Color de texto</FieldLabel><ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} /></div>
+      <div><FieldLabel>Texto del botón</FieldLabel><Input value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} /></div>
+      <div><FieldLabel>URL de destino</FieldLabel><Input value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })} placeholder="https://..." /></div>
+      <div><FieldLabel>Color de fondo</FieldLabel><ColorPickerField value={block.bgColor} onChange={c => onUpdate({ ...block, bgColor: c })} full /></div>
+      <div><FieldLabel>Color de texto</FieldLabel><ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} full /></div>
     </div>
   );
 }
@@ -1164,7 +1185,8 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f5f5f5', overflow: 'hidden' }}>
+    <ConfigProvider theme={EDITOR_THEME}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f5f5f5', overflow: 'hidden', fontFamily: "'Roboto', sans-serif" }}>
       {/* Header fila 1 — título + acciones */}
       <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
         <Text strong style={{ fontSize: 15, whiteSpace: 'nowrap' }}>Diseño del correo de respuesta</Text>
@@ -1324,5 +1346,6 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
         />
       )}
     </div>
+    </ConfigProvider>
   );
 }
