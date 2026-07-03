@@ -1,5 +1,5 @@
 export type Trigger = 'response' | 'farewell';
-export type ComponentType = 'text' | 'ai' | 'responses' | 'divider' | 'image' | 'spacer' | 'social';
+export type ComponentType = 'header' | 'title' | 'text' | 'ai' | 'responses' | 'divider' | 'footer' | 'image' | 'button' | 'spacer' | 'social';
 export type TextAlign = 'left' | 'center' | 'right';
 export type Tone = 'empatico' | 'formal' | 'calido' | 'directo' | 'custom';
 export type RuleStatus = 'draft' | 'active' | 'inactive';
@@ -17,6 +17,16 @@ export interface ComponentDesign {
   hideMobile?: boolean;
 }
 
+export interface HeaderBlock {
+  id: string; type: 'header';
+  name: string; bgColor: string;
+  design: ComponentDesign;
+}
+export interface TitleBlock {
+  id: string; type: 'title';
+  text: string;
+  design: ComponentDesign;
+}
 export interface TextBlock {
   id: string; type: 'text';
   content: string;
@@ -48,9 +58,19 @@ export interface DividerBlock {
   id: string; type: 'divider';
   design: ComponentDesign;
 }
+export interface FooterBlock {
+  id: string; type: 'footer';
+  text: string;
+  design: ComponentDesign;
+}
 export interface ImageComponent {
   id: string; type: 'image';
   src: string; alt: string; dynamic: boolean; widthPercent: number;
+  design: ComponentDesign;
+}
+export interface ButtonComponent {
+  id: string; type: 'button';
+  text: string; url: string; bgColor: string; textColor: string;
   design: ComponentDesign;
 }
 export interface SpacerComponent {
@@ -75,8 +95,8 @@ export interface SocialComponent {
 }
 
 export type Component =
-  | TextBlock | AiBlock | ResponsesBlock | DividerBlock
-  | ImageComponent | SpacerComponent | SocialComponent;
+  | HeaderBlock | TitleBlock | TextBlock | AiBlock | ResponsesBlock | DividerBlock | FooterBlock
+  | ImageComponent | ButtonComponent | SpacerComponent | SocialComponent;
 
 export interface Column {
   id: string;

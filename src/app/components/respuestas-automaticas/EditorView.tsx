@@ -4,9 +4,9 @@ import {
   InputNumber, Radio, Checkbox, Tooltip, Segmented, Modal, ConfigProvider,
 } from 'antd';
 import {
-  SendOutlined, CopyOutlined, CloseOutlined, PlusOutlined, AlignLeftOutlined,
-  AlignCenterOutlined, AlignRightOutlined, MinusOutlined, UnorderedListOutlined,
-  ThunderboltOutlined, HolderOutlined, TableOutlined, PictureOutlined,
+  SendOutlined, CopyOutlined, CloseOutlined, PlusOutlined, BoldOutlined, AlignLeftOutlined,
+  AlignCenterOutlined, AlignRightOutlined, MinusOutlined, FileTextOutlined, UnorderedListOutlined,
+  ThunderboltOutlined, HolderOutlined, TableOutlined, PictureOutlined, LinkOutlined,
   ColumnHeightOutlined, ShareAltOutlined,
 } from '@ant-design/icons';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
@@ -15,10 +15,10 @@ import CodeMirror from '@uiw/react-codemirror';
 import { html as htmlLang } from '@codemirror/lang-html';
 import {
   AutoResponse, Row, RowDesign, Component, ComponentType, ComponentDesign, EmailLayoutConfig, TextAlign,
-  AiBlock, TextBlock, ResponsesBlock,
-  ImageComponent, SpacerComponent, SocialComponent, SocialNetworkKey, Tone,
+  AiBlock, TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, FooterBlock,
+  ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey, Tone,
 } from './types';
-import { VARIABLES, PREGUNTAS, TONO_LABELS, DEFAULT_RESTRICTIONS, SETUP, mockGenerateAiText, countComponents } from './data';
+import { VARIABLES, PREGUNTAS, TONO_LABELS, HEADER_COLORS, DEFAULT_RESTRICTIONS, SETUP, mockGenerateAiText, countComponents } from './data';
 import { cuid } from './cuid';
 import TestModal from './TestModal';
 
@@ -54,11 +54,15 @@ function makeComponent(type: ComponentType): Component {
   const design = { ...DEFAULT_COMPONENT_DESIGN };
   const id = cuid();
   switch (type) {
+    case 'header':    return { id, type, name: 'HIR Casa', bgColor: '#1890ff', design };
+    case 'title':     return { id, type, text: 'Tu opinión importa', design };
     case 'text':      return { id, type, content: 'Hola {{nombre_preferido}},\n\nGracias por tomarte el tiempo de responder nuestra encuesta.', design };
     case 'ai':        return { id, type, objetivo: '', tone: 'empatico' as Tone, customTone: '', datoPriorizar: '', restricciones: [...DEFAULT_RESTRICTIONS], generatedText: '', design };
     case 'responses': return { id, type, questions: PREGUNTAS.map(q => ({ questionId: q.id, included: true, showStatement: true, showOnlyAnswer: false })), displayStyle: 'bold-indented', design };
     case 'divider':   return { id, type, design };
+    case 'footer':    return { id, type, text: 'Para darte de baja, responde a este correo con el asunto "Baja".\n\n© HIR Casa · Ciudad de México', design };
     case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, design };
+    case 'button':    return { id, type, text: 'Responder estudio', url: '', bgColor: '#1890ff', textColor: '#ffffff', design };
     case 'spacer':    return { id, type, height: 24, design };
     case 'social':    return { id, type, style: 'negro', size: 26, gap: 8, shape: 'square', networks: SOCIAL_KEYS.map(k => ({ network: k, included: false, url: '' })), design };
     default: return { id, type: 'divider', design };
@@ -90,14 +94,18 @@ const COLUMN_LAYOUTS: { label: string; widths: number[] }[] = [
   { label: '25×4', widths: [25, 25, 25, 25] },
 ];
 
-const COMPONENT_PALETTE: { type: ComponentType; label: string; icon: React.ReactNode; violet?: boolean }[] = [
-  { type: 'text', label: 'Texto', icon: <AlignLeftOutlined /> },
-  { type: 'image', label: 'Imagen', icon: <PictureOutlined /> },
-  { type: 'divider', label: 'Divisor', icon: <MinusOutlined /> },
-  { type: 'spacer', label: 'Espaciador', icon: <ColumnHeightOutlined /> },
-  { type: 'social', label: 'Redes Sociales', icon: <ShareAltOutlined /> },
-  { type: 'responses', label: 'Bloque de respuestas', icon: <UnorderedListOutlined /> },
-  { type: 'ai', label: 'Bloque IA', icon: '✦', violet: true },
+const COMPONENT_PALETTE: { type: ComponentType; label: string; sub: string; icon: React.ReactNode; violet?: boolean }[] = [
+  { type: 'header', label: 'Header de marca', sub: 'Logo y color corporativo', icon: <BoldOutlined /> },
+  { type: 'title', label: 'Título', sub: 'Texto grande destacado', icon: 'T' },
+  { type: 'text', label: 'Texto', sub: 'Con variables del encuestado', icon: <AlignLeftOutlined /> },
+  { type: 'image', label: 'Imagen', sub: 'Estática o dinámica', icon: <PictureOutlined /> },
+  { type: 'button', label: 'Botón', sub: 'Llamado a la acción', icon: <LinkOutlined /> },
+  { type: 'divider', label: 'Divisor', sub: 'Línea separadora', icon: <MinusOutlined /> },
+  { type: 'spacer', label: 'Espaciador', sub: 'Espacio en blanco', icon: <ColumnHeightOutlined /> },
+  { type: 'social', label: 'Redes Sociales', sub: 'Íconos con enlaces', icon: <ShareAltOutlined /> },
+  { type: 'ai', label: 'Bloque IA', sub: 'Texto único por encuestado', icon: '✦', violet: true },
+  { type: 'responses', label: 'Bloque de respuestas', sub: 'Las respuestas del encuestado', icon: <UnorderedListOutlined /> },
+  { type: 'footer', label: 'Footer legal', sub: 'Texto legal + baja', icon: <FileTextOutlined /> },
 ];
 
 const SOCIAL_ICONS: Record<SocialNetworkKey, string> = { facebook: '📘', instagram: '📷', linkedin: '💼', youtube: '▶️', x: '✖️', pinterest: '📌' };
@@ -121,11 +129,15 @@ function componentToHtml(c: Component): string {
   const border = d.borderStyle && d.borderStyle !== 'none' && (d.borderWidth ?? 0) > 0 ? `border:${d.borderWidth}px ${d.borderStyle} ${d.borderColor ?? '#000'};` : '';
   const style = `padding:${d.paddingTop}px ${d.paddingRight ?? 0}px ${d.paddingBottom}px ${d.paddingLeft ?? 0}px;text-align:${d.textAlign};${d.bgColor !== 'transparent' ? `background:${d.bgColor};` : ''}${border}`;
   switch (c.type) {
+    case 'header':    return `<div style="${style}background:${c.bgColor};text-align:center;"><span style="font-weight:700;font-size:22px;color:#fff;">${c.name}</span></div>`;
+    case 'title':     return `<div style="${style}"><h2 style="font-weight:700;font-size:21px;color:#000;margin:0;">${c.text}</h2></div>`;
     case 'text':      return `<div style="${style}"><p style="font-size:13.5px;line-height:1.75;color:#333;white-space:pre-line;margin:0;">${c.content}</p></div>`;
     case 'ai':        return `<div style="${style}"><p style="font-size:13px;line-height:1.7;color:#4C1D95;font-style:italic;margin:0;">${c.generatedText || '[Texto generado pendiente — envía una prueba]'}</p></div>`;
     case 'responses': return `<div style="${style}"><p style="font-size:12px;color:#666;">[Bloque de respuestas del encuestado]</p></div>`;
     case 'divider':   return `<hr style="margin:${d.paddingTop}px 26px ${d.paddingBottom}px;" />`;
+    case 'footer':    return `<div style="${style}"><p style="font-size:11.5px;color:#999;text-align:center;white-space:pre-line;margin:0;">${c.text}</p></div>`;
     case 'image':     return `<div style="${style}text-align:center;">${c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : ''}</div>`;
+    case 'button':    return `<div style="${style}text-align:center;"><a href="${c.url}" style="display:inline-block;padding:10px 24px;border-radius:6px;background:${c.bgColor};color:${c.textColor};font-weight:600;text-decoration:none;">${c.text}</a></div>`;
     case 'spacer':    return `<div style="${style}height:${c.height}px;"></div>`;
     case 'social': {
       const radius = c.shape === 'circle' ? '50%' : c.shape === 'rounded' ? '6px' : '0';
@@ -184,6 +196,16 @@ const COMPONENT_ITEM = 'component-item';
 
 function renderComponentContent(component: Component): React.ReactNode {
   const align = component.design.textAlign;
+  if (component.type === 'header') {
+    return (
+      <div style={{ background: component.bgColor, padding: '20px 32px', textAlign: 'center' }}>
+        <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 700, fontSize: 22, color: '#fff', letterSpacing: -0.5 }}>{component.name}</span>
+      </div>
+    );
+  }
+  if (component.type === 'title') {
+    return <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 700, fontSize: 21, color: 'rgba(0,0,0,.85)', letterSpacing: -0.5, padding: '0 32px', margin: 0, textAlign: align }} dangerouslySetInnerHTML={{ __html: renderVars(component.text) }} />;
+  }
   if (component.type === 'text') {
     return <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13.5, lineHeight: 1.75, color: 'rgba(0,0,0,.65)', padding: '0 32px', margin: 0, whiteSpace: 'pre-line', textAlign: align }} dangerouslySetInnerHTML={{ __html: renderVars(component.content) }} />;
   }
@@ -228,6 +250,9 @@ function renderComponentContent(component: Component): React.ReactNode {
     );
   }
   if (component.type === 'divider') return <Divider style={{ margin: '0 26px', minWidth: 'auto', width: 'auto' }} />;
+  if (component.type === 'footer') {
+    return <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 11.5, color: 'rgba(0,0,0,.35)', textAlign: 'center', padding: '13px 32px', margin: 0, background: '#fafafa', whiteSpace: 'pre-line' }}>{component.text}</p>;
+  }
   if (component.type === 'image') {
     return component.src ? (
       <div style={{ padding: '0 32px', textAlign: 'center' }}>
@@ -237,6 +262,13 @@ function renderComponentContent(component: Component): React.ReactNode {
       <div style={{ margin: '0 32px', padding: '32px', textAlign: 'center', color: '#bfbfbf', border: '1px dashed #d9d9d9', borderRadius: 8 }}>
         <PictureOutlined style={{ fontSize: 24 }} />
         <div style={{ fontSize: 12, marginTop: 4 }}>Sin imagen — define la URL en Configuración</div>
+      </div>
+    );
+  }
+  if (component.type === 'button') {
+    return (
+      <div style={{ textAlign: 'center', padding: '8px 32px' }}>
+        <span style={{ display: 'inline-block', padding: '10px 24px', borderRadius: 6, background: component.bgColor, color: component.textColor, fontWeight: 600, fontSize: 14 }}>{component.text}</span>
       </div>
     );
   }
@@ -440,20 +472,21 @@ function RowBox({ row, index, selected, onSelectRow, selectedComponentId, onSele
 
 // ─── Paleta ────────────────────────────────────────────────────────────────────
 
-function PaletteItem({ icon, label, onClick, violet }: { icon: React.ReactNode; label: string; onClick: () => void; violet?: boolean }) {
+function PaletteItem({ icon, label, sub, onClick, violet }: { icon: React.ReactNode; label: string; sub: string; onClick: () => void; violet?: boolean }) {
   return (
     <button
       onClick={onClick}
       style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
-        padding: '18px 8px', cursor: 'pointer', textAlign: 'center',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+        padding: '14px 8px', cursor: 'pointer', textAlign: 'center',
         border: `1px solid ${violet ? 'var(--ds-violet-mid)' : '#d9d9d9'}`,
         borderRadius: 8,
         background: violet ? 'var(--ds-violet-bg)' : '#fff',
       }}
     >
       <span style={{ fontSize: 20, color: violet ? 'var(--ds-violet)' : 'rgba(0,0,0,.45)' }}>{icon}</span>
-      <div style={{ fontWeight: 500, fontSize: 13, color: violet ? 'var(--ds-violet-dark)' : 'rgba(0,0,0,.85)', lineHeight: 1.3 }}>{label}</div>
+      <div style={{ fontWeight: 500, fontSize: 11, color: violet ? 'var(--ds-violet-dark)' : 'rgba(0,0,0,.85)', lineHeight: 1.3 }}>{label}</div>
+      <div style={{ fontSize: 9, color: 'rgba(0,0,0,.45)', lineHeight: 1.3 }}>{sub}</div>
     </button>
   );
 }
@@ -762,6 +795,32 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
     </div>
   );
 }
+function HeaderContentFields({ block, onUpdate }: { block: HeaderBlock; onUpdate: (b: Component) => void }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div>
+        <FieldLabel>Nombre o logo</FieldLabel>
+        <Input size="small" value={block.name} onChange={e => onUpdate({ ...block, name: e.target.value })} />
+      </div>
+      <div>
+        <FieldLabel>Color de fondo</FieldLabel>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {HEADER_COLORS.map(c => (
+            <div key={c} onClick={() => onUpdate({ ...block, bgColor: c })} style={{ width: 24, height: 24, borderRadius: '50%', background: c, border: block.bgColor === c ? '3px solid #1890ff' : '3px solid transparent', cursor: 'pointer', outline: block.bgColor === c ? '2px solid white' : 'none', outlineOffset: -4 }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+function TitleContentFields({ block, onUpdate }: { block: TitleBlock; onUpdate: (b: Component) => void }) {
+  return (
+    <div>
+      <FieldLabel>Texto del título</FieldLabel>
+      <Input size="small" value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} />
+    </div>
+  );
+}
 function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; onUpdate: (b: Component) => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -780,6 +839,15 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
           </div>
         );
       })}
+    </div>
+  );
+}
+function FooterContentFields({ block, onUpdate }: { block: FooterBlock; onUpdate: (b: Component) => void }) {
+  return (
+    <div>
+      <FieldLabel>Texto del footer</FieldLabel>
+      <TextArea rows={3} value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} />
+      <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 2 }}>Debe incluir aviso de desuscripción. Requerido para correos comerciales.</Text>
     </div>
   );
 }
@@ -805,6 +873,16 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
         <FieldLabel>Tamaño</FieldLabel>
         <InputNumber size="small" min={10} max={100} value={block.widthPercent} addonAfter="%" onChange={v => onUpdate({ ...block, widthPercent: v ?? 100 })} style={{ width: '100%' }} />
       </div>
+    </div>
+  );
+}
+function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUpdate: (b: Component) => void }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div><FieldLabel>Texto del botón</FieldLabel><Input value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} /></div>
+      <div><FieldLabel>URL de destino</FieldLabel><Input value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })} placeholder="https://..." /></div>
+      <div><FieldLabel>Color de fondo</FieldLabel><ColorPickerField value={block.bgColor} onChange={c => onUpdate({ ...block, bgColor: c })} full /></div>
+      <div><FieldLabel>Color de texto</FieldLabel><ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} full /></div>
     </div>
   );
 }
@@ -869,15 +947,19 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
 }
 
 const TYPE_SECTION_TITLE: Partial<Record<ComponentType, string>> = {
-  text: 'Texto', ai: 'Bloque IA', responses: 'Bloque de respuestas', image: 'Imagen',
-  spacer: 'Espaciador', social: 'Redes Sociales',
+  header: 'Encabezado', title: 'Título', text: 'Texto', ai: 'Bloque IA', responses: 'Bloque de respuestas',
+  footer: 'Footer', image: 'Imagen', button: 'Botón', spacer: 'Espaciador', social: 'Redes Sociales',
 };
 
 function ComponentTypeFields({ component, onUpdate }: { component: Component; onUpdate: (c: Component) => void }) {
   if (component.type === 'text')      return <TextContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'ai')        return <AiContentFields block={component} onUpdate={onUpdate} />;
+  if (component.type === 'header')    return <HeaderContentFields block={component} onUpdate={onUpdate} />;
+  if (component.type === 'title')     return <TitleContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'responses') return <ResponsesContentFields block={component} onUpdate={onUpdate} />;
+  if (component.type === 'footer')    return <FooterContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'image')     return <ImageContentFields block={component} onUpdate={onUpdate} />;
+  if (component.type === 'button')    return <ButtonContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'spacer')    return <SpacerContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'social')    return <SocialContentFields block={component} onUpdate={onUpdate} />;
   return <Text type="secondary" style={{ fontSize: 12 }}>Este componente no tiene contenido configurable.</Text>;
@@ -897,7 +979,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
   const [testValidated, setTestValidated] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   const [mode, setMode] = useState<'visual' | 'html'>(rule.customHtml ? 'html' : 'visual');
-  const [activeTab, setActiveTab] = useState<'elementos' | 'configuracion'>('elementos');
+  const [activeTab, setActiveTab] = useState<'elementos' | 'configuracion' | 'diseno'>('elementos');
   const [selection, setSelection] = useState<Selection>(null);
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState(false);
@@ -918,7 +1000,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     const row = makeRow(widths);
     updateRows([...rows, row]);
     setSelection({ kind: 'row', rowId: row.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
     setColumnPickerOpen(false);
     scrollToBottom();
   }
@@ -927,27 +1009,27 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     const i = rows.findIndex(r => r.id === rowId);
     updateRows(i < 0 ? [...rows, row] : [...rows.slice(0, i + 1), row, ...rows.slice(i + 1)]);
     setSelection({ kind: 'row', rowId: row.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
   }
   function addComponentRow(type: ComponentType) {
     const row = makeSingleComponentRow(type);
     updateRows([...rows, row]);
     const comp = row.columns[0].components[0];
     setSelection({ kind: 'component', rowId: row.id, columnId: row.columns[0].id, componentId: comp.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
     scrollToBottom();
   }
   function addComponentToColumn(type: ComponentType, rowId: string, columnId: string) {
     const comp = makeComponent(type);
     updateRows(rows.map(r => r.id !== rowId ? r : { ...r, columns: r.columns.map(c => c.id !== columnId ? c : { ...c, components: [...c.components, comp] }) }));
     setSelection({ kind: 'component', rowId, columnId, componentId: comp.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
   }
   function insertComponentAfter(rowId: string, columnId: string, atIndex: number) {
     const comp = makeComponent('text');
     updateRows(rows.map(r => r.id !== rowId ? r : { ...r, columns: r.columns.map(c => c.id !== columnId ? c : { ...c, components: [...c.components.slice(0, atIndex + 1), comp, ...c.components.slice(atIndex + 1)] }) }));
     setSelection({ kind: 'component', rowId, columnId, componentId: comp.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
   }
   function updateComponent(rowId: string, columnId: string, comp: Component) {
     updateRows(rows.map(r => r.id !== rowId ? r : { ...r, columns: r.columns.map(c => c.id !== columnId ? c : { ...c, components: c.components.map(x => x.id === comp.id ? comp : x) }) }));
@@ -1085,7 +1167,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
 
   const tabStrip = (
     <div style={{ width: 328, display: 'flex', borderLeft: '1px solid #f0f0f0', flexShrink: 0 }}>
-      {(['elementos', 'configuracion'] as const).map(tab => (
+      {(['elementos', 'configuracion', 'diseno'] as const).map(tab => (
         <button
           key={tab}
           onClick={() => setActiveTab(tab)}
@@ -1096,7 +1178,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
             fontSize: 12, fontWeight: activeTab === tab ? 600 : 400,
           }}
         >
-          {tab === 'elementos' ? 'Elementos' : 'Configuración'}
+          {tab === 'elementos' ? 'Elementos' : tab === 'configuracion' ? 'Configuración' : 'Diseño'}
         </button>
       ))}
     </div>
@@ -1181,9 +1263,9 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                       <RowBox
                         key={row.id} row={row} index={i}
                         selected={selection?.kind === 'row' && selection.rowId === row.id}
-                        onSelectRow={() => { setSelection({ kind: 'row', rowId: row.id }); setActiveTab('configuracion'); }}
+                        onSelectRow={() => { setSelection({ kind: 'row', rowId: row.id }); setActiveTab('diseno'); }}
                         selectedComponentId={selection?.kind === 'component' && selection.rowId === row.id ? selection.componentId : null}
-                        onSelectComponent={(columnId, componentId) => { setSelection({ kind: 'component', rowId: row.id, columnId, componentId }); setActiveTab('configuracion'); }}
+                        onSelectComponent={(columnId, componentId) => { setSelection({ kind: 'component', rowId: row.id, columnId, componentId }); setActiveTab('diseno'); }}
                         onRemoveRow={() => removeRow(row.id)}
                         onDuplicateRow={() => duplicateRow(row.id)}
                         onInsertRowAfter={() => addRowAfter(row.id, [100])}
@@ -1211,36 +1293,44 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
               <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 12px' }}>
                 {activeTab === 'elementos' && (
                   <div id="palette-section">
+                    <Text type="secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Estructura</Text>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                      <PaletteItem icon={<TableOutlined />} label="Columnas" sub="Elige un layout" onClick={() => setColumnPickerOpen(o => !o)} />
+                    </div>
+                    {columnPickerOpen && <ColumnLayoutPicker onPick={addRow} onClose={() => setColumnPickerOpen(false)} />}
+                    <Text type="secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '10px 0 8px' }}>Componentes</Text>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                      <PaletteItem icon={<TableOutlined />} label="Columnas" onClick={() => setColumnPickerOpen(o => !o)} />
                       {COMPONENT_PALETTE.map(item => (
-                        <PaletteItem key={item.type} icon={item.icon} label={item.label} violet={item.violet} onClick={() => addComponentRow(item.type)} />
+                        <PaletteItem key={item.type} icon={item.icon} label={item.label} sub={item.sub} violet={item.violet} onClick={() => addComponentRow(item.type)} />
                       ))}
                     </div>
-                    {columnPickerOpen && <div style={{ marginTop: 8 }}><ColumnLayoutPicker onPick={addRow} onClose={() => setColumnPickerOpen(false)} /></div>}
                   </div>
                 )}
                 {activeTab === 'configuracion' && (
-                  !selection ? (
-                    <CollapsibleSection title="Diseño del bloque">
-                      <LayoutConfigFields layout={draft.layout} onUpdate={p => updateDraft({ layout: { ...draft.layout, ...p } })} />
-                    </CollapsibleSection>
-                  ) : selectedRow ? (
+                  <LayoutConfigFields layout={draft.layout} onUpdate={p => updateDraft({ layout: { ...draft.layout, ...p } })} />
+                )}
+                {activeTab === 'diseno' && (
+                  selection?.kind === 'row' && selectedRow ? (
                     <>
-                      <CollapsibleSection title="Columna">
+                      <CollapsibleSection title="Bloque">
                         <BlockFields design={selectedRow.design} onUpdate={p => updateRowDesign(selectedRow.id, p)} />
-                        <div>
-                          <FieldLabel>Columnas y tamaños</FieldLabel>
-                          <ColumnsAndSizesField row={selectedRow} onChange={widths => setRowColumns(selectedRow.id, widths)} />
-                        </div>
                       </CollapsibleSection>
-                      {selection.kind === 'component' && selectedComponent && TYPE_SECTION_TITLE[selectedComponent.type] && (
+                      <CollapsibleSection title="Columnas y tamaños">
+                        <ColumnsAndSizesField row={selectedRow} onChange={widths => setRowColumns(selectedRow.id, widths)} />
+                      </CollapsibleSection>
+                    </>
+                  ) : selection?.kind === 'component' && selectedComponent ? (
+                    <>
+                      <CollapsibleSection title="Bloque">
+                        <BlockFields design={selectedComponent.design} onUpdate={p => updateComponent(selection.rowId, selection.columnId, { ...selectedComponent, design: { ...selectedComponent.design, ...p } })} />
+                      </CollapsibleSection>
+                      {TYPE_SECTION_TITLE[selectedComponent.type] && (
                         <CollapsibleSection title={TYPE_SECTION_TITLE[selectedComponent.type]!}>
                           <ComponentTypeFields component={selectedComponent} onUpdate={c => updateComponent(selection.rowId, selection.columnId, c)} />
                         </CollapsibleSection>
                       )}
                     </>
-                  ) : <Text type="secondary" style={{ fontSize: 12 }}>Selecciona una fila o un componente del canvas para configurarlo aquí.</Text>
+                  ) : <Text type="secondary" style={{ fontSize: 12 }}>Selecciona una fila o un componente del canvas para configurar su diseño aquí.</Text>
                 )}
               </div>
             </div>

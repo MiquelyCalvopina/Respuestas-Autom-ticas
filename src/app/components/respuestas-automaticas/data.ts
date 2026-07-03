@@ -47,6 +47,8 @@ export const CONDITION_FIELDS = ['NPS', 'CSAT', 'Canal', 'Sucursal', 'Comentario
 export const CONDITION_OPERATORS = ['grupo es', 'nota es', 'no está vacía', 'contiene'];
 export const CONDITION_VALUES = ['Detractor', 'Neutro', 'Promotor', 'No aplica'];
 
+export const HEADER_COLORS = ['#4338CA', '#7C3AED', '#059669', '#DC2626', '#0F172A', '#D97706', '#0D9488'];
+
 export const DEFAULT_RESTRICTIONS = ['No prometer tiempos de resolución', 'No mencionar compensaciones económicas'];
 
 const fmtVal = (v: string | string[]): string => Array.isArray(v) ? v.join(' o ') : v;
