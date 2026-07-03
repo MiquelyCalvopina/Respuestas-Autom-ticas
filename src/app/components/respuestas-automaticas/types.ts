@@ -1,18 +1,16 @@
 export type Trigger = 'response' | 'farewell';
-export type BlockType = 'header' | 'title' | 'text' | 'ai' | 'responses' | 'divider' | 'footer';
+export type ComponentType = 'header' | 'title' | 'text' | 'ai' | 'responses' | 'divider' | 'footer' | 'image' | 'button' | 'spacer' | 'social';
 export type TextAlign = 'left' | 'center' | 'right';
 export type Tone = 'empatico' | 'formal' | 'calido' | 'directo' | 'custom';
 export type RuleStatus = 'draft' | 'active' | 'inactive';
 
-export interface BlockDesign {
+export interface ComponentDesign {
   paddingTop: number;
   paddingBottom: number;
   paddingLeft?: number;
   paddingRight?: number;
   textAlign: TextAlign;
   bgColor: string;
-  widthPercent?: number;
-  boxed?: boolean;
   borderColor?: string;
   borderWidth?: number;
   borderStyle?: 'solid' | 'dotted' | 'none';
@@ -22,17 +20,17 @@ export interface BlockDesign {
 export interface HeaderBlock {
   id: string; type: 'header';
   name: string; bgColor: string;
-  design: BlockDesign;
+  design: ComponentDesign;
 }
 export interface TitleBlock {
   id: string; type: 'title';
   text: string;
-  design: BlockDesign;
+  design: ComponentDesign;
 }
 export interface TextBlock {
   id: string; type: 'text';
   content: string;
-  design: BlockDesign;
+  design: ComponentDesign;
 }
 export interface AiBlock {
   id: string; type: 'ai';
@@ -42,7 +40,7 @@ export interface AiBlock {
   datoPriorizar: string;
   restricciones: string[];
   generatedText: string;
-  design: BlockDesign;
+  design: ComponentDesign;
 }
 export interface ResponseQuestion {
   questionId: string;
@@ -54,19 +52,71 @@ export interface ResponsesBlock {
   id: string; type: 'responses';
   questions: ResponseQuestion[];
   displayStyle: 'bold-indented' | 'list' | 'table';
-  design: BlockDesign;
+  design: ComponentDesign;
 }
 export interface DividerBlock {
   id: string; type: 'divider';
-  design: BlockDesign;
+  design: ComponentDesign;
 }
 export interface FooterBlock {
   id: string; type: 'footer';
   text: string;
-  design: BlockDesign;
+  design: ComponentDesign;
+}
+export interface ImageComponent {
+  id: string; type: 'image';
+  src: string; alt: string; dynamic: boolean; widthPercent: number;
+  design: ComponentDesign;
+}
+export interface ButtonComponent {
+  id: string; type: 'button';
+  text: string; url: string; bgColor: string; textColor: string;
+  design: ComponentDesign;
+}
+export interface SpacerComponent {
+  id: string; type: 'spacer';
+  height: number;
+}
+export type SocialNetworkKey = 'facebook' | 'instagram' | 'x' | 'linkedin' | 'whatsapp';
+export interface SocialNetwork {
+  network: SocialNetworkKey;
+  url: string;
+}
+export interface SocialComponent {
+  id: string; type: 'social';
+  networks: SocialNetwork[];
+  design: ComponentDesign;
 }
 
-export type Block = HeaderBlock | TitleBlock | TextBlock | AiBlock | ResponsesBlock | DividerBlock | FooterBlock;
+export type Component =
+  | HeaderBlock | TitleBlock | TextBlock | AiBlock | ResponsesBlock | DividerBlock | FooterBlock
+  | ImageComponent | ButtonComponent | SpacerComponent | SocialComponent;
+
+export interface Column {
+  id: string;
+  widthPercent: number; // las columnas de una fila suman ~100
+  components: Component[];
+}
+
+export interface RowDesign {
+  widthPercent?: number;
+  boxed?: boolean;
+  bgColor: string;
+  borderColor?: string;
+  borderWidth?: number;
+  borderStyle?: 'solid' | 'dotted' | 'none';
+  paddingTop: number;
+  paddingBottom: number;
+  paddingLeft?: number;
+  paddingRight?: number;
+  hideMobile?: boolean;
+}
+
+export interface Row {
+  id: string;
+  columns: Column[];
+  design: RowDesign;
+}
 
 export interface ConditionRule {
   id: string;
@@ -137,7 +187,7 @@ export interface AutoResponse {
   recipientVariable: string;
   replyTo: string;
   subject: string;
-  blocks: Block[];
+  rows: Row[];
   blocksUpdatedAt: string | null;
   customHtml?: string | null;
 }

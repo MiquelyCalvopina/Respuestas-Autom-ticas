@@ -1,4 +1,10 @@
-import { Pregunta, Etiqueta, AiBlock } from './types';
+import { Pregunta, Etiqueta, AiBlock, Row } from './types';
+
+export const countComponents = (rows: Row[]): number =>
+  rows.flatMap(r => r.columns).flatMap(c => c.components).length;
+
+export const hasAiComponent = (rows: Row[]): boolean =>
+  rows.flatMap(r => r.columns).flatMap(c => c.components).some(comp => comp.type === 'ai');
 
 export const SETUP = {
   empresa: 'HIR Casa',

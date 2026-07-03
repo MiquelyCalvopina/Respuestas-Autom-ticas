@@ -4,6 +4,9 @@ import { SendOutlined, LeftOutlined } from '@ant-design/icons';
 import { AutoResponse } from './types';
 import { PREGUNTAS, SIMULATED_RESPONSES } from './data';
 
+const hasAiOrResponsesComponent = (rule: AutoResponse) =>
+  rule.rows.flatMap(r => r.columns).flatMap(c => c.components).some(comp => comp.type === 'ai' || comp.type === 'responses');
+
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
@@ -22,7 +25,7 @@ const MOCK_RESPONSES: { id: string; label: string; summary: string }[] = [
 const NPS_BUTTONS = Array.from({ length: 11 }, (_, i) => i);
 
 export default function TestModal({ rule, onClose, onSend }: Props) {
-  const hasAiOrResponses = rule.blocks.some(b => b.type === 'ai' || b.type === 'responses');
+  const hasAiOrResponses = hasAiOrResponsesComponent(rule);
   const totalSteps = hasAiOrResponses ? 2 : 1;
   const [step, setStep] = useState(0);
   const [email, setEmail] = useState('');

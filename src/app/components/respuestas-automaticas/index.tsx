@@ -24,7 +24,7 @@ function emptyRule(): AutoResponse {
     recipientVariable: 'correo_electronico',
     replyTo: '',
     subject: '',
-    blocks: [],
+    rows: [],
     blocksUpdatedAt: null,
     customHtml: null,
   };

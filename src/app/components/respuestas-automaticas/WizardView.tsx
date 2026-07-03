@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { AutoResponse, ConditionGroup, ConditionRule, Pregunta, OpcionConComentario, SubCondition } from './types';
-import { VARIABLES, PREGUNTAS_EJEMPLO, ETIQUETAS_CATEGORIZACION } from './data';
+import { VARIABLES, PREGUNTAS_EJEMPLO, ETIQUETAS_CATEGORIZACION, countComponents } from './data';
 import { cuid } from './cuid';
 
 interface Props {
@@ -779,7 +779,7 @@ function SubConditionUI({ subCondition, onUpdateRow, onSetConnector, onDelete }:
   const selStyle:   React.CSSProperties = { minWidth: 160, borderRadius: 8 };
 
   return (
-    <div style={{ borderLeft: '2px solid #e6f7ff', padding: '8px 0 8px 16px', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+    <div style={{ borderLeft: '2px solid #e6f7ff', padding: '8px 16px 8px 16px', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
         <div style={{ background: 'rgba(0,0,0,0.04)', padding: 4, borderRadius: 8, display: 'flex', alignItems: 'center' }}>
           {(['Y', 'O'] as const).map(opt => (
@@ -975,9 +975,11 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
             <BranchesOutlined style={{ fontSize: 12, color: '#434343', transform: 'rotate(90deg)' }} />
           </button>
           {canDelete && (
-            <button onClick={onDelete} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ff4d4f', display: 'flex', alignItems: 'center' }}>
-              <DeleteOutlined style={{ fontSize: 14 }} />
-            </button>
+            <DeleteConfirm what="este grupo (se perderán sus condiciones y subcondiciones)" onConfirm={onDelete}>
+              <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ff4d4f', display: 'flex', alignItems: 'center' }}>
+                <DeleteOutlined style={{ fontSize: 14 }} />
+              </button>
+            </DeleteConfirm>
           )}
         </div>
       )}
@@ -991,9 +993,11 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
             <BranchesOutlined style={{ fontSize: 12, color: '#434343', transform: 'rotate(90deg)' }} />
           </button>
           {canDelete && (
-            <button onClick={onDelete} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ff4d4f', display: 'flex', alignItems: 'center' }}>
-              <DeleteOutlined style={{ fontSize: 14 }} />
-            </button>
+            <DeleteConfirm what="este grupo (se perderán sus condiciones y subcondiciones)" onConfirm={onDelete}>
+              <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ff4d4f', display: 'flex', alignItems: 'center' }}>
+                <DeleteOutlined style={{ fontSize: 14 }} />
+              </button>
+            </DeleteConfirm>
           )}
         </div>
       )}
@@ -1157,7 +1161,7 @@ function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () =>
           <InfoRow
             label="Plantilla de correo"
             value={
-              rule.blocks.length === 0 ? (
+              countComponents(rule.rows) === 0 ? (
                 <Button type="link" onClick={onOpenEditor} style={{ padding: 0, height: 'auto' }}>
                   Diseñar plantilla de correo
                 </Button>
@@ -1194,7 +1198,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
     ? (rule.name.trim() !== '' && rule.trigger !== null && rule.sender !== '' && replyToValid)
     : current === 1
     ? allConditionsComplete(rule.condGroups)
-    : rule.blocks.length > 0;
+    : countComponents(rule.rows) > 0;
   const isLast  = current === 2;
 
   return (

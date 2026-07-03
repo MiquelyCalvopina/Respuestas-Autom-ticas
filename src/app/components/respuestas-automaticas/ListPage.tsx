@@ -3,6 +3,7 @@ import { PlusOutlined, DownOutlined, FormOutlined, ImportOutlined, MailOutlined,
 import type { MenuProps } from 'antd';
 import svgPaths from "@/imports/BoostersPage-1/svg-hnea2jkxqi";
 import { AutoResponse } from './types';
+import { countComponents, hasAiComponent } from './data';
 
 interface Props {
   rules: AutoResponse[];
@@ -148,7 +149,7 @@ function triggerBadge(t: AutoResponse['trigger']) {
 function RuleCard({ rule, onEdit, onLog, onDelete, onToggle }: {
   rule: AutoResponse; onEdit: () => void; onLog: () => void; onDelete: () => void; onToggle: () => void;
 }) {
-  const hasAi = rule.blocks.some(b => b.type === 'ai');
+  const hasAi = hasAiComponent(rule.rows);
   const condCount = rule.condGroups.flatMap(g => g.rows).length;
 
   return (
@@ -174,7 +175,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle }: {
             className="font-['Roboto:Regular',sans-serif] font-normal text-[12px] text-[rgba(0,0,0,0.45)]"
             style={{ fontVariationSettings: '"wdth" 100' }}
           >
-            {rule.sender || '—'} · {rule.blocks.length} bloque{rule.blocks.length !== 1 ? 's' : ''}
+            {rule.sender || '—'} · {countComponents(rule.rows)} bloque{countComponents(rule.rows) !== 1 ? 's' : ''}
           </span>
         </div>
         <Switch checked={rule.active} onChange={onToggle} size="small" />
