@@ -1124,7 +1124,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     : { width: '100%', background: '#fff', overflow: 'hidden', minHeight: 180 };
 
   const subjectBar = (
-    <div style={{ maxWidth: cardMaxWidth, margin: '12px auto 0', display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', background: '#fff', borderRadius: 6, border: '1px solid #f0f0f0' }}>
+    <div style={{ maxWidth: cardMaxWidth, margin: '0 auto 12px', display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', background: '#fff', borderRadius: 6, border: '1px solid #f0f0f0' }}>
       <Text type="secondary" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', flexShrink: 0 }}>ASUNTO</Text>
       {editingSubject ? (
         <Input
@@ -1197,13 +1197,11 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
         {mode === 'visual' && tabStrip}
       </div>
 
-      {/* Asunto — visible en ambos modos (fix: antes desaparecía en Editor HTML) */}
-      {subjectBar}
-
       {mode === 'html' ? (
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden', marginTop: 12 }}>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
           {/* Vista previa en vivo */}
-          <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 24px 20px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
+          <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 24px 20px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
+            {subjectBar}
             <div style={cardStyle}
               dangerouslySetInnerHTML={{ __html: htmlValue }}
             />
@@ -1230,6 +1228,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
           <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
             {/* Canvas */}
             <div ref={canvasRef} className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 24px 20px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
+              {subjectBar}
               <div style={cardStyle}>
                 {rows.length === 0 ? (
                   <div style={{ padding: '48px 32px', textAlign: 'center', color: 'rgba(0,0,0,.25)' }}>
