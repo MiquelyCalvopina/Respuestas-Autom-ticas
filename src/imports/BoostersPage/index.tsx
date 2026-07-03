@@ -1160,9 +1160,10 @@ function TabContent() {
 }
 
 function PageContainer() {
+  const { activeContent } = useContext(BoostersCtx);
   return (
     <div className="relative bg-white border-[#f0f0f0] border-l border-t border-solid w-full h-full rounded-tl-[20px] flex flex-col overflow-hidden" data-name="Page Container">
-      <HorizontalMenu />
+      {activeContent === 'boosters-list' && <HorizontalMenu />}
       <TabContent />
     </div>
   );

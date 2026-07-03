@@ -115,6 +115,7 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
       onLog={openLog}
       onDelete={deleteRule}
       onToggle={toggleRule}
+      onBack={onBack}
     />
   );
 }

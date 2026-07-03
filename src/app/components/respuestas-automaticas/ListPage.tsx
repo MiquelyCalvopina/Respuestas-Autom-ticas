@@ -12,6 +12,7 @@ interface Props {
   onLog: (id: string) => void;
   onDelete: (id: string) => void;
   onToggle: (id: string) => void;
+  onBack: () => void;
   onCopyFromStudy?: () => void;
 }
 
@@ -219,7 +220,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle }: {
 
 // ─── ListPage ─────────────────────────────────────────────────────────────────
 
-export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onToggle, onCopyFromStudy }: Props) {
+export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onToggle, onBack, onCopyFromStudy }: Props) {
   const goToFirstRuleLog = () => { if (rules[0]) onLog(rules[0].id); };
 
   return (
@@ -234,7 +235,7 @@ export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onTogg
             {/* Breadcrumb */}
             <div className="content-stretch flex items-center overflow-clip relative shrink-0">
               <button
-                onClick={goToFirstRuleLog}
+                onClick={onBack}
                 className="[word-break:break-word] bg-transparent border-0 cursor-pointer flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] p-0 relative shrink-0 text-[#1890ff] text-[14px] whitespace-nowrap"
                 style={{ fontVariationSettings: '"wdth" 100' }}
               >
