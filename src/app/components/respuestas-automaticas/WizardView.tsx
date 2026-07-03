@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button, Input, Select, Segmented, Radio, DatePicker, InputNumber, Popconfirm, Modal } from 'antd';
-import { RightOutlined, PlusOutlined, CheckOutlined, DeleteOutlined, CheckCircleFilled, BranchesOutlined, HolderOutlined } from '@ant-design/icons';
+import { RightOutlined, PlusOutlined, CheckOutlined, DeleteOutlined, CheckCircleFilled, BranchesOutlined, HolderOutlined, InfoCircleFilled } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -1196,6 +1196,7 @@ function BreadcrumbChevron() {
 export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, onSaveDraft, onOpenEditor }: Props) {
   const [current, setCurrent] = useState(0);
   const [showExitDialog, setShowExitDialog] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
   const replyToValid = rule.replyTo === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rule.replyTo);
   const canNext = current === 0
     ? (rule.name.trim() !== '' && rule.trigger !== null && rule.sender !== '' && replyToValid)
@@ -1205,7 +1206,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
   const isLast  = current === 2;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', background: '#fff', width: '100%', height: '100%' }}>
+    <div ref={rootRef} style={{ display: 'flex', flexDirection: 'column', background: '#fff', width: '100%', height: '100%', position: 'relative' }}>
 
       {/* Topbar */}
       <div style={{
@@ -1227,24 +1228,34 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
             style={{ width: 250, borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
           />
         </div>
-        <Button onClick={() => {}}>Guardar borrador</Button>
       </div>
 
       <Modal
         open={showExitDialog}
         onCancel={() => setShowExitDialog(false)}
-        title="¿Salir de la creación de esta regla?"
-        footer={
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <Button onClick={() => setShowExitDialog(false)}>Seguir editando</Button>
-            <Button danger onClick={onBack}>Descartar y salir</Button>
-            <Button type="primary" onClick={() => { onSaveDraft(); }}>Guardar como borrador y salir</Button>
-          </div>
-        }
+        closable
+        getContainer={() => rootRef.current || document.body}
+        footer={null}
+        width={480}
+        styles={{ content: { borderRadius: 12, padding: 24 } }}
       >
-        <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.65)', margin: 0 }}>
-          Puedes descartar el avance, guardarlo como borrador para continuar después, o seguir editando ahora.
-        </p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: '#e6f4ff', flexShrink: 0, marginTop: 2 }}>
+            <InfoCircleFilled style={{ color: '#1890ff', fontSize: 14 }} />
+          </span>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 16, color: 'rgba(0,0,0,0.85)', margin: '0 0 4px' }}>
+              ¿Salir de la creación de esta regla?
+            </p>
+            <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.65)', margin: 0 }}>
+              Puedes descartar el avance o guardarlo como borrador para continuar después.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
+              <Button danger style={{ borderRadius: 8 }} onClick={onBack}>Descartar y salir</Button>
+              <Button type="primary" style={{ borderRadius: 8 }} onClick={onSaveDraft}>Guardar como borrador y salir</Button>
+            </div>
+          </div>
+        </div>
       </Modal>
 
       {/* Step indicator */}
@@ -1266,7 +1277,6 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
         {current > 0 && (
           <Button onClick={() => setCurrent(c => c - 1)}>← Anterior</Button>
         )}
-        <Button onClick={() => {}}>Guardar borrador</Button>
         <Button
           type="primary"
           disabled={!canNext}

@@ -7,7 +7,7 @@ import {
   SendOutlined, CopyOutlined, CloseOutlined, PlusOutlined, BoldOutlined, AlignLeftOutlined,
   AlignCenterOutlined, AlignRightOutlined, MinusOutlined, FileTextOutlined, UnorderedListOutlined,
   ThunderboltOutlined, HolderOutlined, TableOutlined, PictureOutlined, LinkOutlined,
-  ColumnHeightOutlined, ShareAltOutlined,
+  ColumnHeightOutlined, ShareAltOutlined, InfoCircleFilled, ExclamationCircleFilled,
 } from '@ant-design/icons';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -41,6 +41,20 @@ const EDITOR_THEME = {
     borderRadius: 8,
   },
 };
+
+// Ícono circular usado en los modales de decisión (confirmar/advertir), siguiendo
+// las reglas visuales de Estudios: círculo de color suave + ícono, sin el ícono
+// grande por defecto de AntD.
+function decisionIcon(tone: 'info' | 'warning') {
+  const palette = tone === 'info' ? { bg: '#e6f4ff', fg: '#1890ff' } : { bg: '#fffbe6', fg: '#faad14' };
+  const Icon = tone === 'info' ? InfoCircleFilled : ExclamationCircleFilled;
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: palette.bg, marginRight: 4 }}>
+      <Icon style={{ color: palette.fg, fontSize: 14 }} />
+    </span>
+  );
+}
+const ROUND_BTN = { style: { borderRadius: 8 } };
 
 // ─── Construcción de filas/columnas/componentes ───────────────────────────────
 
@@ -984,6 +998,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const rows = draft.rows;
 
   function updateDraft(patch: Partial<AutoResponse>) {
@@ -1098,15 +1113,24 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     Modal.confirm({
       title: '¿Salir sin guardar?',
       content: 'Tienes cambios sin guardar en la plantilla de correo. Si sales ahora, se perderán.',
+      icon: decisionIcon('info'),
       okText: 'Salir sin guardar',
-      okButtonProps: { danger: true },
+      okButtonProps: { danger: true, ...ROUND_BTN },
       cancelText: 'Seguir editando',
+      cancelButtonProps: ROUND_BTN,
+      getContainer: () => rootRef.current || document.body,
       onOk: () => onBack(),
     });
   }
   function handleSaveDesign() {
     if (countComponents(draft.rows) === 0) {
-      Modal.warning({ title: 'Acción no permitida', content: 'Debes agregar contenido al correo antes de guardarlo.' });
+      Modal.warning({
+        title: 'Acción no permitida',
+        content: 'Debes agregar contenido al correo antes de guardarlo.',
+        icon: decisionIcon('warning'),
+        okButtonProps: ROUND_BTN,
+        getContainer: () => rootRef.current || document.body,
+      });
       return;
     }
     onChange({ ...draft, blocksUpdatedAt: new Date().toISOString() });
@@ -1117,9 +1141,12 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
       Modal.confirm({
         title: 'Descartar cambios de HTML',
         content: 'Tienes cambios manuales en el HTML que se perderán si vuelves al editor visual.',
+        icon: decisionIcon('info'),
         okText: 'Descartar y volver',
-        okButtonProps: { danger: true },
+        okButtonProps: { danger: true, ...ROUND_BTN },
         cancelText: 'Seguir en HTML',
+        cancelButtonProps: ROUND_BTN,
+        getContainer: () => rootRef.current || document.body,
         onOk: () => { updateDraft({ customHtml: null }); setMode('visual'); },
       });
       return;
@@ -1186,7 +1213,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
 
   return (
     <ConfigProvider theme={EDITOR_THEME}>
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f5f5f5', overflow: 'hidden', fontFamily: "'Roboto', sans-serif" }}>
+    <div ref={rootRef} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f5f5f5', overflow: 'hidden', fontFamily: "'Roboto', sans-serif", position: 'relative' }}>
       {/* Header fila 1 — título + acciones */}
       <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '9px 24px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
         <Text style={{ fontSize: 15, fontWeight: 500, whiteSpace: 'nowrap' }}>Diseño del correo de respuesta</Text>
