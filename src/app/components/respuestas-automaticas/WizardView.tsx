@@ -58,7 +58,7 @@ function StepChevron() {
 
 function NavigationSteps({ current }: { current: number }) {
   return (
-    <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 24px', flexShrink: 0 }}>
+    <div style={{ background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 24px', flexShrink: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
         <StepNode num={1} label="Detalles"    active={current === 0} done={current > 0} />
         <StepChevron />
