@@ -1215,13 +1215,19 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     <ConfigProvider theme={EDITOR_THEME}>
     <div ref={rootRef} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f5f5f5', overflow: 'hidden', fontFamily: "'Roboto', sans-serif", position: 'relative' }}>
       {/* Header fila 1 — título + acciones */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '9px 24px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '9px 24px', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        <button
+          onClick={handleExit}
+          style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+        >
+          ← Volver al asistente
+        </button>
+        <div style={{ width: 1, height: 16, background: '#d9d9d9' }} />
         <Text style={{ fontSize: 15, fontWeight: 500, whiteSpace: 'nowrap' }}>Diseño del correo de respuesta</Text>
         <div style={{ flex: 1 }} />
         <Button icon={<SendOutlined />} onClick={() => setShowTestModal(true)} style={{ borderColor: '#13c2c2', color: '#13c2c2', background: '#e6fffb' }}>
           Enviar prueba
         </Button>
-        <Button onClick={handleExit}>Cancelar</Button>
         <Tooltip title={!testValidated ? 'Envía una prueba con el diseño actual antes de guardar' : ''}>
           <Button type="primary" disabled={!testValidated} onClick={handleSaveDesign}>
             Guardar diseño
