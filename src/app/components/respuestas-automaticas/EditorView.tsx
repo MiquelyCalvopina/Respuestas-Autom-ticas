@@ -1122,6 +1122,10 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
       onOk: () => onBack(),
     });
   }
+  function commitSaveDesign() {
+    onChange({ ...draft, blocksUpdatedAt: new Date().toISOString() });
+    onBack();
+  }
   function handleSaveDesign() {
     if (countComponents(draft.rows) === 0) {
       Modal.warning({
@@ -1133,8 +1137,22 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
       });
       return;
     }
-    onChange({ ...draft, blocksUpdatedAt: new Date().toISOString() });
-    onBack();
+    const hasFooter = draft.rows.some(r => r.columns.some(c => c.components.some(comp => comp.type === 'footer')));
+    if (draft.customHtml == null && !hasFooter) {
+      Modal.confirm({
+        title: 'Sin bloque de footer legal',
+        content: 'No agregaste un bloque de Footer legal (con el aviso de baja). No es obligatorio para este tipo de correo, pero puedes agregarlo antes de guardar.',
+        icon: decisionIcon('warning'),
+        okText: 'Guardar de todos modos',
+        okButtonProps: ROUND_BTN,
+        cancelText: 'Volver a editar',
+        cancelButtonProps: ROUND_BTN,
+        getContainer: () => rootRef.current || document.body,
+        onOk: () => commitSaveDesign(),
+      });
+      return;
+    }
+    commitSaveDesign();
   }
   function handleModeChange(next: 'visual' | 'html') {
     if (next === 'visual' && draft.customHtml != null) {
