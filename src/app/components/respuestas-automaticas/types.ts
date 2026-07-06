@@ -54,6 +54,21 @@ export interface ResponsesBlock {
   displayStyle: 'bold-indented' | 'list' | 'table';
   showQuestion: boolean;
   rowGap: number;
+  headerLabel: string;
+  headerColor: string;
+  headerSize: number;
+  questionColor: string;
+  questionBg: string;
+  questionSize: number;
+  questionWeight: '400' | '600' | '700';
+  answerColor: string;
+  answerBg: string;
+  answerSize: number;
+  answerWeight: '400' | '600' | '700';
+  accentColor: string;
+  accentWidth: number;
+  separatorStyle: 'solid' | 'dotted' | 'none';
+  separatorColor: string;
   design: ComponentDesign;
 }
 export interface DividerBlock {

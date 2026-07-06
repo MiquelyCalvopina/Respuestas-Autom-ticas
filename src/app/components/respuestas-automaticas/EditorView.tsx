@@ -72,7 +72,17 @@ function makeComponent(type: ComponentType): Component {
     case 'title':     return { id, type, text: 'Tu opinión importa', design };
     case 'text':      return { id, type, content: 'Hola {{nombre_preferido}},\n\nGracias por tomarte el tiempo de responder nuestra encuesta.', design };
     case 'ai':        return { id, type, objetivo: '', tone: 'empatico' as Tone, customTone: '', datoPriorizar: '', restricciones: [...DEFAULT_RESTRICTIONS], idioma: 'es' as AiLanguage, generatedText: '', design };
-    case 'responses': return { id, type, questions: PREGUNTAS.map(q => ({ questionId: q.id, included: true })), displayStyle: 'bold-indented', showQuestion: true, rowGap: 10, design };
+    case 'responses': return {
+      id, type,
+      questions: PREGUNTAS.map(q => ({ questionId: q.id, included: true })),
+      displayStyle: 'bold-indented', showQuestion: true, rowGap: 10,
+      headerLabel: 'Tus respuestas', headerColor: '#9CA3AF', headerSize: 10,
+      questionColor: '#1E293B', questionBg: 'transparent', questionSize: 13, questionWeight: '700',
+      answerColor: '#475569', answerBg: 'transparent', answerSize: 13, answerWeight: '400',
+      accentColor: '#E2E8F0', accentWidth: 2,
+      separatorStyle: 'solid', separatorColor: '#E5E7EB',
+      design,
+    };
     case 'divider':   return { id, type, design };
     case 'footer':    return { id, type, text: 'Para darte de baja, responde a este correo con el asunto "Baja".\n\n© HIR Casa · Ciudad de México', design };
     case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, design };
@@ -162,18 +172,27 @@ function componentToHtml(c: Component): string {
     case 'ai':        return `<div style="${style}"><p style="font-size:13px;line-height:1.7;color:#4C1D95;font-style:italic;margin:0;">${c.generatedText || '[Texto generado pendiente — envía una prueba]'}</p></div>`;
     case 'responses': {
       const included = orderedIncludedQuestions(c);
+      const label = `<div style="font-size:${c.headerSize}px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.headerColor};margin-bottom:${c.rowGap}px;">${c.headerLabel}</div>`;
+      const qStyle = `font-size:${c.questionSize}px;font-weight:${c.questionWeight};color:${c.questionColor};margin-bottom:3px;${c.questionBg !== 'transparent' ? `background:${c.questionBg};padding:4px 6px;border-radius:4px;` : ''}`;
+      const sepBorder = c.separatorStyle !== 'none' ? `border-bottom:1px ${c.separatorStyle} ${c.separatorColor};padding-bottom:${Math.floor(c.rowGap / 2)}px;` : '';
       if (c.displayStyle === 'table') {
-        const rows = included.map(q => `<tr>${c.showQuestion ? `<td style="padding:8px 12px;font-weight:600;color:#000;background:#fafafa;width:45%;border-top:1px solid #f0f0f0;">${q.texto}</td>` : ''}<td style="padding:8px 12px;color:#555;border-top:1px solid #f0f0f0;">${mockAnswerFor(q)}</td></tr>`).join('');
-        return `<div style="${style}"><table role="presentation" width="100%" style="border-collapse:collapse;border:1px solid #f0f0f0;font-size:12.5px;">${rows}</table></div>`;
+        const rows = included.map(q => `<tr>${c.showQuestion ? `<td style="padding:8px 12px;${qStyle}width:45%;border-top:1px solid #f0f0f0;">${q.texto}</td>` : ''}<td style="padding:8px 12px;font-size:${c.answerSize}px;font-weight:${c.answerWeight};color:${c.answerColor};border-top:1px solid #f0f0f0;">${mockAnswerFor(q)}</td></tr>`).join('');
+        return `<div style="${style}">${label}<table role="presentation" width="100%" style="border-collapse:collapse;border:1px solid #f0f0f0;font-size:12.5px;">${rows}</table></div>`;
       }
       const items = included.map((q, i) => {
+        const isLast = i === included.length - 1;
         const qLabel = !c.showQuestion ? '' : c.displayStyle === 'bold-indented'
-          ? `<strong style="display:block;font-size:13px;margin-bottom:2px;">${q.texto}</strong>`
-          : `<span style="font-weight:500;">${q.texto}: </span>`;
-        const indentStyle = c.displayStyle === 'bold-indented' ? 'padding-left:11px;border-left:2.5px solid #d9d9d9;' : '';
-        return `<div style="margin-bottom:${i < included.length - 1 ? c.rowGap : 0}px;">${qLabel}<p style="font-size:12.5px;color:#555;margin:0;${indentStyle}">${mockAnswerFor(q)}</p></div>`;
+          ? `<strong style="display:block;${qStyle}">${q.texto}</strong>`
+          : `<span style="font-weight:${c.questionWeight};color:${c.questionColor};">${q.texto}: </span>`;
+        const accentLeft = c.displayStyle === 'bold-indented' ? c.accentWidth + 9 : 0;
+        const accentBorder = c.displayStyle === 'bold-indented' ? `border-left:${c.accentWidth}px solid ${c.accentColor};` : '';
+        const bgStyle = c.answerBg !== 'transparent'
+          ? `background:${c.answerBg};border-radius:4px;padding:4px 8px 4px ${accentLeft + 8}px;`
+          : (accentLeft ? `padding-left:${accentLeft}px;` : '');
+        const answerStyle = `font-size:${c.answerSize}px;font-weight:${c.answerWeight};color:${c.answerColor};line-height:1.5;${accentBorder}${bgStyle}`;
+        return `<div style="margin-bottom:${c.rowGap}px;${!isLast ? sepBorder : ''}">${qLabel}<p style="margin:0;${answerStyle}">${mockAnswerFor(q)}</p></div>`;
       }).join('');
-      return `<div style="${style}"><div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#999;margin-bottom:10px;">TUS RESPUESTAS</div>${items}</div>`;
+      return `<div style="${style}">${label}${items}</div>`;
     }
     case 'divider':   return `<hr style="margin:${d.paddingTop}px 26px ${d.paddingBottom}px;" />`;
     case 'footer':    return `<div style="${style}"><p style="font-size:11.5px;color:#999;text-align:center;white-space:pre-line;margin:0;">${c.text}</p></div>`;
@@ -276,15 +295,28 @@ function renderComponentContent(component: Component): React.ReactNode {
   }
   if (component.type === 'responses') {
     const included = orderedIncludedQuestions(component);
+    const label = (
+      <Text style={{ fontSize: component.headerSize, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: component.headerColor, display: 'block', marginBottom: component.rowGap }}>
+        {component.headerLabel}
+      </Text>
+    );
+    const questionStyle: React.CSSProperties = {
+      fontSize: component.questionSize, fontWeight: Number(component.questionWeight), color: component.questionColor,
+      ...(component.questionBg !== 'transparent' ? { background: component.questionBg, padding: '4px 6px', borderRadius: 4 } : {}),
+    };
+    const sepStyle: React.CSSProperties = component.separatorStyle !== 'none'
+      ? { borderBottom: `1px ${component.separatorStyle} ${component.separatorColor}`, paddingBottom: Math.floor(component.rowGap / 2) }
+      : {};
     if (component.displayStyle === 'table') {
       return (
         <div style={{ margin: '0 32px' }}>
+          {label}
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, border: '1px solid #f0f0f0', borderRadius: 8 }}>
             <tbody>
               {included.map((q, i) => (
                 <tr key={q.id} style={{ borderTop: i > 0 ? '1px solid #f0f0f0' : undefined }}>
-                  {component.showQuestion && <td style={{ padding: '8px 12px', fontWeight: 600, color: 'rgba(0,0,0,.85)', background: '#fafafa', width: '45%' }}>{q.texto}</td>}
-                  <td style={{ padding: '8px 12px', color: 'rgba(0,0,0,.65)' }}>{mockAnswerFor(q)}</td>
+                  {component.showQuestion && <td style={{ padding: '8px 12px', width: '45%', ...questionStyle }}>{q.texto}</td>}
+                  <td style={{ padding: '8px 12px', fontSize: component.answerSize, fontWeight: Number(component.answerWeight), color: component.answerColor }}>{mockAnswerFor(q)}</td>
                 </tr>
               ))}
             </tbody>
@@ -293,25 +325,33 @@ function renderComponentContent(component: Component): React.ReactNode {
       );
     }
     return (
-      <div style={{ margin: '0 32px', border: '1px solid #f0f0f0', borderRadius: 8, background: '#fafafa', padding: '14px 16px' }}>
-        <Text type="secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>TUS RESPUESTAS</Text>
-        {included.map((q, i) => (
-          <div key={q.id} style={{ marginBottom: i < included.length - 1 ? component.rowGap : 0 }}>
-            {component.showQuestion && component.displayStyle === 'bold-indented' && (
-              <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 2 }}>{q.texto}</Text>
-            )}
-            {component.showQuestion && component.displayStyle === 'list' && (
-              <Text style={{ fontSize: 12.5, fontWeight: 500, display: 'block' }}>{q.texto}: </Text>
-            )}
-            <p style={{
-              fontSize: 12.5, color: 'rgba(0,0,0,.65)', margin: 0,
-              paddingLeft: component.displayStyle === 'bold-indented' ? 11 : 0,
-              borderLeft: component.displayStyle === 'bold-indented' ? '2.5px solid #d9d9d9' : 'none',
-            }}>
-              {mockAnswerFor(q)}
-            </p>
-          </div>
-        ))}
+      <div style={{ margin: '0 32px' }}>
+        {label}
+        {included.map((q, i) => {
+          const isLast = i === included.length - 1;
+          return (
+            <div key={q.id} style={{ marginBottom: component.rowGap, ...(!isLast ? sepStyle : {}) }}>
+              {component.showQuestion && component.displayStyle === 'bold-indented' && (
+                <Text style={{ display: 'block', marginBottom: 2, ...questionStyle }}>{q.texto}</Text>
+              )}
+              {component.showQuestion && component.displayStyle === 'list' && (
+                <Text style={{ display: 'inline', fontWeight: Number(component.questionWeight), color: component.questionColor }}>{q.texto}: </Text>
+              )}
+              <p style={{
+                margin: 0, fontSize: component.answerSize, fontWeight: Number(component.answerWeight), color: component.answerColor, lineHeight: 1.5,
+                paddingLeft: (component.displayStyle === 'bold-indented' ? component.accentWidth + 9 : 0) + (component.answerBg !== 'transparent' ? 8 : 0),
+                paddingRight: component.answerBg !== 'transparent' ? 8 : 0,
+                paddingTop: component.answerBg !== 'transparent' ? 4 : 0,
+                paddingBottom: component.answerBg !== 'transparent' ? 4 : 0,
+                borderLeft: component.displayStyle === 'bold-indented' ? `${component.accentWidth}px solid ${component.accentColor}` : 'none',
+                background: component.answerBg !== 'transparent' ? component.answerBg : undefined,
+                borderRadius: component.answerBg !== 'transparent' ? 4 : undefined,
+              }}>
+                {mockAnswerFor(q)}
+              </p>
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -899,6 +939,23 @@ function TitleContentFields({ block, onUpdate }: { block: TitleBlock; onUpdate: 
     </div>
   );
 }
+function SubSectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(0,0,0,.35)', borderBottom: '1px solid #f0f0f0', paddingBottom: 4, marginTop: 4 }}>
+      {children}
+    </div>
+  );
+}
+function WeightField({ value, onChange }: { value: '400' | '600' | '700'; onChange: (v: '400' | '600' | '700') => void }) {
+  return (
+    <Radio.Group value={value} onChange={e => onChange(e.target.value)} style={{ display: 'flex', width: '100%' }}>
+      <Radio.Button value="400" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Normal</Radio.Button>
+      <Radio.Button value="600" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Semi</Radio.Button>
+      <Radio.Button value="700" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Bold</Radio.Button>
+    </Radio.Group>
+  );
+}
+
 const RQ_ITEM = 'rq-item';
 
 function RQItem({ q, index, checked, onToggle, moveItem }: {
@@ -986,9 +1043,93 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
           ]}
         />
       </div>
+
+      <SubSectionHeading>Etiqueta del bloque</SubSectionHeading>
+      <div>
+        <FieldLabel>Texto</FieldLabel>
+        <Input size="small" value={block.headerLabel} onChange={e => onUpdate({ ...block, headerLabel: e.target.value })} />
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Color</FieldLabel>
+          <ColorPickerField value={block.headerColor} onChange={c => onUpdate({ ...block, headerColor: c })} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Tamaño</FieldLabel>
+          <InputNumber size="small" min={8} max={16} value={block.headerSize} onChange={v => onUpdate({ ...block, headerSize: v ?? 10 })} style={{ width: '100%' }} addonAfter="px" />
+        </div>
+      </div>
+
+      <SubSectionHeading>Preguntas</SubSectionHeading>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Color del texto</FieldLabel>
+          <ColorPickerField value={block.questionColor} onChange={c => onUpdate({ ...block, questionColor: c })} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Fondo de la fila</FieldLabel>
+          <ColorPickerField value={block.questionBg} onChange={c => onUpdate({ ...block, questionBg: c })} allowTransparent full />
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Tamaño px</FieldLabel>
+          <InputNumber size="small" min={9} max={20} value={block.questionSize} onChange={v => onUpdate({ ...block, questionSize: v ?? 13 })} style={{ width: '100%' }} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Peso</FieldLabel>
+          <WeightField value={block.questionWeight} onChange={v => onUpdate({ ...block, questionWeight: v })} />
+        </div>
+      </div>
+
+      <SubSectionHeading>Respuestas</SubSectionHeading>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Color del texto</FieldLabel>
+          <ColorPickerField value={block.answerColor} onChange={c => onUpdate({ ...block, answerColor: c })} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Fondo de la respuesta</FieldLabel>
+          <ColorPickerField value={block.answerBg} onChange={c => onUpdate({ ...block, answerBg: c })} allowTransparent full />
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Tamaño px</FieldLabel>
+          <InputNumber size="small" min={9} max={20} value={block.answerSize} onChange={v => onUpdate({ ...block, answerSize: v ?? 13 })} style={{ width: '100%' }} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Peso</FieldLabel>
+          <WeightField value={block.answerWeight} onChange={v => onUpdate({ ...block, answerWeight: v })} />
+        </div>
+      </div>
+
+      <SubSectionHeading>Acento lateral</SubSectionHeading>
+      <div>
+        <FieldLabel>Color del acento</FieldLabel>
+        <ColorPickerField value={block.accentColor} onChange={c => onUpdate({ ...block, accentColor: c })} />
+      </div>
+      <div>
+        <FieldLabel>Grosor del acento</FieldLabel>
+        <Slider min={0} max={8} value={block.accentWidth} onChange={v => onUpdate({ ...block, accentWidth: v })} tooltip={{ formatter: v => `${v}px` }} />
+      </div>
+
+      <SubSectionHeading>Separadores y espaciado</SubSectionHeading>
+      <div>
+        <FieldLabel>Estilo separador</FieldLabel>
+        <Radio.Group value={block.separatorStyle} onChange={e => onUpdate({ ...block, separatorStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+          <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
+          <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
+          <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
+        </Radio.Group>
+      </div>
+      <div>
+        <FieldLabel>Color del separador</FieldLabel>
+        <ColorPickerField value={block.separatorColor} onChange={c => onUpdate({ ...block, separatorColor: c })} />
+      </div>
       <div>
         <FieldLabel>Espacio entre filas</FieldLabel>
-        <Slider min={4} max={32} value={block.rowGap} onChange={v => onUpdate({ ...block, rowGap: v })} />
+        <Slider min={4} max={32} value={block.rowGap} onChange={v => onUpdate({ ...block, rowGap: v })} tooltip={{ formatter: v => `${v}px` }} />
       </div>
     </div>
   );
