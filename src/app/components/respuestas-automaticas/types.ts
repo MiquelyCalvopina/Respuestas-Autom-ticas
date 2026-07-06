@@ -1,5 +1,5 @@
 export type Trigger = 'response' | 'farewell';
-export type ComponentType = 'header' | 'title' | 'text' | 'ai' | 'responses' | 'divider' | 'image' | 'button' | 'spacer' | 'social';
+export type ComponentType = 'header' | 'title' | 'text' | 'ai' | 'responses' | 'divider' | 'footer' | 'image' | 'button' | 'spacer' | 'social';
 export type TextAlign = 'left' | 'center' | 'right';
 export type Tone = 'empatico' | 'formal' | 'calido' | 'directo' | 'custom';
 export type AiLanguage = 'es' | 'en' | 'pt' | 'fr';
@@ -86,6 +86,11 @@ export interface DividerBlock {
   id: string; type: 'divider';
   design: ComponentDesign;
 }
+export interface FooterBlock {
+  id: string; type: 'footer';
+  text: string;
+  design: ComponentDesign;
+}
 export interface ImageComponent {
   id: string; type: 'image';
   src: string; alt: string; dynamic: boolean; widthPercent: number;
@@ -118,7 +123,7 @@ export interface SocialComponent {
 }
 
 export type Component =
-  | HeaderBlock | TitleBlock | TextBlock | AiBlock | ResponsesBlock | DividerBlock
+  | HeaderBlock | TitleBlock | TextBlock | AiBlock | ResponsesBlock | DividerBlock | FooterBlock
   | ImageComponent | ButtonComponent | SpacerComponent | SocialComponent;
 
 export interface Column {

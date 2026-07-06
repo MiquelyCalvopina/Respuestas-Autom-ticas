@@ -9,6 +9,7 @@ import {
   AlignCenterOutlined, AlignRightOutlined, MinusOutlined, UnorderedListOutlined,
   ThunderboltOutlined, HolderOutlined, TableOutlined, PictureOutlined, LinkOutlined,
   ColumnHeightOutlined, ShareAltOutlined, InfoCircleFilled, ExclamationCircleFilled, QuestionCircleOutlined,
+  FileTextOutlined, UploadOutlined,
 } from '@ant-design/icons';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -16,7 +17,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { html as htmlLang } from '@codemirror/lang-html';
 import {
   AutoResponse, Row, Column, RowDesign, Component, ComponentType, ComponentDesign, EmailLayoutConfig, TextAlign,
-  AiBlock, TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, Pregunta,
+  AiBlock, TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, Pregunta, FooterBlock,
   ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey, Tone, AiLanguage,
 } from './types';
 import { VARIABLES, PREGUNTAS_EJEMPLO, mockAnswerFor, TONO_LABELS, IDIOMA_LABELS, HEADER_COLORS, DEFAULT_RESTRICTIONS, RESTRICCION_SUGERENCIAS, SETUP, mockGenerateAiText, countComponents } from './data';
@@ -95,6 +96,7 @@ function makeComponent(type: ComponentType): Component {
       design,
     };
     case 'divider':   return { id, type, design };
+    case 'footer':    return { id, type, text: `© ${new Date().getFullYear()} ${SETUP.empresa}. Si ya no deseas recibir estos correos, {{enlace_desuscripcion}}.`, design };
     case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, design };
     case 'button':    return { id, type, text: 'Responder estudio', url: '', bgColor: '#1890ff', textColor: '#ffffff', design };
     case 'spacer':    return { id, type, height: 24, design };
@@ -135,6 +137,7 @@ const COMPONENT_PALETTE: { type: ComponentType; label: string; sub: string; icon
   { type: 'image', label: 'Imagen', sub: 'Estática o dinámica', icon: <PictureOutlined /> },
   { type: 'button', label: 'Botón', sub: 'Llamado a la acción', icon: <LinkOutlined /> },
   { type: 'divider', label: 'Divisor', sub: 'Línea separadora', icon: <MinusOutlined /> },
+  { type: 'footer', label: 'Footer legal', sub: 'Aviso de desuscripción', icon: <FileTextOutlined /> },
   { type: 'spacer', label: 'Espaciador', sub: 'Espacio en blanco', icon: <ColumnHeightOutlined /> },
   { type: 'social', label: 'Redes Sociales', sub: 'Íconos con enlaces', icon: <ShareAltOutlined /> },
   { type: 'ai', label: 'Bloque IA', sub: 'Texto único por encuestado', icon: '✦' },
@@ -218,6 +221,7 @@ function componentToHtml(c: Component): string {
       return `<div style="${style}">${containerOpen}${label}${items}</div></div>`;
     }
     case 'divider':   return `<hr style="margin:${d.paddingTop}px 26px ${d.paddingBottom}px;" />`;
+    case 'footer':    return `<div style="${style}text-align:center;"><p style="font-size:11px;line-height:1.6;color:#8c8c8c;margin:0;white-space:pre-line;">${c.text}</p></div>`;
     case 'image':     return `<div style="${style}text-align:center;">${c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : ''}</div>`;
     case 'button':    return `<div style="${style}text-align:center;"><a href="${c.url}" style="display:inline-block;padding:10px 24px;border-radius:6px;background:${c.bgColor};color:${c.textColor};font-weight:600;text-decoration:none;">${c.text}</a></div>`;
     case 'spacer':    return `<div style="${style}height:${c.height}px;"></div>`;
@@ -390,6 +394,11 @@ function renderComponentContent(component: Component): React.ReactNode {
     );
   }
   if (component.type === 'divider') return <Divider style={{ margin: '0 26px', minWidth: 'auto', width: 'auto' }} />;
+  if (component.type === 'footer') {
+    return (
+      <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 11, lineHeight: 1.6, color: '#8c8c8c', padding: '0 32px', margin: 0, whiteSpace: 'pre-line', textAlign: align }} dangerouslySetInnerHTML={{ __html: renderVars(component.text) }} />
+    );
+  }
   if (component.type === 'image') {
     return component.src ? (
       <div style={{ padding: '0 32px', textAlign: 'center' }}>
@@ -916,21 +925,23 @@ function BlockFields<T extends {
   borderColor?: string; borderWidth?: number; borderStyle?: 'solid' | 'dotted' | 'none';
   paddingTop: number; paddingBottom: number; paddingLeft?: number; paddingRight?: number;
   hideMobile?: boolean;
-}>({ design, onUpdate }: { design: T; onUpdate: (p: Partial<T>) => void }) {
+}>({ design, onUpdate, excludeAlign }: { design: T; onUpdate: (p: Partial<T>) => void; excludeAlign?: boolean }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <FieldLabel>Color de fondo</FieldLabel>
         <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent full />
       </div>
-      <div>
-        <FieldLabel>Alineación</FieldLabel>
-        <Radio.Group value={design.textAlign ?? 'left'} onChange={e => onUpdate({ textAlign: e.target.value } as Partial<T>)} style={{ display: 'flex', width: '100%' }}>
-          <Radio.Button value="left" style={{ flex: 1, textAlign: 'center' }}><AlignLeftOutlined /></Radio.Button>
-          <Radio.Button value="center" style={{ flex: 1, textAlign: 'center' }}><AlignCenterOutlined /></Radio.Button>
-          <Radio.Button value="right" style={{ flex: 1, textAlign: 'center' }}><AlignRightOutlined /></Radio.Button>
-        </Radio.Group>
-      </div>
+      {!excludeAlign && (
+        <div>
+          <FieldLabel>Alineación</FieldLabel>
+          <Radio.Group value={design.textAlign ?? 'left'} onChange={e => onUpdate({ textAlign: e.target.value } as Partial<T>)} style={{ display: 'flex', width: '100%' }}>
+            <Radio.Button value="left" style={{ flex: 1, textAlign: 'center' }}><AlignLeftOutlined /></Radio.Button>
+            <Radio.Button value="center" style={{ flex: 1, textAlign: 'center' }}><AlignCenterOutlined /></Radio.Button>
+            <Radio.Button value="right" style={{ flex: 1, textAlign: 'center' }}><AlignRightOutlined /></Radio.Button>
+          </Radio.Group>
+        </div>
+      )}
       <BorderFields borderColor={design.borderColor ?? '#000000'} borderWidth={design.borderWidth ?? 0} borderStyle={design.borderStyle ?? 'none'} onUpdate={onUpdate} />
       <PaddingGrid design={design} onUpdate={onUpdate} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1115,6 +1126,35 @@ function TitleContentFields({ block, onUpdate }: { block: TitleBlock; onUpdate: 
     <div>
       <FieldLabel>Texto del título</FieldLabel>
       <Input size="small" value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} />
+    </div>
+  );
+}
+function FooterContentFields({ block, onUpdate }: { block: FooterBlock; onUpdate: (b: Component) => void }) {
+  const taRef = useRef<HTMLTextAreaElement>(null);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div>
+        <FieldLabel tooltip="Texto legal al pie del correo — nombre del cliente y aviso de desuscripción.">Texto</FieldLabel>
+        <TextArea ref={taRef} rows={3} value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} />
+      </div>
+      <div>
+        <FieldLabel>Insertar variable</FieldLabel>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+          {VARIABLES.map(v => (
+            <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 10 }} color="blue" onClick={() => {
+              const ta = taRef.current;
+              const tag = `{{${v}}}`;
+              if (!ta) { onUpdate({ ...block, text: block.text + tag }); return; }
+              const s = ta.selectionStart, e2 = ta.selectionEnd;
+              const nc = block.text.slice(0, s) + tag + block.text.slice(e2);
+              onUpdate({ ...block, text: nc });
+              setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = s + tag.length; }, 0);
+            }}>
+              {`{{${v}}}`}
+            </Tag>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1381,6 +1421,17 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
 }
 function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpdate: (b: Component) => void }) {
   const urlRef = useRef<InputRef>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Prototipo sin backend: el "upload" genera una URL local de vista previa
+    // (URL.createObjectURL), no sube el archivo a ningún servidor.
+    onUpdate({ ...block, src: URL.createObjectURL(file), alt: block.alt || file.name.replace(/\.[^.]+$/, '') });
+    e.target.value = '';
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div>
@@ -1391,11 +1442,17 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
         </Radio.Group>
       </div>
       <div>
-        <FieldLabel>URL</FieldLabel>
-        <Input
-          ref={urlRef} size="small" value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })}
-          placeholder={block.dynamic ? 'https://.../{{variable}}.png' : 'https://...'}
-        />
+        <FieldLabel>Imagen</FieldLabel>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Input
+            ref={urlRef} size="small" value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })}
+            placeholder={block.dynamic ? 'https://.../{{variable}}.png' : 'https://...'}
+            style={{ flex: 1 }}
+          />
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
+          <Button size="small" icon={<UploadOutlined />} onClick={() => fileInputRef.current?.click()}>Subir</Button>
+        </div>
+        <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>Sube un archivo o pega el enlace de una imagen.</Text>
       </div>
       {block.dynamic && (
         <div>
@@ -1430,10 +1487,33 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
   );
 }
 function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUpdate: (b: Component) => void }) {
+  const urlRef = useRef<InputRef>(null);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div><FieldLabel>Texto del botón</FieldLabel><Input value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} /></div>
-      <div><FieldLabel>URL de destino</FieldLabel><Input value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })} placeholder="https://..." /></div>
+      <div>
+        <FieldLabel>URL de destino</FieldLabel>
+        <Input ref={urlRef} value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })} placeholder="https://.../{{variable}}" />
+      </div>
+      <div>
+        <FieldLabel>Insertar variable</FieldLabel>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+          {VARIABLES.map(v => (
+            <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 10 }} color="blue" onClick={() => {
+              const input = urlRef.current?.input;
+              const tag = `{{${v}}}`;
+              if (!input) { onUpdate({ ...block, url: block.url + tag }); return; }
+              const s = input.selectionStart ?? block.url.length, e2 = input.selectionEnd ?? block.url.length;
+              const next = block.url.slice(0, s) + tag + block.url.slice(e2);
+              onUpdate({ ...block, url: next });
+              setTimeout(() => { input.focus(); input.selectionStart = input.selectionEnd = s + tag.length; }, 0);
+            }}>
+              {`{{${v}}}`}
+            </Tag>
+          ))}
+        </div>
+        <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>El enlace puede incluir una variable para llevar a una URL distinta por destinatario.</Text>
+      </div>
       <div><FieldLabel>Color de fondo</FieldLabel><ColorPickerField value={block.bgColor} onChange={c => onUpdate({ ...block, bgColor: c })} full /></div>
       <div><FieldLabel>Color de texto</FieldLabel><ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} full /></div>
     </div>
@@ -1506,7 +1586,7 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
 
 const TYPE_SECTION_TITLE: Partial<Record<ComponentType, string>> = {
   header: 'Encabezado', title: 'Título', text: 'Texto', ai: 'Bloque IA', responses: 'Bloque de respuestas',
-  image: 'Imagen', button: 'Botón', spacer: 'Espaciador', social: 'Redes Sociales',
+  footer: 'Footer legal', image: 'Imagen', button: 'Botón', spacer: 'Espaciador', social: 'Redes Sociales',
 };
 
 function ComponentTypeFields({ component, onUpdate }: { component: Component; onUpdate: (c: Component) => void }) {
@@ -1514,6 +1594,7 @@ function ComponentTypeFields({ component, onUpdate }: { component: Component; on
   if (component.type === 'ai')        return <AiContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'header')    return <HeaderContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'title')     return <TitleContentFields block={component} onUpdate={onUpdate} />;
+  if (component.type === 'footer')    return <FooterContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'responses') return <ResponsesContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'image')     return <ImageContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'button')    return <ButtonContentFields block={component} onUpdate={onUpdate} />;
@@ -1908,7 +1989,11 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                   ) : selection?.kind === 'component' && selectedComponent ? (
                     <>
                       <CollapsibleSection title="Bloque">
-                        <BlockFields design={selectedComponent.design} onUpdate={p => updateComponent(selection.rowId, selection.columnId, { ...selectedComponent, design: { ...selectedComponent.design, ...p } })} />
+                        <BlockFields
+                          design={selectedComponent.design}
+                          onUpdate={p => updateComponent(selection.rowId, selection.columnId, { ...selectedComponent, design: { ...selectedComponent.design, ...p } })}
+                          excludeAlign={selectedComponent.type === 'header' || selectedComponent.type === 'divider' || selectedComponent.type === 'footer'}
+                        />
                       </CollapsibleSection>
                       {TYPE_SECTION_TITLE[selectedComponent.type] && (
                         <CollapsibleSection title={TYPE_SECTION_TITLE[selectedComponent.type]!}>
