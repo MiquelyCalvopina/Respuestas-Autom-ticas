@@ -1211,6 +1211,9 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
   function toggleQuestion(questionId: string, isIncluded: boolean) {
     onUpdate({ ...block, questions: block.questions.map(q => q.questionId === questionId ? { ...q, included: isIncluded } : q) });
   }
+  function setIncludedFor(ids: string[], isIncluded: boolean) {
+    onUpdate({ ...block, questions: block.questions.map(q => ids.includes(q.questionId) ? { ...q, included: isIncluded } : q) });
+  }
   function moveIncluded(from: number, to: number) {
     const includedBqs = block.questions.filter(q => q.included);
     const restBqs = block.questions.filter(q => !q.included);
@@ -1233,6 +1236,27 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
             size="small" allowClear value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por texto o tipo…" prefix={<Text type="secondary" style={{ fontSize: 12 }}>🔍</Text>}
           />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+            {term ? (
+              <>
+                <Button size="small" onClick={() => setIncludedFor([...includedFiltered, ...excludedFiltered].map(x => x.q.id), true)}>
+                  Seleccionar coincidencias ({includedFiltered.length + excludedFiltered.length})
+                </Button>
+                <Button size="small" onClick={() => setIncludedFor([...includedFiltered, ...excludedFiltered].map(x => x.q.id), false)}>
+                  Quitar coincidencias
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button size="small" onClick={() => setIncludedFor(withMeta.map(x => x.q.id), true)}>
+                  Seleccionar todas ({withMeta.length})
+                </Button>
+                <Button size="small" onClick={() => setIncludedFor(withMeta.map(x => x.q.id), false)} disabled={included.length === 0}>
+                  Quitar todas
+                </Button>
+              </>
+            )}
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 320, overflowY: 'auto', marginTop: 8, paddingRight: 2 }}>
             {includedFiltered.length === 0 && excludedFiltered.length === 0 && (
               <Text type="secondary" style={{ fontSize: 12, padding: '8px 0' }}>Sin resultados para "{search}".</Text>
