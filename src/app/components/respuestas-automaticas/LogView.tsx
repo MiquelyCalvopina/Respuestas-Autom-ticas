@@ -45,7 +45,6 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
           <Button
             key={f.key}
             type={filter === f.key ? 'primary' : 'default'}
-            size="small"
             onClick={() => setFilter(f.key)}
           >
             {f.label} ({f.count})

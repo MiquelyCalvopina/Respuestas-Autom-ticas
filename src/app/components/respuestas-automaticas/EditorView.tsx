@@ -9,7 +9,7 @@ import {
   AlignCenterOutlined, AlignRightOutlined, MinusOutlined, UnorderedListOutlined,
   ThunderboltOutlined, HolderOutlined, TableOutlined, PictureOutlined, LinkOutlined,
   ColumnHeightOutlined, ShareAltOutlined, InfoCircleFilled, ExclamationCircleFilled, QuestionCircleOutlined,
-  UploadOutlined,
+  UploadOutlined, SearchOutlined,
 } from '@ant-design/icons';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -789,7 +789,6 @@ function ColorPickerField({ value, onChange, allowTransparent, full }: { value: 
             ))}
           </div>
           <Input
-            size="small"
             placeholder="#RRGGBB"
             value={value === 'transparent' ? '' : value}
             onChange={e => onChange(e.target.value)}
@@ -852,7 +851,7 @@ function PaddingField({ label, value, onChange }: { label: string; value: number
   return (
     <div>
       <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>{label}</Text>
-      <InputNumber size="small" value={value} onChange={v => onChange(v ?? 0)} style={{ width: '100%' }} min={0} addonAfter="px" />
+      <InputNumber value={value} onChange={v => onChange(v ?? 0)} style={{ width: '100%' }} min={0} addonAfter="px" />
     </div>
   );
 }
@@ -865,9 +864,9 @@ function BorderFields({ borderColor, borderWidth, borderStyle, onUpdate }: {
       <FieldLabel>Borde</FieldLabel>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <ColorPickerField value={borderColor} onChange={c => onUpdate({ borderColor: c })} />
-        <InputNumber size="small" min={0} value={borderWidth} onChange={v => onUpdate({ borderWidth: v ?? 0 })} style={{ flex: 1 }} addonAfter="px" />
+        <InputNumber min={0} value={borderWidth} onChange={v => onUpdate({ borderWidth: v ?? 0 })} style={{ flex: 1 }} addonAfter="px" />
       </div>
-      <Radio.Group size="small" value={borderStyle} onChange={e => onUpdate({ borderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+      <Radio.Group value={borderStyle} onChange={e => onUpdate({ borderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
         <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
         <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
         <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
@@ -895,11 +894,11 @@ function LayoutConfigFields({ layout, onUpdate }: { layout: EmailLayoutConfig; o
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <FieldLabel>Ancho del contenido</FieldLabel>
-        <InputNumber size="small" value={layout.widthPercent} min={10} max={100} addonAfter="%" onChange={v => onUpdate({ widthPercent: v ?? 100 })} style={{ width: '100%' }} />
+        <InputNumber value={layout.widthPercent} min={10} max={100} addonAfter="%" onChange={v => onUpdate({ widthPercent: v ?? 100 })} style={{ width: '100%' }} />
       </div>
       <div>
         <FieldLabel>Estilo del contenedor</FieldLabel>
-        <Radio.Group size="small" value={layout.boxed} onChange={e => onUpdate({ boxed: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+        <Radio.Group value={layout.boxed} onChange={e => onUpdate({ boxed: e.target.value })} style={{ display: 'flex', width: '100%' }}>
           <Radio.Button value={true} style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Con margen</Radio.Button>
           <Radio.Button value={false} style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ancho completo</Radio.Button>
         </Radio.Group>
@@ -928,7 +927,7 @@ function BlockFields<T extends {
       {!excludeAlign && (
         <div>
           <FieldLabel>Alineación</FieldLabel>
-          <Radio.Group size="small" value={design.textAlign ?? 'left'} onChange={e => onUpdate({ textAlign: e.target.value } as Partial<T>)} style={{ display: 'flex', width: '100%' }}>
+          <Radio.Group value={design.textAlign ?? 'left'} onChange={e => onUpdate({ textAlign: e.target.value } as Partial<T>)} style={{ display: 'flex', width: '100%' }}>
             <Radio.Button value="left" style={{ flex: 1, textAlign: 'center' }}><AlignLeftOutlined /></Radio.Button>
             <Radio.Button value="center" style={{ flex: 1, textAlign: 'center' }}><AlignCenterOutlined /></Radio.Button>
             <Radio.Button value="right" style={{ flex: 1, textAlign: 'center' }}><AlignRightOutlined /></Radio.Button>
@@ -1007,12 +1006,12 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
             </Card>
           ))}
         </div>
-        {block.tone === 'custom' && <Input size="small" style={{ marginTop: 6 }} value={block.customTone} onChange={e => onUpdate({ ...block, customTone: e.target.value })} placeholder="Describe el tono…" />}
+        {block.tone === 'custom' && <Input style={{ marginTop: 6 }} value={block.customTone} onChange={e => onUpdate({ ...block, customTone: e.target.value })} placeholder="Describe el tono…" />}
       </div>
       <div>
         <FieldLabel tooltip="Solo aplica al texto que genera este bloque IA. El resto del correo mantiene su propio idioma.">Idioma del texto generado</FieldLabel>
         <Select
-          size="small" style={{ width: '100%' }} value={block.idioma}
+          style={{ width: '100%' }} value={block.idioma}
           onChange={v => onUpdate({ ...block, idioma: v as AiLanguage })}
           options={Object.entries(IDIOMA_LABELS).map(([value, label]) => ({ value, label }))}
         />
@@ -1020,7 +1019,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
       <div>
         <FieldLabel tooltip="La IA nunca hará ni sugerirá estas acciones, sin importar el objetivo o el tono elegidos. Elige de la lista o escribe la tuya y presiona Enter.">Acciones prohibidas</FieldLabel>
         <Select
-          mode="tags" size="small" style={{ width: '100%' }} value={block.restricciones}
+          mode="tags" style={{ width: '100%' }} value={block.restricciones}
           onChange={v => onUpdate({ ...block, restricciones: v })}
           options={RESTRICCION_SUGERENCIAS.map(r => ({ value: r, label: r }))}
           placeholder="Elige o escribe una acción prohibida…"
@@ -1036,12 +1035,12 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
       <div style={{ display: 'flex', gap: 8 }}>
         <div style={{ flex: 1 }}>
           <FieldLabel>Tamaño px</FieldLabel>
-          <InputNumber size="small" min={10} max={24} value={block.fontSize} onChange={v => onUpdate({ ...block, fontSize: v ?? 13 })} style={{ width: '100%' }} />
+          <InputNumber min={10} max={24} value={block.fontSize} onChange={v => onUpdate({ ...block, fontSize: v ?? 13 })} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1 }}>
           <FieldLabel tooltip="Espacio vertical entre líneas del párrafo generado.">Interlineado</FieldLabel>
           <Select
-            size="small" style={{ width: '100%' }} value={block.lineHeight}
+            style={{ width: '100%' }} value={block.lineHeight}
             onChange={v => onUpdate({ ...block, lineHeight: v })}
             options={[
               { value: 1.4, label: 'Compacto' },
@@ -1055,7 +1054,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
       <div style={{ display: 'flex', gap: 8 }}>
         <div style={{ flex: 1 }}>
           <FieldLabel tooltip="Cursiva o normal — el formato tipográfico del párrafo generado.">Estilo</FieldLabel>
-          <Radio.Group size="small" value={block.fontStyle} onChange={e => onUpdate({ ...block, fontStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+          <Radio.Group value={block.fontStyle} onChange={e => onUpdate({ ...block, fontStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
             <Radio.Button value="italic" style={{ flex: 1, textAlign: 'center', fontStyle: 'italic' }}>Cursiva</Radio.Button>
             <Radio.Button value="normal" style={{ flex: 1, textAlign: 'center' }}>Normal</Radio.Button>
           </Radio.Group>
@@ -1078,11 +1077,11 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
       <div style={{ display: 'flex', gap: 8 }}>
         <div style={{ flex: 1 }}>
           <FieldLabel>Grosor borde</FieldLabel>
-          <InputNumber size="small" min={0} max={8} value={block.cardBorderWidth} onChange={v => onUpdate({ ...block, cardBorderWidth: v ?? 1 })} style={{ width: '100%' }} addonAfter="px" />
+          <InputNumber min={0} max={8} value={block.cardBorderWidth} onChange={v => onUpdate({ ...block, cardBorderWidth: v ?? 1 })} style={{ width: '100%' }} addonAfter="px" />
         </div>
         <div style={{ flex: 1 }}>
           <FieldLabel>Estilo borde</FieldLabel>
-          <Radio.Group size="small" value={block.cardBorderStyle} onChange={e => onUpdate({ ...block, cardBorderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+          <Radio.Group value={block.cardBorderStyle} onChange={e => onUpdate({ ...block, cardBorderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
             <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
             <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
             <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
@@ -1101,7 +1100,7 @@ function HeaderContentFields({ block, onUpdate }: { block: HeaderBlock; onUpdate
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div>
         <FieldLabel>Nombre o logo</FieldLabel>
-        <Input size="small" value={block.name} onChange={e => onUpdate({ ...block, name: e.target.value })} />
+        <Input value={block.name} onChange={e => onUpdate({ ...block, name: e.target.value })} />
       </div>
       <div>
         <FieldLabel>Color de fondo</FieldLabel>
@@ -1118,7 +1117,7 @@ function TitleContentFields({ block, onUpdate }: { block: TitleBlock; onUpdate: 
   return (
     <div>
       <FieldLabel>Texto del título</FieldLabel>
-      <Input size="small" value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} />
+      <Input value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} />
     </div>
   );
 }
@@ -1131,7 +1130,7 @@ function SubSectionHeading({ children }: { children: React.ReactNode }) {
 }
 function WeightField({ value, onChange }: { value: '400' | '600' | '700'; onChange: (v: '400' | '600' | '700') => void }) {
   return (
-    <Radio.Group size="small" value={value} onChange={e => onChange(e.target.value)} style={{ display: 'flex', width: '100%' }}>
+    <Radio.Group value={value} onChange={e => onChange(e.target.value)} style={{ display: 'flex', width: '100%' }}>
       <Radio.Button value="400" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Normal</Radio.Button>
       <Radio.Button value="600" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Semi</Radio.Button>
       <Radio.Button value="700" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Bold</Radio.Button>
@@ -1233,25 +1232,25 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <div>
           <FieldLabel>Buscar preguntas del estudio</FieldLabel>
           <Input
-            size="small" allowClear value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por texto o tipo…" prefix={<Text type="secondary" style={{ fontSize: 12 }}>🔍</Text>}
+            allowClear value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar por texto o tipo…" prefix={<SearchOutlined style={{ color: 'rgba(0,0,0,0.25)' }} />}
           />
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
             {term ? (
               <>
-                <Button size="small" onClick={() => setIncludedFor([...includedFiltered, ...excludedFiltered].map(x => x.q.id), true)}>
+                <Button onClick={() => setIncludedFor([...includedFiltered, ...excludedFiltered].map(x => x.q.id), true)}>
                   Seleccionar coincidencias ({includedFiltered.length + excludedFiltered.length})
                 </Button>
-                <Button size="small" onClick={() => setIncludedFor([...includedFiltered, ...excludedFiltered].map(x => x.q.id), false)}>
+                <Button onClick={() => setIncludedFor([...includedFiltered, ...excludedFiltered].map(x => x.q.id), false)}>
                   Quitar coincidencias
                 </Button>
               </>
             ) : (
               <>
-                <Button size="small" onClick={() => setIncludedFor(withMeta.map(x => x.q.id), true)}>
+                <Button onClick={() => setIncludedFor(withMeta.map(x => x.q.id), true)}>
                   Seleccionar todas ({withMeta.length})
                 </Button>
-                <Button size="small" onClick={() => setIncludedFor(withMeta.map(x => x.q.id), false)} disabled={included.length === 0}>
+                <Button onClick={() => setIncludedFor(withMeta.map(x => x.q.id), false)} disabled={included.length === 0}>
                   Quitar todas
                 </Button>
               </>
@@ -1292,7 +1291,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <div>
           <FieldLabel>Estilo de visualización</FieldLabel>
           <Select
-            size="small" style={{ width: '100%' }} value={block.displayStyle}
+            style={{ width: '100%' }} value={block.displayStyle}
             onChange={v => onUpdate({ ...block, displayStyle: v as ResponsesBlock['displayStyle'] })}
             options={[
               { value: 'bold-indented', label: 'Pregunta en negrita + respuesta con sangría' },
@@ -1304,11 +1303,11 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ flex: 1 }}>
             <FieldLabel>Ancho del contenedor</FieldLabel>
-            <InputNumber size="small" min={40} max={100} value={block.containerWidth} onChange={v => onUpdate({ ...block, containerWidth: v ?? 100 })} style={{ width: '100%' }} addonAfter="%" />
+            <InputNumber min={40} max={100} value={block.containerWidth} onChange={v => onUpdate({ ...block, containerWidth: v ?? 100 })} style={{ width: '100%' }} addonAfter="%" />
           </div>
           <div style={{ flex: 1 }}>
             <FieldLabel>Radio de esquinas</FieldLabel>
-            <InputNumber size="small" min={0} max={24} value={block.containerBorderRadius} onChange={v => onUpdate({ ...block, containerBorderRadius: v ?? 0 })} style={{ width: '100%' }} addonAfter="px" />
+            <InputNumber min={0} max={24} value={block.containerBorderRadius} onChange={v => onUpdate({ ...block, containerBorderRadius: v ?? 0 })} style={{ width: '100%' }} addonAfter="px" />
           </div>
         </div>
       </CollapsibleSection>
@@ -1317,7 +1316,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <SubSectionHeading>Etiqueta del bloque</SubSectionHeading>
         <div>
           <FieldLabel>Texto</FieldLabel>
-          <Input size="small" value={block.headerLabel} onChange={e => onUpdate({ ...block, headerLabel: e.target.value })} />
+          <Input value={block.headerLabel} onChange={e => onUpdate({ ...block, headerLabel: e.target.value })} />
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ flex: 1 }}>
@@ -1326,7 +1325,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
           </div>
           <div style={{ flex: 1 }}>
             <FieldLabel>Tamaño</FieldLabel>
-            <InputNumber size="small" min={8} max={16} value={block.headerSize} onChange={v => onUpdate({ ...block, headerSize: v ?? 10 })} style={{ width: '100%' }} addonAfter="px" />
+            <InputNumber min={8} max={16} value={block.headerSize} onChange={v => onUpdate({ ...block, headerSize: v ?? 10 })} style={{ width: '100%' }} addonAfter="px" />
           </div>
         </div>
 
@@ -1344,7 +1343,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ flex: 1 }}>
             <FieldLabel>Tamaño px</FieldLabel>
-            <InputNumber size="small" min={9} max={20} value={block.questionSize} onChange={v => onUpdate({ ...block, questionSize: v ?? 13 })} style={{ width: '100%' }} />
+            <InputNumber min={9} max={20} value={block.questionSize} onChange={v => onUpdate({ ...block, questionSize: v ?? 13 })} style={{ width: '100%' }} />
           </div>
           <div style={{ flex: 1 }}>
             <FieldLabel>Peso</FieldLabel>
@@ -1366,7 +1365,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ flex: 1 }}>
             <FieldLabel>Tamaño px</FieldLabel>
-            <InputNumber size="small" min={9} max={20} value={block.answerSize} onChange={v => onUpdate({ ...block, answerSize: v ?? 13 })} style={{ width: '100%' }} />
+            <InputNumber min={9} max={20} value={block.answerSize} onChange={v => onUpdate({ ...block, answerSize: v ?? 13 })} style={{ width: '100%' }} />
           </div>
           <div style={{ flex: 1 }}>
             <FieldLabel>Peso</FieldLabel>
@@ -1389,7 +1388,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <SubSectionHeading>Separadores y espaciado</SubSectionHeading>
         <div>
           <FieldLabel>Estilo separador</FieldLabel>
-          <Radio.Group size="small" value={block.separatorStyle} onChange={e => onUpdate({ ...block, separatorStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+          <Radio.Group value={block.separatorStyle} onChange={e => onUpdate({ ...block, separatorStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
             <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
             <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
             <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
@@ -1424,7 +1423,7 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div>
         <FieldLabel>Origen</FieldLabel>
-        <Radio.Group size="small" value={block.dynamic} onChange={e => onUpdate({ ...block, dynamic: e.target.value })}>
+        <Radio.Group value={block.dynamic} onChange={e => onUpdate({ ...block, dynamic: e.target.value })}>
           <Radio value={false}>Imagen estática</Radio>
           <Radio value={true}>Imagen dinámica</Radio>
         </Radio.Group>
@@ -1433,12 +1432,12 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
         <FieldLabel>Imagen</FieldLabel>
         <div style={{ display: 'flex', gap: 8 }}>
           <Input
-            ref={urlRef} size="small" value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })}
+            ref={urlRef} value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })}
             placeholder={block.dynamic ? 'https://.../{{variable}}.png' : 'https://...'}
             style={{ flex: 1 }}
           />
           <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
-          <Button size="small" icon={<UploadOutlined />} onClick={() => fileInputRef.current?.click()}>Subir</Button>
+          <Button icon={<UploadOutlined />} onClick={() => fileInputRef.current?.click()}>Subir</Button>
         </div>
         <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>Sube un archivo o pega el enlace de una imagen.</Text>
       </div>
@@ -1465,11 +1464,11 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
       )}
       <div>
         <FieldLabel>Texto alternativo</FieldLabel>
-        <Input size="small" value={block.alt} onChange={e => onUpdate({ ...block, alt: e.target.value })} />
+        <Input value={block.alt} onChange={e => onUpdate({ ...block, alt: e.target.value })} />
       </div>
       <div>
         <FieldLabel>Tamaño</FieldLabel>
-        <InputNumber size="small" min={10} max={100} value={block.widthPercent} addonAfter="%" onChange={v => onUpdate({ ...block, widthPercent: v ?? 100 })} style={{ width: '100%' }} />
+        <InputNumber min={10} max={100} value={block.widthPercent} addonAfter="%" onChange={v => onUpdate({ ...block, widthPercent: v ?? 100 })} style={{ width: '100%' }} />
       </div>
     </div>
   );
@@ -1478,10 +1477,10 @@ function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUp
   const urlRef = useRef<InputRef>(null);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div><FieldLabel>Texto del botón</FieldLabel><Input size="small" value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} /></div>
+      <div><FieldLabel>Texto del botón</FieldLabel><Input value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} /></div>
       <div>
         <FieldLabel>URL de destino</FieldLabel>
-        <Input ref={urlRef} size="small" value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })} placeholder="https://.../{{variable}}" />
+        <Input ref={urlRef} value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })} placeholder="https://.../{{variable}}" />
       </div>
       <div>
         <FieldLabel>Insertar variable</FieldLabel>
@@ -1511,7 +1510,7 @@ function SpacerContentFields({ block, onUpdate }: { block: SpacerComponent; onUp
   return (
     <div>
       <FieldLabel>Tamaño</FieldLabel>
-      <InputNumber size="small" min={4} max={200} value={block.height} addonAfter="px" onChange={v => onUpdate({ ...block, height: v ?? 24 })} style={{ width: '100%' }} />
+      <InputNumber min={4} max={200} value={block.height} addonAfter="px" onChange={v => onUpdate({ ...block, height: v ?? 24 })} style={{ width: '100%' }} />
     </div>
   );
 }
@@ -1529,7 +1528,7 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div>
         <FieldLabel>Tipo</FieldLabel>
-        <Radio.Group size="small" value={block.style} onChange={e => onUpdate({ ...block, style: e.target.value })} style={{ width: '100%', display: 'flex' }}>
+        <Radio.Group value={block.style} onChange={e => onUpdate({ ...block, style: e.target.value })} style={{ width: '100%', display: 'flex' }}>
           <Radio.Button value="negro" style={{ flex: 1, textAlign: 'center' }}>Negro</Radio.Button>
           <Radio.Button value="blanco" style={{ flex: 1, textAlign: 'center' }}>Blanco</Radio.Button>
           <Radio.Button value="color" style={{ flex: 1, textAlign: 'center' }}>Color</Radio.Button>
@@ -1538,16 +1537,16 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
       <div style={{ display: 'flex', gap: 8 }}>
         <div style={{ flex: 1 }}>
           <FieldLabel>Tamaño</FieldLabel>
-          <InputNumber size="small" min={12} max={64} value={block.size} addonAfter="px" onChange={v => onUpdate({ ...block, size: v ?? 26 })} style={{ width: '100%' }} />
+          <InputNumber min={12} max={64} value={block.size} addonAfter="px" onChange={v => onUpdate({ ...block, size: v ?? 26 })} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1 }}>
           <FieldLabel>Espacio entre íconos</FieldLabel>
-          <InputNumber size="small" min={0} max={40} value={block.gap} addonAfter="px" onChange={v => onUpdate({ ...block, gap: v ?? 8 })} style={{ width: '100%' }} />
+          <InputNumber min={0} max={40} value={block.gap} addonAfter="px" onChange={v => onUpdate({ ...block, gap: v ?? 8 })} style={{ width: '100%' }} />
         </div>
       </div>
       <div>
         <FieldLabel>Estilo del borde</FieldLabel>
-        <Radio.Group size="small" value={block.shape} onChange={e => onUpdate({ ...block, shape: e.target.value })} style={{ display: 'flex' }}>
+        <Radio.Group value={block.shape} onChange={e => onUpdate({ ...block, shape: e.target.value })} style={{ display: 'flex' }}>
           <Radio.Button value="square" style={{ flex: 1, textAlign: 'center' }}><ShapeSwatch shape="square" /></Radio.Button>
           <Radio.Button value="rounded" style={{ flex: 1, textAlign: 'center' }}><ShapeSwatch shape="rounded" /></Radio.Button>
           <Radio.Button value="circle" style={{ flex: 1, textAlign: 'center' }}><ShapeSwatch shape="circle" /></Radio.Button>
@@ -1560,7 +1559,7 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
               <Text style={{ fontSize: 12 }}>{SOCIAL_ICONS[entry.network]} {SOCIAL_LABELS[entry.network]}</Text>
             </Checkbox>
             <Input
-              size="small" addonBefore="https://" maxLength={300}
+              addonBefore="https://" maxLength={300}
               value={entry.url} onChange={e => setEntry(entry.network, { url: e.target.value })}
               placeholder={`www.${SOCIAL_LABELS[entry.network].toLowerCase()}.com/hircasa`}
               style={{ marginTop: 4 }}
@@ -1793,7 +1792,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
       <Text type="secondary" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', flexShrink: 0 }}>ASUNTO</Text>
       {editingSubject ? (
         <Input
-          autoFocus size="small" bordered={false}
+          autoFocus bordered={false}
           value={draft.subject} onChange={e => updateDraft({ subject: e.target.value })}
           onBlur={() => setEditingSubject(false)} onKeyDown={e => e.key === 'Enter' && setEditingSubject(false)}
           style={{ flex: 1, padding: 0 }}
@@ -1803,7 +1802,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
           <span style={{ flex: 1, fontSize: 13, color: draft.subject ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.25)' }}
             dangerouslySetInnerHTML={{ __html: draft.subject ? renderVars(draft.subject) : 'Sin asunto…' }}
           />
-          <Button size="small" onClick={() => setEditingSubject(true)}>Editar</Button>
+          <Button onClick={() => setEditingSubject(true)}>Editar</Button>
         </>
       )}
     </div>

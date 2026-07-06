@@ -173,7 +173,7 @@ function SchedulePopover({ rule, onSchedule, onCancelSchedule }: {
               <span style={{ fontSize: 12, fontFamily: "'Roboto', sans-serif", color: 'rgba(0,0,0,0.65)' }}>
                 Programada para <strong>{dayjs(rule.scheduledAt).format('DD MMM, HH:mm')}</strong>.
               </span>
-              <Button size="small" danger onClick={() => { onCancelSchedule(); setOpen(false); }}>
+              <Button danger onClick={() => { onCancelSchedule(); setOpen(false); }}>
                 Cancelar programación
               </Button>
             </>
@@ -183,13 +183,13 @@ function SchedulePopover({ rule, onSchedule, onCancelSchedule }: {
                 Programar activación
               </span>
               <DatePicker
-                showTime size="small" style={{ width: '100%' }}
+                showTime style={{ width: '100%' }}
                 value={picked} onChange={setPicked}
                 disabledDate={d => !!d && d.isBefore(dayjs(), 'day')}
                 placeholder="Fecha y hora"
               />
               <Button
-                size="small" type="primary" disabled={!picked}
+                type="primary" disabled={!picked}
                 onClick={() => { if (picked) { onSchedule(picked.toISOString()); setOpen(false); setPicked(null); } }}
               >
                 Programar

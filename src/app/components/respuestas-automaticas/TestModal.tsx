@@ -91,7 +91,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
     return (
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
         {Array.from({ length: max + 1 }, (_, n) => n).map(n => (
-          <Button key={n} size="small" type={value === n ? 'primary' : 'default'} onClick={() => onChange(n)} style={{ minWidth: 30 }}>{n}</Button>
+          <Button key={n} type={value === n ? 'primary' : 'default'} onClick={() => onChange(n)} style={{ minWidth: 30 }}>{n}</Button>
         ))}
       </div>
     );
@@ -99,7 +99,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
   if (q.tipo === 'CES') {
     const max = q.escala?.[1] ?? 7;
     return (
-      <Select size="small" value={value as number} onChange={onChange} style={{ width: 140 }}
+      <Select value={value as number} onChange={onChange} style={{ width: 140 }}
         options={Array.from({ length: max }, (_, i) => i + 1).map(n => ({ value: n, label: `${n} de ${max}` }))} />
     );
   }
@@ -113,7 +113,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
         {(q.atributos ?? []).map(a => (
           <div key={a} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
             <Text style={{ fontSize: 11.5, color: 'rgba(0,0,0,0.65)' }}>{a}</Text>
-            <Select size="small" value={v[a]} onChange={n => onChange({ ...v, [a]: n })} style={{ width: 110 }}
+            <Select value={v[a]} onChange={n => onChange({ ...v, [a]: n })} style={{ width: 110 }}
               options={Array.from({ length: q.escala?.[1] ?? 5 }, (_, i) => i + 1).map(n => ({ value: n, label: `${n} de ${q.escala?.[1] ?? 5}` }))} />
           </div>
         ))}
@@ -130,7 +130,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
         {(q.campos ?? []).map(c => (
           <div key={c.nombre}>
             <Text type="secondary" style={{ fontSize: 10.5, display: 'block', marginBottom: 2 }}>{c.nombre}</Text>
-            <Input size="small" value={v[c.nombre]} onChange={e => onChange({ ...v, [c.nombre]: e.target.value })} />
+            <Input value={v[c.nombre]} onChange={e => onChange({ ...v, [c.nombre]: e.target.value })} />
           </div>
         ))}
       </div>
@@ -144,7 +144,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
         <Radio.Group value={v.option} onChange={e => onChange({ ...v, option: e.target.value })} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {optionTexts(q).map(opt => <Radio key={opt} value={opt} style={{ fontSize: 12 }}>{opt}</Radio>)}
         </Radio.Group>
-        {canComment && <Input size="small" placeholder="Comentario de la opción…" value={v.comment} onChange={e => onChange({ ...v, comment: e.target.value })} />}
+        {canComment && <Input placeholder="Comentario de la opción…" value={v.comment} onChange={e => onChange({ ...v, comment: e.target.value })} />}
       </div>
     );
   }
@@ -156,7 +156,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
         <Checkbox.Group value={v.options} onChange={opts => onChange({ ...v, options: opts as string[] })} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {optionTexts(q).map(opt => <Checkbox key={opt} value={opt} style={{ fontSize: 12 }}>{opt}</Checkbox>)}
         </Checkbox.Group>
-        {canComment && <Input size="small" placeholder="Comentario de una opción…" value={v.comment} onChange={e => onChange({ ...v, comment: e.target.value })} />}
+        {canComment && <Input placeholder="Comentario de una opción…" value={v.comment} onChange={e => onChange({ ...v, comment: e.target.value })} />}
       </div>
     );
   }
@@ -175,11 +175,11 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
       <div style={{ display: 'flex', gap: 8 }}>
         <div>
           <Text type="secondary" style={{ fontSize: 10.5, display: 'block' }}>Más importante</Text>
-          <Select size="small" value={v.mas} onChange={mas => onChange({ ...v, mas })} options={opts} style={{ width: 160 }} />
+          <Select value={v.mas} onChange={mas => onChange({ ...v, mas })} options={opts} style={{ width: 160 }} />
         </div>
         <div>
           <Text type="secondary" style={{ fontSize: 10.5, display: 'block' }}>Menos importante</Text>
-          <Select size="small" value={v.menos} onChange={menos => onChange({ ...v, menos })} options={opts} style={{ width: 160 }} />
+          <Select value={v.menos} onChange={menos => onChange({ ...v, menos })} options={opts} style={{ width: 160 }} />
         </div>
       </div>
     );
