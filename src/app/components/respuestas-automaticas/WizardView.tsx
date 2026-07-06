@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button, Input, Select, Segmented, Radio, DatePicker, InputNumber, Popconfirm, Modal } from 'antd';
-import { RightOutlined, PlusOutlined, CheckOutlined, DeleteOutlined, CheckCircleFilled, BranchesOutlined, HolderOutlined, InfoCircleFilled } from '@ant-design/icons';
+import { RightOutlined, PlusOutlined, CheckOutlined, DeleteOutlined, CheckCircleFilled, BranchesOutlined, HolderOutlined, InfoCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { AutoResponse, ConditionGroup, ConditionRule, Pregunta, OpcionConComentario, SubCondition } from './types';
-import { VARIABLES, PREGUNTAS_EJEMPLO, ETIQUETAS_CATEGORIZACION, countComponents } from './data';
+import { AutoResponse, ConditionGroup, ConditionRule, Pregunta, OpcionConComentario, SubCondition, AiBlock } from './types';
+import { PREGUNTAS_EJEMPLO, ETIQUETAS_CATEGORIZACION, countComponents, describeRecipientSource } from './data';
 import { cuid } from './cuid';
 
 interface Props {
@@ -99,6 +99,18 @@ function TriggerCard({ selected, onSelect, title, description }: {
 
 // ─── Step 1 — Detalles ────────────────────────────────────────────────────────
 
+const RECIPIENT_EMAIL_QUESTIONS = PREGUNTAS_EJEMPLO.flatMap(q => {
+  if (q.tipo === 'respuesta_abierta' && q.validacion === 'correo') {
+    return [{ value: `pregunta:${q.id}`, label: q.texto }];
+  }
+  if (q.tipo === 'formulario') {
+    return (q.campos ?? [])
+      .filter(c => c.tipo === 'correo')
+      .map(c => ({ value: `pregunta:${q.id}:campo:${c.nombre}`, label: `${q.texto} → ${c.nombre}` }));
+  }
+  return [];
+});
+
 function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoResponse) => void }) {
   return (
     <div style={{ padding: '24px 250px', display: 'flex', flexDirection: 'column', gap: 16, background: '#fff' }}>
@@ -140,11 +152,22 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
           value={rule.recipientVariable || 'correo_electronico'}
           onChange={v => onChange({ ...rule, recipientVariable: v })}
           style={{ width: '100%', borderRadius: 8, fontFamily: "'Roboto', sans-serif" }}
-          options={VARIABLES.map(v => ({ value: v, label: v }))}
+          options={[
+            { label: 'Datos de contacto', options: [{ value: 'correo_electronico', label: 'correo_electronico' }] },
+            ...(RECIPIENT_EMAIL_QUESTIONS.length ? [{ label: 'Preguntas del estudio', options: RECIPIENT_EMAIL_QUESTIONS }] : []),
+          ]}
         />
         <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '4px 0 0 0', lineHeight: 'normal' }}>
           El sistema enviará el correo al valor de este dato para cada encuestado. Si está vacío, ese envío se omite y queda registrado en el historial como <strong style={{ color: 'rgba(0,0,0,0.65)' }}>No enviado</strong>.
         </p>
+        <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 8, padding: '10px 12px', marginTop: 10 }}>
+          <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.65)', margin: 0, lineHeight: 1.6 }}>
+            Esta regla funciona cuando el encuestado recibió el estudio por <strong>correo</strong> vía Plugthem, por <strong>WhatsApp</strong> vía Plugthem si la fuente elegida tiene valor, o por <strong>enlace personalizado</strong> si la base cargada incluía ese dato. No funciona para encuestados que respondieron por <strong>enlace genérico o QR</strong>, porque no tienen datos de contacto registrados.
+          </p>
+          <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '6px 0 0 0', lineHeight: 1.6 }}>
+            WhatsApp como canal de respuesta automática llega en una próxima versión — requiere plantillas aprobadas por Meta, un proveedor de envío y costo por mensaje.
+          </p>
+        </div>
       </div>
 
       {/* Disparador */}
@@ -166,6 +189,9 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
             description="Se ejecuta cuando un encuestado termina el estudio. Aplica a todas las despedidas o una específica."
           />
         </div>
+        <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '8px 0 0 0', lineHeight: 1.6 }}>
+          El correo no llega en el momento exacto de la respuesta, sino entre 2 y 7 minutos después — el sistema primero procesa la respuesta completa antes de enviarlo.
+        </p>
       </div>
 
       {/* Remitente + Reply-to */}
@@ -1125,14 +1151,16 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 function VariablePill({ value }: { value: string }) {
+  const isQuestion = value.startsWith('pregunta:');
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 2,
       background: 'var(--ds-violet-bg)', color: 'var(--ds-violet)',
       border: '1px solid var(--ds-violet-mid)', borderRadius: 100,
-      padding: '1px 10px', fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
+      padding: '1px 10px', fontFamily: isQuestion ? "'Roboto', sans-serif" : "'JetBrains Mono', monospace", fontSize: 12,
+      maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
     }}>
-      @{value}
+      {isQuestion ? describeRecipientSource(value) : `@${value}`}
     </span>
   );
 }
@@ -1145,6 +1173,10 @@ function formatTemplateDate(iso: string | null): string {
 
 function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () => void }) {
   const triggerLabel = rule.trigger === 'farewell' ? 'Cuando el encuestado llega a una despedida' : 'Por cada respuesta nueva';
+  const aiBlockSinObjetivo = rule.rows
+    .flatMap(r => r.columns)
+    .flatMap(c => c.components)
+    .some((comp): comp is AiBlock => comp.type === 'ai' && comp.objetivo.trim() === '');
 
   return (
     <div style={{ padding: '24px 250px', display: 'flex', flexDirection: 'column', gap: 16, background: '#fff' }}>
@@ -1183,6 +1215,15 @@ function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () =>
           />
         </div>
       </div>
+
+      {aiBlockSinObjetivo && (
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 8, padding: '10px 12px' }}>
+          <ExclamationCircleFilled style={{ color: '#faad14', fontSize: 14, marginTop: 2 }} />
+          <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.65)', margin: 0, lineHeight: 1.6 }}>
+            Tienes un bloque IA sin objetivo configurado. Ábrelo en el editor de correo y completa "¿Qué debe lograr este bloque?" antes de activar la regla.
+          </p>
+        </div>
+      )}
 
     </div>
   );

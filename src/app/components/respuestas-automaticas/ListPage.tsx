@@ -3,7 +3,7 @@ import { PlusOutlined, DownOutlined, FormOutlined, ImportOutlined, MailOutlined,
 import type { MenuProps } from 'antd';
 import svgPaths from "@/imports/BoostersPage-1/svg-hnea2jkxqi";
 import { AutoResponse } from './types';
-import { countComponents, hasAiComponent } from './data';
+import { countComponents, hasAiComponent, describeRecipientSource } from './data';
 
 interface Props {
   rules: AutoResponse[];
@@ -176,7 +176,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle }: {
             className="font-['Roboto:Regular',sans-serif] font-normal text-[12px] text-[rgba(0,0,0,0.45)]"
             style={{ fontVariationSettings: '"wdth" 100' }}
           >
-            {rule.sender || '—'} · {countComponents(rule.rows)} bloque{countComponents(rule.rows) !== 1 ? 's' : ''}
+            Enviar a: {describeRecipientSource(rule.recipientVariable)} · {countComponents(rule.rows)} bloque{countComponents(rule.rows) !== 1 ? 's' : ''}
           </span>
         </div>
         <Switch checked={rule.active} onChange={onToggle} size="small" />
@@ -186,7 +186,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle }: {
       <div className="flex flex-wrap gap-[8px]">
         {statusBadge(rule)}
         {triggerBadge(rule.trigger)}
-        {condCount > 0 && <Badge tone="neutral">{condCount} condici{condCount !== 1 ? 'ones' : 'ón'}</Badge>}
+        <Badge tone="neutral">{condCount > 0 ? `${condCount} condici${condCount !== 1 ? 'ones' : 'ón'}` : 'Todas las respuestas'}</Badge>
         {hasAi && <Badge tone="ai"><ThunderboltOutlined style={{ marginRight: 4 }} />Bloque IA</Badge>}
       </div>
 

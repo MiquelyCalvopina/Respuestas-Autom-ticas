@@ -18,6 +18,19 @@ export const VARIABLES = [
   'canal', 'telefono', 'identificador', 'numero_credito',
 ];
 
+// Decodifica el valor de AutoResponse.recipientVariable, que puede ser una variable plana
+// (ej. "correo_electronico") o una referencia a una pregunta del estudio: "pregunta:{id}"
+// (respuesta abierta que valida correo) o "pregunta:{id}:campo:{nombre}" (campo tipo correo
+// dentro de un Formulario).
+export function describeRecipientSource(value: string): string {
+  if (!value) return 'correo_electronico';
+  const parts = value.split(':');
+  if (parts[0] !== 'pregunta') return value;
+  const pregunta = PREGUNTAS_EJEMPLO.find(p => p.id === parts[1]);
+  if (!pregunta) return value;
+  return parts[2] === 'campo' ? `${pregunta.texto} → ${parts[3]}` : pregunta.texto;
+}
+
 export const TONOS: Record<string, string> = {
   empatico: 'empático y cercano, mostrando comprensión genuina sin ser condescendiente',
   formal: 'formal y profesional, corporativo y preciso',
