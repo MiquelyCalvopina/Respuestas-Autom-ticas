@@ -5,7 +5,7 @@ import {
 } from 'antd';
 import {
   SendOutlined, CopyOutlined, CloseOutlined, PlusOutlined, BoldOutlined, AlignLeftOutlined,
-  AlignCenterOutlined, AlignRightOutlined, MinusOutlined, FileTextOutlined, UnorderedListOutlined,
+  AlignCenterOutlined, AlignRightOutlined, MinusOutlined, UnorderedListOutlined,
   ThunderboltOutlined, HolderOutlined, TableOutlined, PictureOutlined, LinkOutlined,
   ColumnHeightOutlined, ShareAltOutlined, InfoCircleFilled, ExclamationCircleFilled, QuestionCircleOutlined,
 } from '@ant-design/icons';
@@ -14,11 +14,11 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import CodeMirror from '@uiw/react-codemirror';
 import { html as htmlLang } from '@codemirror/lang-html';
 import {
-  AutoResponse, Row, RowDesign, Component, ComponentType, ComponentDesign, EmailLayoutConfig, TextAlign,
-  AiBlock, TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, FooterBlock,
+  AutoResponse, Row, Column, RowDesign, Component, ComponentType, ComponentDesign, EmailLayoutConfig, TextAlign,
+  AiBlock, TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, Pregunta,
   ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey, Tone, AiLanguage,
 } from './types';
-import { VARIABLES, PREGUNTAS, TONO_LABELS, IDIOMA_LABELS, HEADER_COLORS, DEFAULT_RESTRICTIONS, RESTRICCION_SUGERENCIAS, SETUP, mockGenerateAiText, countComponents } from './data';
+import { VARIABLES, PREGUNTAS_EJEMPLO, mockAnswerFor, TONO_LABELS, IDIOMA_LABELS, HEADER_COLORS, DEFAULT_RESTRICTIONS, RESTRICCION_SUGERENCIAS, SETUP, mockGenerateAiText, countComponents } from './data';
 import { cuid } from './cuid';
 import TestModal from './TestModal';
 
@@ -56,6 +56,10 @@ function decisionIcon(tone: 'info' | 'warning') {
 }
 const ROUND_BTN = { style: { borderRadius: 8 } };
 
+// Panel de propiedades — al menos 35% del ancho del editor, con un piso/techo en px
+// para que no se vuelva inusable en pantallas muy angostas ni excesivo en muy anchas.
+const SIDEBAR_WIDTH: React.CSSProperties = { width: '36%', minWidth: 380, maxWidth: 560, flexShrink: 0 };
+
 // ─── Construcción de filas/columnas/componentes ───────────────────────────────
 
 const DEFAULT_COMPONENT_DESIGN: ComponentDesign = {
@@ -79,8 +83,9 @@ function makeComponent(type: ComponentType): Component {
     };
     case 'responses': return {
       id, type,
-      questions: PREGUNTAS.map(q => ({ questionId: q.id, included: true })),
+      questions: PREGUNTAS_EJEMPLO.map(q => ({ questionId: q.id, included: true })),
       displayStyle: 'bold-indented', showQuestion: true, rowGap: 10,
+      containerWidth: 100, containerBorderRadius: 10,
       headerLabel: 'Tus respuestas', headerColor: '#9CA3AF', headerSize: 10,
       questionColor: '#1E293B', questionBg: 'transparent', questionSize: 13, questionWeight: '700',
       answerColor: '#475569', answerBg: 'transparent', answerSize: 13, answerWeight: '400',
@@ -89,7 +94,6 @@ function makeComponent(type: ComponentType): Component {
       design,
     };
     case 'divider':   return { id, type, design };
-    case 'footer':    return { id, type, text: 'Para darte de baja, responde a este correo con el asunto "Baja".\n\n© HIR Casa · Ciudad de México', design };
     case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, design };
     case 'button':    return { id, type, text: 'Responder estudio', url: '', bgColor: '#1890ff', textColor: '#ffffff', design };
     case 'spacer':    return { id, type, height: 24, design };
@@ -134,7 +138,6 @@ const COMPONENT_PALETTE: { type: ComponentType; label: string; sub: string; icon
   { type: 'social', label: 'Redes Sociales', sub: 'Íconos con enlaces', icon: <ShareAltOutlined /> },
   { type: 'ai', label: 'Bloque IA', sub: 'Texto único por encuestado', icon: '✦', violet: true },
   { type: 'responses', label: 'Bloque de respuestas', sub: 'Las respuestas del encuestado', icon: <UnorderedListOutlined /> },
-  { type: 'footer', label: 'Footer legal', sub: 'Texto legal + baja', icon: <FileTextOutlined /> },
 ];
 
 const SOCIAL_ICONS: Record<SocialNetworkKey, string> = { facebook: '📘', instagram: '📷', linkedin: '💼', youtube: '▶️', x: '✖️', pinterest: '📌' };
@@ -153,17 +156,11 @@ function formatDate(iso: string | null | undefined): string {
   return `${d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })} ${d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`;
 }
 
-function mockAnswerFor(q: (typeof PREGUNTAS)[number]): string {
-  if (q.tipo === 'NPS') return '7';
-  if (q.tipo === 'CSAT') return '★★★★☆';
-  if (q.tipo === 'seleccion_simple') return q.opciones?.[0] ?? '';
-  return 'El proceso fue satisfactorio.';
-}
-function orderedIncludedQuestions(block: ResponsesBlock): (typeof PREGUNTAS)[number][] {
+function orderedIncludedQuestions(block: ResponsesBlock): Pregunta[] {
   return block.questions
     .filter(bq => bq.included)
-    .map(bq => PREGUNTAS.find(q => q.id === bq.questionId))
-    .filter((q): q is (typeof PREGUNTAS)[number] => !!q);
+    .map(bq => PREGUNTAS_EJEMPLO.find(q => q.id === bq.questionId))
+    .filter((q): q is Pregunta => !!q);
 }
 
 function componentToHtml(c: Component): string {
@@ -183,9 +180,10 @@ function componentToHtml(c: Component): string {
       const label = `<div style="font-size:${c.headerSize}px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.headerColor};margin-bottom:${c.rowGap}px;">${c.headerLabel}</div>`;
       const qStyle = `font-size:${c.questionSize}px;font-weight:${c.questionWeight};color:${c.questionColor};margin-bottom:3px;${c.questionBg !== 'transparent' ? `background:${c.questionBg};padding:4px 6px;border-radius:4px;` : ''}`;
       const sepBorder = c.separatorStyle !== 'none' ? `border-bottom:1px ${c.separatorStyle} ${c.separatorColor};padding-bottom:${Math.floor(c.rowGap / 2)}px;` : '';
+      const containerOpen = `<div style="width:${c.containerWidth}%;margin:0 auto;border-radius:${c.containerBorderRadius}px;overflow:hidden;">`;
       if (c.displayStyle === 'table') {
         const rows = included.map(q => `<tr>${c.showQuestion ? `<td style="padding:8px 12px;${qStyle}width:45%;border-top:1px solid #f0f0f0;">${q.texto}</td>` : ''}<td style="padding:8px 12px;font-size:${c.answerSize}px;font-weight:${c.answerWeight};color:${c.answerColor};border-top:1px solid #f0f0f0;">${mockAnswerFor(q)}</td></tr>`).join('');
-        return `<div style="${style}">${label}<table role="presentation" width="100%" style="border-collapse:collapse;border:1px solid #f0f0f0;font-size:12.5px;">${rows}</table></div>`;
+        return `<div style="${style}">${containerOpen}${label}<table role="presentation" width="100%" style="border-collapse:collapse;border:1px solid #f0f0f0;font-size:12.5px;">${rows}</table></div></div>`;
       }
       const items = included.map((q, i) => {
         const isLast = i === included.length - 1;
@@ -200,10 +198,9 @@ function componentToHtml(c: Component): string {
         const answerStyle = `font-size:${c.answerSize}px;font-weight:${c.answerWeight};color:${c.answerColor};line-height:1.5;${accentBorder}${bgStyle}`;
         return `<div style="margin-bottom:${c.rowGap}px;${!isLast ? sepBorder : ''}">${qLabel}<p style="margin:0;${answerStyle}">${mockAnswerFor(q)}</p></div>`;
       }).join('');
-      return `<div style="${style}">${label}${items}</div>`;
+      return `<div style="${style}">${containerOpen}${label}${items}</div></div>`;
     }
     case 'divider':   return `<hr style="margin:${d.paddingTop}px 26px ${d.paddingBottom}px;" />`;
-    case 'footer':    return `<div style="${style}"><p style="font-size:11.5px;color:#999;text-align:center;white-space:pre-line;margin:0;">${c.text}</p></div>`;
     case 'image':     return `<div style="${style}text-align:center;">${c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : ''}</div>`;
     case 'button':    return `<div style="${style}text-align:center;"><a href="${c.url}" style="display:inline-block;padding:10px 24px;border-radius:6px;background:${c.bgColor};color:${c.textColor};font-weight:600;text-decoration:none;">${c.text}</a></div>`;
     case 'spacer':    return `<div style="${style}height:${c.height}px;"></div>`;
@@ -261,6 +258,7 @@ function ActionOverlay({ dragHandleRef, onInsertAfter, onDuplicate, onRemove }: 
 
 const ROW_ITEM = 'row-item';
 const COMPONENT_ITEM = 'component-item';
+const PALETTE_ITEM = 'palette-item';
 
 function renderComponentContent(component: Component): React.ReactNode {
   const align = component.design.textAlign;
@@ -321,25 +319,29 @@ function renderComponentContent(component: Component): React.ReactNode {
     const sepStyle: React.CSSProperties = component.separatorStyle !== 'none'
       ? { borderBottom: `1px ${component.separatorStyle} ${component.separatorColor}`, paddingBottom: Math.floor(component.rowGap / 2) }
       : {};
+    const containerStyle: React.CSSProperties = { width: `${component.containerWidth}%`, margin: '0 auto', borderRadius: component.containerBorderRadius, overflow: 'hidden' };
     if (component.displayStyle === 'table') {
       return (
         <div style={{ margin: '0 32px' }}>
-          {label}
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, border: '1px solid #f0f0f0', borderRadius: 8 }}>
-            <tbody>
-              {included.map((q, i) => (
-                <tr key={q.id} style={{ borderTop: i > 0 ? '1px solid #f0f0f0' : undefined }}>
-                  {component.showQuestion && <td style={{ padding: '8px 12px', width: '45%', ...questionStyle }}>{q.texto}</td>}
-                  <td style={{ padding: '8px 12px', fontSize: component.answerSize, fontWeight: Number(component.answerWeight), color: component.answerColor }}>{mockAnswerFor(q)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div style={containerStyle}>
+            {label}
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, border: '1px solid #f0f0f0' }}>
+              <tbody>
+                {included.map((q, i) => (
+                  <tr key={q.id} style={{ borderTop: i > 0 ? '1px solid #f0f0f0' : undefined }}>
+                    {component.showQuestion && <td style={{ padding: '8px 12px', width: '45%', ...questionStyle }}>{q.texto}</td>}
+                    <td style={{ padding: '8px 12px', fontSize: component.answerSize, fontWeight: Number(component.answerWeight), color: component.answerColor }}>{mockAnswerFor(q)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     }
     return (
       <div style={{ margin: '0 32px' }}>
+        <div style={containerStyle}>
         {label}
         {included.map((q, i) => {
           const isLast = i === included.length - 1;
@@ -366,13 +368,11 @@ function renderComponentContent(component: Component): React.ReactNode {
             </div>
           );
         })}
+        </div>
       </div>
     );
   }
   if (component.type === 'divider') return <Divider style={{ margin: '0 26px', minWidth: 'auto', width: 'auto' }} />;
-  if (component.type === 'footer') {
-    return <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 11.5, color: 'rgba(0,0,0,.35)', textAlign: 'center', padding: '13px 32px', margin: 0, background: '#fafafa', whiteSpace: 'pre-line' }}>{component.text}</p>;
-  }
   if (component.type === 'image') {
     return component.src ? (
       <div style={{ padding: '0 32px', textAlign: 'center' }}>
@@ -503,6 +503,23 @@ function EmptyColumnSlot({ onAdd }: { onAdd: (type: ComponentType) => void }) {
   );
 }
 
+// ─── Zona del canvas que acepta soltar un componente de la paleta ────────────
+
+function AddElementDropZone({ onDropComponent, children }: { onDropComponent: (type: ComponentType) => void; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [{ isOver }, drop] = useDrop({
+    accept: PALETTE_ITEM,
+    drop: (item: { componentType?: ComponentType }) => { if (item.componentType) onDropComponent(item.componentType); },
+    collect: monitor => ({ isOver: monitor.isOver() }),
+  });
+  drop(ref);
+  return (
+    <div ref={ref} style={{ outline: isOver ? '2px dashed var(--ds-violet)' : 'none', outlineOffset: -2, borderRadius: 8, transition: 'outline .1s' }}>
+      {children}
+    </div>
+  );
+}
+
 // ─── Fila en el canvas ────────────────────────────────────────────────────────
 
 function RowBox({ row, index, selected, onSelectRow, selectedComponentId, onSelectComponent, onRemoveRow, onDuplicateRow, onInsertRowAfter, moveRow, moveComponentInColumn, onAddComponentToColumn, removeComponent, duplicateComponent, insertComponentAfter }: {
@@ -566,23 +583,16 @@ function RowBox({ row, index, selected, onSelectRow, selectedComponentId, onSele
       >
         <div style={{ display: 'flex', gap: 8 }}>
           {row.columns.map(col => (
-            <div key={col.id} style={{ width: `${col.widthPercent}%`, display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-              {col.components.length === 0 ? (
-                <EmptyColumnSlot onAdd={type => onAddComponentToColumn(type, col.id)} />
-              ) : (
-                col.components.map((comp, i) => (
-                  <ComponentBox
-                    key={comp.id} component={comp} index={i} columnId={col.id}
-                    selected={selectedComponentId === comp.id}
-                    onSelect={() => onSelectComponent(col.id, comp.id)}
-                    onRemove={() => removeComponent(col.id, comp.id)}
-                    onDuplicate={() => duplicateComponent(col.id, comp.id)}
-                    onInsertAfter={() => insertComponentAfter(col.id, i)}
-                    moveComponent={(from, to) => moveComponentInColumn(col.id, from, to)}
-                  />
-                ))
-              )}
-            </div>
+            <ColumnBox
+              key={col.id} column={col}
+              onAddComponentToColumn={type => onAddComponentToColumn(type, col.id)}
+              selectedComponentId={selectedComponentId}
+              onSelectComponent={componentId => onSelectComponent(col.id, componentId)}
+              removeComponent={componentId => removeComponent(col.id, componentId)}
+              duplicateComponent={componentId => duplicateComponent(col.id, componentId)}
+              insertComponentAfter={atIndex => insertComponentAfter(col.id, atIndex)}
+              moveComponent={(from, to) => moveComponentInColumn(col.id, from, to)}
+            />
           ))}
         </div>
       </div>
@@ -590,17 +600,75 @@ function RowBox({ row, index, selected, onSelectRow, selectedComponentId, onSele
   );
 }
 
+// ─── Columna dentro de una fila — también acepta drops de la paleta ──────────
+
+function ColumnBox({ column, onAddComponentToColumn, selectedComponentId, onSelectComponent, removeComponent, duplicateComponent, insertComponentAfter, moveComponent }: {
+  column: Column;
+  onAddComponentToColumn: (type: ComponentType) => void;
+  selectedComponentId: string | null;
+  onSelectComponent: (componentId: string) => void;
+  removeComponent: (componentId: string) => void;
+  duplicateComponent: (componentId: string) => void;
+  insertComponentAfter: (atIndex: number) => void;
+  moveComponent: (from: number, to: number) => void;
+}) {
+  const dropRef = useRef<HTMLDivElement>(null);
+  const [{ isOver }, drop] = useDrop({
+    accept: PALETTE_ITEM,
+    drop: (item: { componentType?: ComponentType }) => {
+      if (item.componentType) onAddComponentToColumn(item.componentType);
+    },
+    collect: monitor => ({ isOver: monitor.isOver({ shallow: true }) }),
+  });
+  drop(dropRef);
+  return (
+    <div
+      ref={dropRef}
+      style={{
+        width: `${column.widthPercent}%`, display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0,
+        background: isOver ? 'var(--ds-violet-bg)' : undefined, borderRadius: isOver ? 6 : undefined,
+        outline: isOver ? '1.5px dashed var(--ds-violet)' : 'none', transition: 'background .1s',
+      }}
+    >
+      {column.components.length === 0 ? (
+        <EmptyColumnSlot onAdd={onAddComponentToColumn} />
+      ) : (
+        column.components.map((comp, i) => (
+          <ComponentBox
+            key={comp.id} component={comp} index={i} columnId={column.id}
+            selected={selectedComponentId === comp.id}
+            onSelect={() => onSelectComponent(comp.id)}
+            onRemove={() => removeComponent(comp.id)}
+            onDuplicate={() => duplicateComponent(comp.id)}
+            onInsertAfter={() => insertComponentAfter(i)}
+            moveComponent={moveComponent}
+          />
+        ))
+      )}
+    </div>
+  );
+}
+
 // ─── Paleta ────────────────────────────────────────────────────────────────────
 
-function PaletteItem({ icon, label, sub, onClick, violet }: { icon: React.ReactNode; label: string; sub: string; onClick: () => void; violet?: boolean }) {
+function PaletteItem({ icon, label, sub, onClick, violet, componentType }: {
+  icon: React.ReactNode; label: string; sub: string; onClick: () => void; violet?: boolean; componentType?: ComponentType;
+}) {
+  const [{ isDragging }, drag] = useDrag({
+    type: PALETTE_ITEM,
+    item: () => ({ componentType }),
+    canDrag: !!componentType,
+    collect: monitor => ({ isDragging: monitor.isDragging() }),
+  });
   return (
     <button
+      ref={componentType ? drag : undefined}
       onClick={onClick}
       style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-        padding: '14px 8px', cursor: 'pointer', textAlign: 'center',
+        padding: '14px 8px', cursor: componentType ? 'grab' : 'pointer', textAlign: 'center',
         border: `1px solid ${violet ? 'var(--ds-violet-mid)' : '#d9d9d9'}`,
-        borderRadius: 8,
+        borderRadius: 8, opacity: isDragging ? 0.4 : 1,
         background: violet ? 'var(--ds-violet-bg)' : '#fff',
       }}
     >
@@ -1033,16 +1101,32 @@ function WeightField({ value, onChange }: { value: '400' | '600' | '700'; onChan
   );
 }
 
-const RQ_ITEM = 'rq-item';
+// Fila de búsqueda — sin drag, solo para tildar/destildar. Se usa con la lista completa
+// de preguntas del estudio (hasta ~36), filtrable por texto o tipo.
+function QuestionSearchRow({ q, checked, onToggle }: { q: Pregunta; checked: boolean; onToggle: (checked: boolean) => void }) {
+  return (
+    <div
+      onClick={() => onToggle(!checked)}
+      style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #f0f0f0', borderRadius: 6, padding: '6px 8px', background: checked ? '#e6f7ff' : '#fff', cursor: 'pointer' }}
+    >
+      <Checkbox checked={checked} onChange={e => onToggle(e.target.checked)} onClick={e => e.stopPropagation()} />
+      <Text style={{ fontSize: 12, flex: 1 }} ellipsis={{ tooltip: q.texto }}>{q.texto}</Text>
+      <Tag style={{ margin: 0, fontSize: 10, flexShrink: 0 }}>{q.tipo}</Tag>
+    </div>
+  );
+}
 
-function RQItem({ q, index, checked, onToggle, moveItem }: {
-  q: (typeof PREGUNTAS)[number]; index: number; checked: boolean;
-  onToggle: (checked: boolean) => void; moveItem: (from: number, to: number) => void;
+const QUESTION_ORDER_ITEM = 'question-order-item';
+
+// Fila del orden final — solo las preguntas ya incluidas (subconjunto normalmente chico),
+// arrastrable para definir el orden real en el correo.
+function QuestionOrderRow({ q, index, onRemove, moveItem }: {
+  q: Pregunta; index: number; onRemove: () => void; moveItem: (from: number, to: number) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
   const [, drop] = useDrop({
-    accept: RQ_ITEM,
+    accept: QUESTION_ORDER_ITEM,
     hover(item: { index: number }, monitor) {
       if (!ref.current) return;
       const dragIndex = item.index, hoverIndex = index;
@@ -1058,7 +1142,7 @@ function RQItem({ q, index, checked, onToggle, moveItem }: {
     },
   });
   const [{ isDragging }, drag] = useDrag({
-    type: RQ_ITEM,
+    type: QUESTION_ORDER_ITEM,
     item: () => ({ index }),
     collect: monitor => ({ isDragging: monitor.isDragging() }),
   });
@@ -1069,39 +1153,66 @@ function RQItem({ q, index, checked, onToggle, moveItem }: {
       <div ref={handleRef} style={{ cursor: 'grab', color: 'rgba(0,0,0,.35)', display: 'flex', flexShrink: 0 }}>
         <HolderOutlined style={{ fontSize: 12 }} />
       </div>
-      <Checkbox checked={checked} onChange={e => onToggle(e.target.checked)} />
-      <Text style={{ fontSize: 12, flex: 1 }}>{q.texto}</Text>
-      <Tag style={{ margin: 0, fontSize: 10 }}>{q.tipo}</Tag>
+      <Text style={{ fontSize: 10, color: 'rgba(0,0,0,.35)', flexShrink: 0, width: 14 }}>{index + 1}</Text>
+      <Text style={{ fontSize: 12, flex: 1 }} ellipsis={{ tooltip: q.texto }}>{q.texto}</Text>
+      <Tag style={{ margin: 0, fontSize: 10, flexShrink: 0 }}>{q.tipo}</Tag>
+      <button onClick={onRemove} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'rgba(0,0,0,.35)', flexShrink: 0, padding: 0, display: 'flex' }}>
+        <CloseOutlined style={{ fontSize: 11 }} />
+      </button>
     </div>
   );
 }
 
 function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; onUpdate: (b: Component) => void }) {
-  function moveQuestion(from: number, to: number) {
-    const next = [...block.questions];
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
-    onUpdate({ ...block, questions: next });
+  const [search, setSearch] = useState('');
+  const withMeta = block.questions
+    .map(bq => ({ bq, q: PREGUNTAS_EJEMPLO.find(x => x.id === bq.questionId) }))
+    .filter((x): x is { bq: typeof x.bq; q: Pregunta } => !!x.q);
+  const included = withMeta.filter(x => x.bq.included);
+  const term = search.trim().toLowerCase();
+  const filtered = term ? withMeta.filter(({ q }) => q.texto.toLowerCase().includes(term) || q.tipo.toLowerCase().includes(term)) : withMeta;
+
+  function toggleQuestion(questionId: string, isIncluded: boolean) {
+    onUpdate({ ...block, questions: block.questions.map(q => q.questionId === questionId ? { ...q, included: isIncluded } : q) });
   }
-  function toggleQuestion(questionId: string, included: boolean) {
-    onUpdate({ ...block, questions: block.questions.map(q => q.questionId === questionId ? { ...q, included } : q) });
+  function moveIncluded(from: number, to: number) {
+    const includedBqs = block.questions.filter(q => q.included);
+    const restBqs = block.questions.filter(q => !q.included);
+    const reordered = [...includedBqs];
+    const [moved] = reordered.splice(from, 1);
+    reordered.splice(to, 0, moved);
+    onUpdate({ ...block, questions: [...reordered, ...restBqs] });
   }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ padding: '7px 10px', borderRadius: 6, background: '#fafafa', border: '1px solid #f0f0f0', fontSize: 11, color: 'rgba(0,0,0,.45)' }}>
         Cada encuestado verá sus propias respuestas exactas. El contenido es dinámico y único por persona.
       </div>
       <div>
-        <FieldLabel>Preguntas a incluir</FieldLabel>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {block.questions.map((bq, i) => {
-            const q = PREGUNTAS.find(x => x.id === bq.questionId);
-            if (!q) return null;
-            return (
-              <RQItem key={q.id} q={q} index={i} checked={bq.included} onToggle={checked => toggleQuestion(q.id, checked)} moveItem={moveQuestion} />
-            );
-          })}
+        <FieldLabel>Buscar preguntas del estudio</FieldLabel>
+        <Input
+          size="small" allowClear value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar por texto o tipo…" prefix={<Text type="secondary" style={{ fontSize: 12 }}>🔍</Text>}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 240, overflowY: 'auto', marginTop: 8, paddingRight: 2 }}>
+          {filtered.length === 0 && <Text type="secondary" style={{ fontSize: 12, padding: '8px 0' }}>Sin resultados para "{search}".</Text>}
+          {filtered.map(({ bq, q }) => (
+            <QuestionSearchRow key={q.id} q={q} checked={bq.included} onToggle={checked => toggleQuestion(q.id, checked)} />
+          ))}
         </div>
+      </div>
+      <div>
+        <FieldLabel>Orden en el correo ({included.length} incluida{included.length === 1 ? '' : 's'})</FieldLabel>
+        {included.length === 0 ? (
+          <Text type="secondary" style={{ fontSize: 12 }}>Selecciona al menos una pregunta arriba.</Text>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 240, overflowY: 'auto', paddingRight: 2 }}>
+            {included.map(({ q }, i) => (
+              <QuestionOrderRow key={q.id} q={q} index={i} onRemove={() => toggleQuestion(q.id, false)} moveItem={moveIncluded} />
+            ))}
+          </div>
+        )}
         <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>Arrastra para cambiar el orden en que aparecen en el correo.</Text>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1119,6 +1230,18 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
             { value: 'table', label: 'Tabla pregunta / respuesta' },
           ]}
         />
+      </div>
+
+      <SubSectionHeading>Contenedor</SubSectionHeading>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Ancho del contenedor</FieldLabel>
+          <InputNumber size="small" min={40} max={100} value={block.containerWidth} onChange={v => onUpdate({ ...block, containerWidth: v ?? 100 })} style={{ width: '100%' }} addonAfter="%" />
+        </div>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Radio de esquinas</FieldLabel>
+          <InputNumber size="small" min={0} max={24} value={block.containerBorderRadius} onChange={v => onUpdate({ ...block, containerBorderRadius: v ?? 0 })} style={{ width: '100%' }} addonAfter="px" />
+        </div>
       </div>
 
       <SubSectionHeading>Etiqueta del bloque</SubSectionHeading>
@@ -1208,15 +1331,6 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <FieldLabel>Espacio entre filas</FieldLabel>
         <Slider min={4} max={32} value={block.rowGap} onChange={v => onUpdate({ ...block, rowGap: v })} tooltip={{ formatter: v => `${v}px` }} />
       </div>
-    </div>
-  );
-}
-function FooterContentFields({ block, onUpdate }: { block: FooterBlock; onUpdate: (b: Component) => void }) {
-  return (
-    <div>
-      <FieldLabel>Texto del footer</FieldLabel>
-      <TextArea rows={3} value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} />
-      <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 2 }}>Debe incluir aviso de desuscripción. Requerido para correos comerciales.</Text>
     </div>
   );
 }
@@ -1317,7 +1431,7 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
 
 const TYPE_SECTION_TITLE: Partial<Record<ComponentType, string>> = {
   header: 'Encabezado', title: 'Título', text: 'Texto', ai: 'Bloque IA', responses: 'Bloque de respuestas',
-  footer: 'Footer', image: 'Imagen', button: 'Botón', spacer: 'Espaciador', social: 'Redes Sociales',
+  image: 'Imagen', button: 'Botón', spacer: 'Espaciador', social: 'Redes Sociales',
 };
 
 function ComponentTypeFields({ component, onUpdate }: { component: Component; onUpdate: (c: Component) => void }) {
@@ -1326,7 +1440,6 @@ function ComponentTypeFields({ component, onUpdate }: { component: Component; on
   if (component.type === 'header')    return <HeaderContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'title')     return <TitleContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'responses') return <ResponsesContentFields block={component} onUpdate={onUpdate} />;
-  if (component.type === 'footer')    return <FooterContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'image')     return <ImageContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'button')    return <ButtonContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'spacer')    return <SpacerContentFields block={component} onUpdate={onUpdate} />;
@@ -1492,21 +1605,6 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
       });
       return;
     }
-    const hasFooter = draft.rows.some(r => r.columns.some(c => c.components.some(comp => comp.type === 'footer')));
-    if (draft.customHtml == null && !hasFooter) {
-      Modal.confirm({
-        title: 'Sin bloque de footer legal',
-        content: 'No agregaste un bloque de Footer legal (con el aviso de baja). No es obligatorio para este tipo de correo, pero puedes agregarlo antes de guardar.',
-        icon: decisionIcon('warning'),
-        okText: 'Guardar de todos modos',
-        okButtonProps: ROUND_BTN,
-        cancelText: 'Volver a editar',
-        cancelButtonProps: ROUND_BTN,
-        getContainer: () => rootRef.current || document.body,
-        onOk: () => commitSaveDesign(),
-      });
-      return;
-    }
     commitSaveDesign();
   }
   function handleModeChange(next: 'visual' | 'html') {
@@ -1566,7 +1664,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
   );
 
   const tabStrip = (
-    <div style={{ width: 328, display: 'flex', borderLeft: '1px solid #f0f0f0', flexShrink: 0 }}>
+    <div style={{ ...SIDEBAR_WIDTH, display: 'flex', borderLeft: '1px solid #f0f0f0' }}>
       {(['elementos', 'configuracion', 'diseno'] as const).map(tab => (
         <button
           key={tab}
@@ -1659,10 +1757,12 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
               {subjectBar}
               <div style={cardStyle}>
                 {rows.length === 0 ? (
-                  <div style={{ padding: '48px 32px', textAlign: 'center', color: 'rgba(0,0,0,.25)' }}>
-                    <PlusOutlined style={{ fontSize: 24, display: 'block', margin: '0 auto 8px' }} />
-                    <Text type="secondary">Agrega elementos desde el panel derecho</Text>
-                  </div>
+                  <AddElementDropZone onDropComponent={addComponentRow}>
+                    <div style={{ padding: '48px 32px', textAlign: 'center', color: 'rgba(0,0,0,.25)' }}>
+                      <PlusOutlined style={{ fontSize: 24, display: 'block', margin: '0 auto 8px' }} />
+                      <Text type="secondary">Agrega elementos desde el panel derecho, o arrástralos aquí</Text>
+                    </div>
+                  </AddElementDropZone>
                 ) : (
                   <div>
                     {rows.map((row, i) => (
@@ -1683,19 +1783,21 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                         insertComponentAfter={(columnId, atIndex) => insertComponentAfter(row.id, columnId, atIndex)}
                       />
                     ))}
-                    <div
-                      onClick={() => { setActiveTab('elementos'); requestAnimationFrame(() => document.getElementById('palette-section')?.scrollIntoView({ behavior: 'smooth' })); }}
-                      style={{ padding: 14, textAlign: 'center', cursor: 'pointer', borderTop: '1px dashed #d9d9d9' }}
-                    >
-                      <Text type="secondary" style={{ fontSize: 12 }}><PlusOutlined style={{ marginRight: 4 }} />Agregar elemento</Text>
-                    </div>
+                    <AddElementDropZone onDropComponent={addComponentRow}>
+                      <div
+                        onClick={() => { setActiveTab('elementos'); requestAnimationFrame(() => document.getElementById('palette-section')?.scrollIntoView({ behavior: 'smooth' })); }}
+                        style={{ padding: 14, textAlign: 'center', cursor: 'pointer', borderTop: '1px dashed #d9d9d9' }}
+                      >
+                        <Text type="secondary" style={{ fontSize: 12 }}><PlusOutlined style={{ marginRight: 4 }} />Agregar elemento, o arrastra uno aquí</Text>
+                      </div>
+                    </AddElementDropZone>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Sidebar */}
-            <div style={{ width: 328, background: '#fff', borderLeft: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', flexShrink: 0, minHeight: 0 }}>
+            <div style={{ ...SIDEBAR_WIDTH, background: '#fff', borderLeft: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 12px' }}>
                 {activeTab === 'elementos' && (
                   <div id="palette-section">
@@ -1707,7 +1809,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                     <Text type="secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '10px 0 8px' }}>Componentes</Text>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                       {COMPONENT_PALETTE.map(item => (
-                        <PaletteItem key={item.type} icon={item.icon} label={item.label} sub={item.sub} violet={item.violet} onClick={() => addComponentRow(item.type)} />
+                        <PaletteItem key={item.type} icon={item.icon} label={item.label} sub={item.sub} violet={item.violet} componentType={item.type} onClick={() => addComponentRow(item.type)} />
                       ))}
                     </div>
                   </div>

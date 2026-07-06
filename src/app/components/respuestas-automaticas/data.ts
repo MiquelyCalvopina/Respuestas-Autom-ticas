@@ -1,4 +1,4 @@
-import { Pregunta, Etiqueta, AiBlock, AiLanguage, Row } from './types';
+import { Pregunta, OpcionConComentario, Etiqueta, AiBlock, AiLanguage, Row } from './types';
 
 export const countComponents = (rows: Row[]): number =>
   rows.flatMap(r => r.columns).flatMap(c => c.components).length;
@@ -16,13 +16,6 @@ export const SETUP = {
 export const VARIABLES = [
   'nombre_preferido', 'correo_electronico', 'sucursal',
   'canal', 'telefono', 'identificador', 'numero_credito',
-];
-
-export const PREGUNTAS = [
-  { id: 'q1', texto: '¿Qué tan probable es que recomiendes HIR Casa a alguien?', tipo: 'NPS', escala: [0, 10] as [number, number] },
-  { id: 'q2', texto: '¿Cuál fue el motivo principal de tu calificación?', tipo: 'texto_abierto' },
-  { id: 'q3', texto: '¿Cómo calificarías la atención recibida?', tipo: 'CSAT', escala: [1, 5] as [number, number] },
-  { id: 'q4', texto: '¿En qué sucursal fuiste atendido?', tipo: 'seleccion_simple', opciones: ['Quito Norte', 'Quito Sur', 'Guayaquil', 'Cuenca'] },
 ];
 
 export const TONOS: Record<string, string> = {
@@ -138,12 +131,51 @@ export function mockGenerateAiText(block: AiBlock, responseSummary: string): str
   return text;
 }
 
-export const SIMULATED_RESPONSES: Record<string, string | number> = {
-  q1: 4,
-  q2: 'El proceso de trámite fue más largo de lo esperado y no recibí suficiente comunicación durante el proceso.',
-  q3: 3,
-  q4: 'Quito Norte',
+// ─── Respuestas simuladas — usadas por el bloque de Respuestas y "Enviar prueba" ──
+
+export const optionTexts = (q: Pregunta): string[] => (q.opciones ?? []).map(o => typeof o === 'string' ? o : o.texto);
+export const commentableOptionTexts = (q: Pregunta): string[] =>
+  (q.opciones ?? []).filter((o): o is OpcionConComentario => typeof o !== 'string' && o.tieneComentario).map(o => o.texto);
+
+const MOCK_COMMENT = 'El proceso fue más ágil de lo que esperaba, aunque hubo un momento de confusión con la documentación.';
+const MOCK_FIELD_VALUE: Record<string, string> = {
+  texto: 'Juan Pérez', numero: '482913', correo: 'contacto@ejemplo.com', fecha: '12/03/2026', url: 'https://ejemplo.com/expediente',
 };
+
+// Genera una respuesta simulada plausible para cualquiera de los 18 tipos de pregunta, incluyendo
+// el caso de comentario atado a una opción de selección (options con tieneComentario: true).
+export function mockAnswerFor(q: Pregunta): string {
+  switch (q.tipo) {
+    case 'NPS': case 'CLI': return `${(q.escala?.[1] ?? 10) - 1}`;
+    case 'CES': return `${Math.ceil((q.escala?.[1] ?? 7) / 2)}`;
+    case 'CSAT': case 'rating': return `${(q.escala?.[1] ?? 5) - 1} de ${q.escala?.[1] ?? 5}`;
+    case 'matriz_escalas':
+      return (q.atributos ?? []).map(a => `${a}: ${(q.escala?.[1] ?? 5) - 1}/${q.escala?.[1] ?? 5}`).join(' · ');
+    case 'respuesta_abierta':
+      return MOCK_COMMENT;
+    case 'formulario':
+      return (q.campos ?? []).map(c => `${c.nombre}: ${MOCK_FIELD_VALUE[c.tipo] ?? ''}`).join(' · ');
+    case 'opcion_simple': case 'dropdown': case 'si_no': case 'seleccion_imagenes_simple': {
+      const chosen = optionTexts(q)[0] ?? '';
+      return commentableOptionTexts(q).includes(chosen) ? `${chosen} — comentario: "${MOCK_COMMENT}"` : chosen;
+    }
+    case 'opcion_multiple': case 'seleccion_imagenes_multiple': {
+      const opts = optionTexts(q);
+      const chosen = opts.slice(0, Math.min(2, opts.length));
+      const withComment = chosen.find(c => commentableOptionTexts(q).includes(c));
+      const base = chosen.join(', ');
+      return withComment ? `${base} — comentario en "${withComment}": "${MOCK_COMMENT}"` : base;
+    }
+    case 'casilla_verificacion': return 'Aceptó';
+    case 'maxdiff': {
+      const opts = optionTexts(q);
+      return `Más importante: ${opts[0] ?? ''} · Menos importante: ${opts[opts.length - 1] ?? ''}`;
+    }
+    case 'ranking': return optionTexts(q).map((o, i) => `${i + 1}° ${o}`).join(' · ');
+    case 'cargar_archivo': return 'comprobante_domicilio.pdf (adjunto)';
+    default: return 'Respuesta de ejemplo.';
+  }
+}
 
 // ─── PREGUNTAS_EJEMPLO — dataset real para el builder de condiciones (Step2) ──
 

@@ -927,13 +927,20 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
   function deleteRow(rowId: string) {
     onUpdateGroup({ ...group, rows: group.rows.filter(r => r.id !== rowId) });
   }
+  // Al agregar una condición (o subcondición) dentro de un grupo que ya tiene una primera
+  // condición, hereda su pregunta/variable y sub-selector — solo cambia el operador/valor.
+  function inheritedFields(): Partial<ConditionRule> {
+    const first = group.rows[0];
+    if (!first) return {};
+    return { subject: first.subject, variable: first.variable, subType: first.subType, attribute: first.attribute };
+  }
   function addRow() {
-    onUpdateGroup({ ...group, rows: [...group.rows, emptyRow()] });
+    onUpdateGroup({ ...group, rows: [...group.rows, { ...emptyRow(), ...inheritedFields() }] });
   }
   function addSubCondition() {
     onUpdateGroup({
       ...group,
-      subConditions: [...(group.subConditions ?? []), { id: cuid(), connector: 'O', row: emptyRow() }],
+      subConditions: [...(group.subConditions ?? []), { id: cuid(), connector: 'O', row: { ...emptyRow(), ...inheritedFields() } }],
     });
   }
   function updateSubCondition(scId: string, patch: Partial<ConditionRule>) {
