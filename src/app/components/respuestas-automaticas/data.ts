@@ -51,26 +51,37 @@ export const HEADER_COLORS = ['#4338CA', '#7C3AED', '#059669', '#DC2626', '#0F17
 
 export const DEFAULT_RESTRICTIONS = ['No prometer tiempos de resolución', 'No mencionar compensaciones económicas'];
 
+// Sugerencias del selector de "Acciones prohibidas" — además de estas, el usuario puede
+// escribir cualquier otra acción libre (Select mode="tags").
+export const RESTRICCION_SUGERENCIAS = [
+  'No prometer tiempos de resolución',
+  'No mencionar compensaciones económicas',
+  'No prometer reembolsos',
+  'No compartir información de otros clientes',
+  'No hacer promesas legales',
+  'No usar humor',
+  'No mencionar el número de ticket o caso',
+];
+
 export const IDIOMA_LABELS: Record<AiLanguage, string> = { es: 'Español', en: 'Inglés', pt: 'Portugués', fr: 'Francés' };
 
 const fmtVal = (v: string | string[]): string => Array.isArray(v) ? v.join(' o ') : v;
 
 export const buildAiPrompt = (
-  block: { objetivo: string; tone: string; customTone: string; datoPriorizar: string; restricciones: string[]; idioma?: AiLanguage },
+  block: { objetivo: string; tone: string; customTone: string; restricciones: string[]; idioma?: AiLanguage },
   condGroups: { rows: { variable: string; operator: string; value: string | string[] }[] }[],
 ): string => {
   const condText = condGroups.flatMap(g => g.rows).map(r => `${r.variable} ${r.operator} ${fmtVal(r.value)}`).join(', ') || 'ninguna';
   const tono = block.tone === 'custom' ? block.customTone : TONOS[block.tone] || '';
   const idiomaLabel = IDIOMA_LABELS[block.idioma || 'es'];
   let prompt = `Eres el asistente de comunicación de ${SETUP.empresa}, empresa de ${SETUP.industria}.\n${SETUP.descripcion}\n\nGenera UN SOLO párrafo para un correo automático enviado a un encuestado que cumple: ${condText}.\n\nObjetivo: ${block.objetivo}\nTono: ${tono}.\nIdioma del texto generado: ${idiomaLabel}.`;
-  if (block.datoPriorizar) prompt += `\nPriorizar este dato si está disponible: ${block.datoPriorizar}.`;
-  if (block.restricciones.length > 0) prompt += `\nNunca mencionar: ${block.restricciones.join(', ')}.`;
+  if (block.restricciones.length > 0) prompt += `\nAcciones prohibidas — nunca hacer: ${block.restricciones.join(', ')}.`;
   prompt += `\n\nReglas:\n- Solo el párrafo, sin saludo ni firma\n- Máximo 3 oraciones concisas\n- En ${idiomaLabel.toLowerCase()}\n- Sonido genuino y humano, no plantilla genérica\n- No iniciar con el nombre de la empresa`;
   return prompt;
 };
 
-// Frases de plantilla por idioma para el generador simulado — el objetivo/dato a priorizar que
-// escribe el administrador del estudio se mantienen tal cual los redactó (no se traducen).
+// Frases de plantilla por idioma para el generador simulado — el objetivo que escribe el
+// administrador del estudio se mantiene tal cual lo redactó (no se traduce).
 const TONE_OPENERS_BY_LANG: Record<AiLanguage, Record<string, string>> = {
   es: {
     empatico: 'Entendemos cómo te sentiste y queremos acompañarte en esto.',
@@ -107,12 +118,6 @@ const FOCUS_BY_LANG: Record<AiLanguage, (summary: string, objetivo: string) => s
   pt: (r, o) => `Com base na sua resposta (${r}), nossa equipe está focada em ${o}.`,
   fr: (r, o) => `D'après votre réponse (${r}), notre équipe se concentre sur ${o}.`,
 };
-const HIGHLIGHT_BY_LANG: Record<AiLanguage, (dato: string) => string> = {
-  es: d => ` Queremos destacar especialmente: ${d}.`,
-  en: d => ` We especially want to highlight: ${d}.`,
-  pt: d => ` Queremos destacar especialmente: ${d}.`,
-  fr: d => ` Nous tenons à souligner particulièrement : ${d}.`,
-};
 const CLOSER_BY_LANG: Record<AiLanguage, (tono: string) => string> = {
   es: t => ` Seguimos comprometidos en brindarte una experiencia ${t}.`,
   en: t => ` We remain committed to providing you with a ${t} experience.`,
@@ -129,9 +134,6 @@ export function mockGenerateAiText(block: AiBlock, responseSummary: string): str
   const opener = TONE_OPENERS_BY_LANG[idioma][block.tone] || TONE_OPENERS_BY_LANG[idioma].custom;
   const objetivo = block.objetivo.trim() || 'darte seguimiento personalizado';
   let text = `${opener} ${FOCUS_BY_LANG[idioma](responseSummary, objetivo.toLowerCase())}`;
-  if (block.datoPriorizar.trim()) {
-    text += HIGHLIGHT_BY_LANG[idioma](block.datoPriorizar.trim());
-  }
   text += CLOSER_BY_LANG[idioma](tono || TONE_FALLBACK_BY_LANG[idioma]);
   return text;
 }

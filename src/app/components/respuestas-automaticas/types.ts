@@ -38,7 +38,6 @@ export interface AiBlock {
   objetivo: string;
   tone: Tone;
   customTone: string;
-  datoPriorizar: string;
   restricciones: string[];
   idioma: AiLanguage;
   generatedText: string;

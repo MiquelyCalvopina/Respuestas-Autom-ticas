@@ -7,7 +7,7 @@ import {
   SendOutlined, CopyOutlined, CloseOutlined, PlusOutlined, BoldOutlined, AlignLeftOutlined,
   AlignCenterOutlined, AlignRightOutlined, MinusOutlined, FileTextOutlined, UnorderedListOutlined,
   ThunderboltOutlined, HolderOutlined, TableOutlined, PictureOutlined, LinkOutlined,
-  ColumnHeightOutlined, ShareAltOutlined, InfoCircleFilled, ExclamationCircleFilled,
+  ColumnHeightOutlined, ShareAltOutlined, InfoCircleFilled, ExclamationCircleFilled, QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -18,7 +18,7 @@ import {
   AiBlock, TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, FooterBlock,
   ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey, Tone, AiLanguage,
 } from './types';
-import { VARIABLES, PREGUNTAS, TONO_LABELS, IDIOMA_LABELS, HEADER_COLORS, DEFAULT_RESTRICTIONS, SETUP, mockGenerateAiText, countComponents } from './data';
+import { VARIABLES, PREGUNTAS, TONO_LABELS, IDIOMA_LABELS, HEADER_COLORS, DEFAULT_RESTRICTIONS, RESTRICCION_SUGERENCIAS, SETUP, mockGenerateAiText, countComponents } from './data';
 import { cuid } from './cuid';
 import TestModal from './TestModal';
 
@@ -72,7 +72,7 @@ function makeComponent(type: ComponentType): Component {
     case 'title':     return { id, type, text: 'Tu opinión importa', design };
     case 'text':      return { id, type, content: 'Hola {{nombre_preferido}},\n\nGracias por tomarte el tiempo de responder nuestra encuesta.', design };
     case 'ai':        return {
-      id, type, objetivo: '', tone: 'empatico' as Tone, customTone: '', datoPriorizar: '', restricciones: [...DEFAULT_RESTRICTIONS], idioma: 'es' as AiLanguage, generatedText: '',
+      id, type, objetivo: '', tone: 'empatico' as Tone, customTone: '', restricciones: [...DEFAULT_RESTRICTIONS], idioma: 'es' as AiLanguage, generatedText: '',
       textBgColor: '#F5F3FF', textColor: '#4C1D95', fontSize: 13, lineHeight: 1.75, fontStyle: 'italic', fontWeight: '400',
       cardBorderColor: '#DDD6FE', cardBorderWidth: 1, cardBorderStyle: 'solid', cardBorderRadius: 10,
       design,
@@ -732,8 +732,17 @@ function CollapsibleSection({ title, children }: { title: string; children: Reac
 
 // ─── Campos compartidos de diseño (fila / componente) ────────────────────────
 
-function FieldLabel({ children, inline }: { children: React.ReactNode; inline?: boolean }) {
-  return <Text style={{ fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,.65)', display: inline ? 'inline' : 'block', marginBottom: inline ? 0 : 6 }}>{children}</Text>;
+function FieldLabel({ children, inline, tooltip }: { children: React.ReactNode; inline?: boolean; tooltip?: string }) {
+  return (
+    <Text style={{ fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,.65)', display: inline ? 'inline' : 'block', marginBottom: inline ? 0 : 6 }}>
+      {children}
+      {tooltip && (
+        <Tooltip title={tooltip}>
+          <QuestionCircleOutlined style={{ marginLeft: 5, fontSize: 12, color: 'rgba(0,0,0,.35)', cursor: 'help' }} />
+        </Tooltip>
+      )}
+    </Text>
+  );
 }
 function PaddingField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
@@ -863,7 +872,6 @@ function TextContentFields({ block, onUpdate }: { block: TextBlock; onUpdate: (b
   );
 }
 function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Component) => void }) {
-  const [newRestr, setNewRestr] = useState('');
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ padding: '7px 10px', borderRadius: 6, background: 'var(--ds-violet-bg)', border: '1px solid var(--ds-violet-mid)' }}>
@@ -880,7 +888,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
         <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 2 }}>La IA genera texto único usando la respuesta real como contexto.</Text>
       </div>
       <div>
-        <FieldLabel>Tono del mensaje</FieldLabel>
+        <FieldLabel tooltip="Ajusta el estilo emocional del texto generado — no cambia lo que dice, solo cómo lo dice.">Tono del mensaje</FieldLabel>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
           {Object.entries(TONO_LABELS).map(([k, v]) => (
             <Card
@@ -896,40 +904,25 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
         {block.tone === 'custom' && <Input size="small" style={{ marginTop: 6 }} value={block.customTone} onChange={e => onUpdate({ ...block, customTone: e.target.value })} placeholder="Describe el tono…" />}
       </div>
       <div>
-        <FieldLabel>Idioma del texto generado</FieldLabel>
+        <FieldLabel tooltip="Solo aplica al texto que genera este bloque IA. El resto del correo mantiene su propio idioma.">Idioma del texto generado</FieldLabel>
         <Select
           size="small" style={{ width: '100%' }} value={block.idioma}
           onChange={v => onUpdate({ ...block, idioma: v as AiLanguage })}
           options={Object.entries(IDIOMA_LABELS).map(([value, label]) => ({ value, label }))}
         />
-        <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 2 }}>El texto generado saldrá en este idioma, sin importar el idioma del resto del correo.</Text>
       </div>
       <div>
-        <FieldLabel>Dato a mencionar (opcional)</FieldLabel>
-        <Input size="small" value={block.datoPriorizar} onChange={e => onUpdate({ ...block, datoPriorizar: e.target.value })} placeholder="Ej: Si hay número de ticket, incluirlo" />
-      </div>
-      <div>
-        <FieldLabel>Nunca debe mencionar</FieldLabel>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 6 }}>
-          {block.restricciones.map(r => (
-            <Tag key={r} color="error" closable onClose={() => onUpdate({ ...block, restricciones: block.restricciones.filter(x => x !== r) })} style={{ fontSize: 11 }}>
-              {r}
-            </Tag>
-          ))}
-        </div>
-        <Input
-          size="small" value={newRestr} onChange={e => setNewRestr(e.target.value)}
-          placeholder="Añadir y presionar Enter…"
-          onKeyDown={e => { if (e.key === 'Enter' && newRestr.trim()) { onUpdate({ ...block, restricciones: [...block.restricciones, newRestr.trim()] }); setNewRestr(''); } }}
+        <FieldLabel tooltip="La IA nunca hará ni sugerirá estas acciones, sin importar el objetivo o el tono elegidos. Elige de la lista o escribe la tuya y presiona Enter.">Acciones prohibidas</FieldLabel>
+        <Select
+          mode="tags" size="small" style={{ width: '100%' }} value={block.restricciones}
+          onChange={v => onUpdate({ ...block, restricciones: v })}
+          options={RESTRICCION_SUGERENCIAS.map(r => ({ value: r, label: r }))}
+          placeholder="Elige o escribe una acción prohibida…"
+          tokenSeparators={[',', ';']}
         />
-        <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 2 }}>La IA respeta estas restricciones en todos los correos.</Text>
       </div>
 
-      <SubSectionHeading>Contenido IA</SubSectionHeading>
-      <div>
-        <FieldLabel>Fondo del área de texto</FieldLabel>
-        <ColorPickerField value={block.textBgColor} onChange={c => onUpdate({ ...block, textBgColor: c })} allowTransparent full />
-      </div>
+      <SubSectionHeading>Texto generado</SubSectionHeading>
       <div>
         <FieldLabel>Color del texto</FieldLabel>
         <ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} />
@@ -940,7 +933,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
           <InputNumber size="small" min={10} max={24} value={block.fontSize} onChange={v => onUpdate({ ...block, fontSize: v ?? 13 })} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1 }}>
-          <FieldLabel>Interlineado</FieldLabel>
+          <FieldLabel tooltip="Espacio vertical entre líneas del párrafo generado.">Interlineado</FieldLabel>
           <Select
             size="small" style={{ width: '100%' }} value={block.lineHeight}
             onChange={v => onUpdate({ ...block, lineHeight: v })}
@@ -955,7 +948,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <div style={{ flex: 1 }}>
-          <FieldLabel>Estilo</FieldLabel>
+          <FieldLabel tooltip="Cursiva o normal — el formato tipográfico del párrafo generado.">Estilo</FieldLabel>
           <Radio.Group value={block.fontStyle} onChange={e => onUpdate({ ...block, fontStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
             <Radio.Button value="italic" style={{ flex: 1, textAlign: 'center', fontStyle: 'italic' }}>Cursiva</Radio.Button>
             <Radio.Button value="normal" style={{ flex: 1, textAlign: 'center' }}>Normal</Radio.Button>
@@ -967,7 +960,11 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
         </div>
       </div>
 
-      <SubSectionHeading>Tarjeta IA</SubSectionHeading>
+      <SubSectionHeading>Tarjeta</SubSectionHeading>
+      <div>
+        <FieldLabel tooltip="El color de fondo de toda la tarjeta que envuelve el texto generado.">Fondo</FieldLabel>
+        <ColorPickerField value={block.textBgColor} onChange={c => onUpdate({ ...block, textBgColor: c })} allowTransparent full />
+      </div>
       <div>
         <FieldLabel>Color del borde</FieldLabel>
         <ColorPickerField value={block.cardBorderColor} onChange={c => onUpdate({ ...block, cardBorderColor: c })} />
