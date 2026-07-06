@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { App } from 'antd';
 import { toast } from 'sonner';
 import { AutoResponse, ModuleView } from './types';
 import { cuid } from './cuid';
+import { countComponents } from './data';
 import ListPage from './ListPage';
 import WizardView from './WizardView';
 import EditorView from './EditorView';
@@ -28,6 +29,7 @@ function emptyRule(): AutoResponse {
     layout: { widthPercent: 100, boxed: true, bgColor: '#f5f5f5' },
     blocksUpdatedAt: null,
     customHtml: null,
+    scheduledAt: null,
   };
 }
 
@@ -58,9 +60,82 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
     message.info('Respuesta automática eliminada');
   }
 
-  function toggleRule(id: string) {
-    setRules(prev => prev.map(r => r.id === id ? { ...r, active: !r.active } : r));
+  function duplicateRule(id: string) {
+    const r = rules.find(r => r.id === id);
+    if (!r) return;
+    const cloned: AutoResponse = {
+      ...r,
+      id: cuid(),
+      name: `${r.name} (copia)`,
+      active: false,
+      published: false,
+      scheduledAt: null,
+      rows: r.rows.map(row => ({
+        ...row,
+        id: cuid(),
+        columns: row.columns.map(col => ({
+          ...col,
+          id: cuid(),
+          components: col.components.map(c => ({ ...c, id: cuid() })),
+        })),
+      })),
+      condGroups: r.condGroups.map(g => ({
+        ...g,
+        id: cuid(),
+        rows: g.rows.map(row => ({ ...row, id: cuid() })),
+        subConditions: (g.subConditions ?? []).map(sc => ({ ...sc, id: cuid(), row: { ...sc.row, id: cuid() } })),
+      })),
+    };
+    setRules(prev => [...prev, cloned]);
+    message.success('Regla duplicada como borrador');
   }
+
+  function toggleRule(id: string) {
+    setRules(prev => prev.map(r => {
+      if (r.id !== id) return r;
+      if (!r.active && countComponents(r.rows) === 0) {
+        message.warning('Esta regla no tiene una plantilla de correo. Edítala y agrega contenido antes de activarla.');
+        return r;
+      }
+      return { ...r, active: !r.active, published: true, scheduledAt: null };
+    }));
+  }
+
+  function scheduleRule(id: string, iso: string) {
+    setRules(prev => prev.map(r => {
+      if (r.id !== id) return r;
+      if (countComponents(r.rows) === 0) {
+        message.warning('Esta regla no tiene una plantilla de correo. Edítala y agrega contenido antes de programarla.');
+        return r;
+      }
+      return { ...r, scheduledAt: iso };
+    }));
+    message.success('Activación programada');
+  }
+
+  function cancelSchedule(id: string) {
+    setRules(prev => prev.map(r => r.id === id ? { ...r, scheduledAt: null } : r));
+  }
+
+  // Simula el disparo de la activación programada — no hay backend/cron real en este prototipo.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      setRules(prev => {
+        let changed = false;
+        const next = prev.map(r => {
+          if (r.scheduledAt && new Date(r.scheduledAt) <= now) {
+            changed = true;
+            return { ...r, active: true, published: true, scheduledAt: null };
+          }
+          return r;
+        });
+        if (changed) message.success('Una regla programada se activó automáticamente');
+        return changed ? next : prev;
+      });
+    }, 15000);
+    return () => clearInterval(timer);
+  }, [message]);
 
   function saveAndActivate() {
     const updated = { ...currentRule, active: true, published: true };
@@ -121,6 +196,9 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
       onLog={openLog}
       onDelete={deleteRule}
       onToggle={toggleRule}
+      onDuplicate={duplicateRule}
+      onSchedule={scheduleRule}
+      onCancelSchedule={cancelSchedule}
       onBack={onBack}
     />
   );

@@ -226,6 +226,7 @@ export interface AutoResponse {
   layout: EmailLayoutConfig;
   blocksUpdatedAt: string | null;
   customHtml?: string | null;
+  scheduledAt: string | null; // fecha/hora futura para activación automática, o null si no hay programación
 }
 
 export type ModuleView = 'list' | 'wizard' | 'editor' | 'log';

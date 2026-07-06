@@ -1,6 +1,8 @@
-import { Dropdown, Button, Switch } from 'antd';
-import { PlusOutlined, DownOutlined, FormOutlined, ImportOutlined, MailOutlined, EditOutlined, DeleteOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { useState } from 'react';
+import { Dropdown, Button, Switch, Popconfirm, Popover, DatePicker } from 'antd';
+import { PlusOutlined, DownOutlined, FormOutlined, ImportOutlined, MailOutlined, EditOutlined, DeleteOutlined, ThunderboltOutlined, CopyOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
+import dayjs, { Dayjs } from 'dayjs';
 import svgPaths from "@/imports/BoostersPage-1/svg-hnea2jkxqi";
 import { AutoResponse } from './types';
 import { countComponents, hasAiComponent, describeRecipientSource } from './data';
@@ -12,6 +14,9 @@ interface Props {
   onLog: (id: string) => void;
   onDelete: (id: string) => void;
   onToggle: (id: string) => void;
+  onDuplicate: (id: string) => void;
+  onSchedule: (id: string, iso: string) => void;
+  onCancelSchedule: (id: string) => void;
   onBack: () => void;
   onCopyFromStudy?: () => void;
 }
@@ -116,12 +121,13 @@ function LogsIcon() {
 
 // ─── Rule card badges ─────────────────────────────────────────────────────────
 
-function Badge({ tone, children }: { tone: 'warning' | 'success' | 'neutral' | 'ai'; children: React.ReactNode }) {
+function Badge({ tone, children }: { tone: 'warning' | 'success' | 'neutral' | 'ai' | 'info'; children: React.ReactNode }) {
   const toneClass = {
     warning: 'bg-[#fffbe6] border-[#ffe58f] text-[#d48806]',
     success: 'bg-[#f6ffed] border-[#b7eb8f] text-[#389e0d]',
     neutral: 'bg-[#fafafa] border-[#d9d9d9] text-[rgba(0,0,0,0.65)]',
     ai:      'bg-[var(--ds-violet-bg)] border-[var(--ds-violet-mid)] text-[var(--ds-violet)]',
+    info:    'bg-[#e6f7ff] border-[#91d5ff] text-[#1890ff]',
   }[tone];
   return (
     <span
@@ -145,10 +151,70 @@ function triggerBadge(t: AutoResponse['trigger']) {
   return null;
 }
 
+// ─── Programar activación ───────────────────────────────────────────────────
+
+function SchedulePopover({ rule, onSchedule, onCancelSchedule }: {
+  rule: AutoResponse; onSchedule: (iso: string) => void; onCancelSchedule: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [picked, setPicked] = useState<Dayjs | null>(null);
+  const scheduled = !!rule.scheduledAt;
+
+  return (
+    <Popover
+      trigger="click"
+      open={open}
+      onOpenChange={setOpen}
+      placement="bottomRight"
+      content={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 240 }}>
+          {scheduled ? (
+            <>
+              <span style={{ fontSize: 12, fontFamily: "'Roboto', sans-serif", color: 'rgba(0,0,0,0.65)' }}>
+                Programada para <strong>{dayjs(rule.scheduledAt).format('DD MMM, HH:mm')}</strong>.
+              </span>
+              <Button size="small" danger onClick={() => { onCancelSchedule(); setOpen(false); }}>
+                Cancelar programación
+              </Button>
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize: 12, fontFamily: "'Roboto', sans-serif", fontWeight: 500, color: 'rgba(0,0,0,0.85)' }}>
+                Programar activación
+              </span>
+              <DatePicker
+                showTime size="small" style={{ width: '100%' }}
+                value={picked} onChange={setPicked}
+                disabledDate={d => !!d && d.isBefore(dayjs(), 'day')}
+                placeholder="Fecha y hora"
+              />
+              <Button
+                size="small" type="primary" disabled={!picked}
+                onClick={() => { if (picked) { onSchedule(picked.toISOString()); setOpen(false); setPicked(null); } }}
+              >
+                Programar
+              </Button>
+            </>
+          )}
+        </div>
+      }
+    >
+      <button
+        className="bg-white border border-solid cursor-pointer flex items-center justify-center shrink-0 rounded-full"
+        style={{ width: 24, height: 24, borderColor: scheduled ? '#91d5ff' : '#d9d9d9', color: scheduled ? '#1890ff' : 'rgba(0,0,0,0.45)' }}
+        aria-label="Programar activación"
+      >
+        <ClockCircleOutlined style={{ fontSize: 12 }} />
+      </button>
+    </Popover>
+  );
+}
+
 // ─── Rule card ────────────────────────────────────────────────────────────────
 
-function RuleCard({ rule, onEdit, onLog, onDelete, onToggle }: {
+function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSchedule, onCancelSchedule }: {
   rule: AutoResponse; onEdit: () => void; onLog: () => void; onDelete: () => void; onToggle: () => void;
+  onDuplicate: () => void; onSchedule: (iso: string) => void; onCancelSchedule: () => void;
 }) {
   const hasAi = hasAiComponent(rule.rows);
   const condCount = rule.condGroups.flatMap(g => g.rows).length;
@@ -179,7 +245,19 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle }: {
             Enviar a: {describeRecipientSource(rule.recipientVariable)} · {countComponents(rule.rows)} bloque{countComponents(rule.rows) !== 1 ? 's' : ''}
           </span>
         </div>
-        <Switch checked={rule.active} onChange={onToggle} size="small" />
+        <SchedulePopover rule={rule} onSchedule={onSchedule} onCancelSchedule={onCancelSchedule} />
+        {rule.active ? (
+          <Popconfirm
+            title="¿Desactivar esta regla?"
+            description="Dejará de enviar correos hasta que la vuelvas a activar."
+            okText="Sí, desactivar" cancelText="Cancelar"
+            onConfirm={onToggle}
+          >
+            <Switch checked={rule.active} size="small" />
+          </Popconfirm>
+        ) : (
+          <Switch checked={rule.active} onChange={onToggle} size="small" />
+        )}
       </div>
 
       {/* Badges */}
@@ -188,6 +266,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle }: {
         {triggerBadge(rule.trigger)}
         <Badge tone="neutral">{condCount > 0 ? `${condCount} condici${condCount !== 1 ? 'ones' : 'ón'}` : 'Todas las respuestas'}</Badge>
         {hasAi && <Badge tone="ai"><ThunderboltOutlined style={{ marginRight: 4 }} />Bloque IA</Badge>}
+        {rule.scheduledAt && <Badge tone="info"><ClockCircleOutlined style={{ marginRight: 4 }} />Se activa {dayjs(rule.scheduledAt).format('DD MMM, HH:mm')}</Badge>}
       </div>
 
       {/* Actions */}
@@ -207,6 +286,13 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle }: {
           <LogsIcon /> Ver ejecuciones
         </button>
         <button
+          onClick={onDuplicate}
+          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[4px] items-center px-[9px] py-[8px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
+          style={{ fontVariationSettings: '"wdth" 100' }}
+        >
+          <CopyOutlined style={{ fontSize: 12 }} /> Duplicar
+        </button>
+        <button
           onClick={onDelete}
           className="bg-white border border-[#ffccc7] border-solid cursor-pointer flex items-center justify-center px-[9px] py-[8px] rounded-[8px] text-[#ff4d4f]"
           aria-label="Eliminar"
@@ -220,7 +306,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle }: {
 
 // ─── ListPage ─────────────────────────────────────────────────────────────────
 
-export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onToggle, onBack, onCopyFromStudy }: Props) {
+export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onToggle, onDuplicate, onSchedule, onCancelSchedule, onBack, onCopyFromStudy }: Props) {
   const goToFirstRuleLog = () => { if (rules[0]) onLog(rules[0].id); };
 
   return (
@@ -328,6 +414,9 @@ export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onTogg
                 onLog={() => onLog(rule.id)}
                 onDelete={() => onDelete(rule.id)}
                 onToggle={() => onToggle(rule.id)}
+                onDuplicate={() => onDuplicate(rule.id)}
+                onSchedule={iso => onSchedule(rule.id, iso)}
+                onCancelSchedule={() => onCancelSchedule(rule.id)}
               />
             ))}
           </div>
