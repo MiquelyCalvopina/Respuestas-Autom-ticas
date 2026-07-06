@@ -9,7 +9,7 @@ import {
   AlignCenterOutlined, AlignRightOutlined, MinusOutlined, UnorderedListOutlined,
   ThunderboltOutlined, HolderOutlined, TableOutlined, PictureOutlined, LinkOutlined,
   ColumnHeightOutlined, ShareAltOutlined, InfoCircleFilled, ExclamationCircleFilled, QuestionCircleOutlined,
-  FileTextOutlined, UploadOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -17,7 +17,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { html as htmlLang } from '@codemirror/lang-html';
 import {
   AutoResponse, Row, Column, RowDesign, Component, ComponentType, ComponentDesign, EmailLayoutConfig, TextAlign,
-  AiBlock, TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, Pregunta, FooterBlock,
+  AiBlock, TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, Pregunta,
   ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey, Tone, AiLanguage,
 } from './types';
 import { VARIABLES, PREGUNTAS_EJEMPLO, mockAnswerFor, TONO_LABELS, IDIOMA_LABELS, HEADER_COLORS, DEFAULT_RESTRICTIONS, RESTRICCION_SUGERENCIAS, SETUP, mockGenerateAiText, countComponents } from './data';
@@ -96,7 +96,6 @@ function makeComponent(type: ComponentType): Component {
       design,
     };
     case 'divider':   return { id, type, design };
-    case 'footer':    return { id, type, text: `© ${new Date().getFullYear()} ${SETUP.empresa}. Si ya no deseas recibir estos correos, {{enlace_desuscripcion}}.`, design };
     case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, design };
     case 'button':    return { id, type, text: 'Responder estudio', url: '', bgColor: '#1890ff', textColor: '#ffffff', design };
     case 'spacer':    return { id, type, height: 24, design };
@@ -137,7 +136,6 @@ const COMPONENT_PALETTE: { type: ComponentType; label: string; sub: string; icon
   { type: 'image', label: 'Imagen', sub: 'Estática o dinámica', icon: <PictureOutlined /> },
   { type: 'button', label: 'Botón', sub: 'Llamado a la acción', icon: <LinkOutlined /> },
   { type: 'divider', label: 'Divisor', sub: 'Línea separadora', icon: <MinusOutlined /> },
-  { type: 'footer', label: 'Footer legal', sub: 'Aviso de desuscripción', icon: <FileTextOutlined /> },
   { type: 'spacer', label: 'Espaciador', sub: 'Espacio en blanco', icon: <ColumnHeightOutlined /> },
   { type: 'social', label: 'Redes Sociales', sub: 'Íconos con enlaces', icon: <ShareAltOutlined /> },
   { type: 'ai', label: 'Bloque IA', sub: 'Texto único por encuestado', icon: '✦' },
@@ -221,7 +219,6 @@ function componentToHtml(c: Component): string {
       return `<div style="${style}">${containerOpen}${label}${items}</div></div>`;
     }
     case 'divider':   return `<hr style="margin:${d.paddingTop}px 26px ${d.paddingBottom}px;" />`;
-    case 'footer':    return `<div style="${style}text-align:center;"><p style="font-size:11px;line-height:1.6;color:#8c8c8c;margin:0;white-space:pre-line;">${c.text}</p></div>`;
     case 'image':     return `<div style="${style}text-align:center;">${c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : ''}</div>`;
     case 'button':    return `<div style="${style}text-align:center;"><a href="${c.url}" style="display:inline-block;padding:10px 24px;border-radius:6px;background:${c.bgColor};color:${c.textColor};font-weight:600;text-decoration:none;">${c.text}</a></div>`;
     case 'spacer':    return `<div style="${style}height:${c.height}px;"></div>`;
@@ -394,11 +391,6 @@ function renderComponentContent(component: Component): React.ReactNode {
     );
   }
   if (component.type === 'divider') return <Divider style={{ margin: '0 26px', minWidth: 'auto', width: 'auto' }} />;
-  if (component.type === 'footer') {
-    return (
-      <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 11, lineHeight: 1.6, color: '#8c8c8c', padding: '0 32px', margin: 0, whiteSpace: 'pre-line', textAlign: align }} dangerouslySetInnerHTML={{ __html: renderVars(component.text) }} />
-    );
-  }
   if (component.type === 'image') {
     return component.src ? (
       <div style={{ padding: '0 32px', textAlign: 'center' }}>
@@ -797,6 +789,7 @@ function ColorPickerField({ value, onChange, allowTransparent, full }: { value: 
             ))}
           </div>
           <Input
+            size="small"
             placeholder="#RRGGBB"
             value={value === 'transparent' ? '' : value}
             onChange={e => onChange(e.target.value)}
@@ -859,7 +852,7 @@ function PaddingField({ label, value, onChange }: { label: string; value: number
   return (
     <div>
       <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>{label}</Text>
-      <InputNumber value={value} onChange={v => onChange(v ?? 0)} style={{ width: '100%' }} min={0} addonAfter="px" />
+      <InputNumber size="small" value={value} onChange={v => onChange(v ?? 0)} style={{ width: '100%' }} min={0} addonAfter="px" />
     </div>
   );
 }
@@ -872,9 +865,9 @@ function BorderFields({ borderColor, borderWidth, borderStyle, onUpdate }: {
       <FieldLabel>Borde</FieldLabel>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <ColorPickerField value={borderColor} onChange={c => onUpdate({ borderColor: c })} />
-        <InputNumber min={0} value={borderWidth} onChange={v => onUpdate({ borderWidth: v ?? 0 })} style={{ flex: 1 }} addonAfter="px" />
+        <InputNumber size="small" min={0} value={borderWidth} onChange={v => onUpdate({ borderWidth: v ?? 0 })} style={{ flex: 1 }} addonAfter="px" />
       </div>
-      <Radio.Group value={borderStyle} onChange={e => onUpdate({ borderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+      <Radio.Group size="small" value={borderStyle} onChange={e => onUpdate({ borderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
         <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
         <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
         <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
@@ -902,11 +895,11 @@ function LayoutConfigFields({ layout, onUpdate }: { layout: EmailLayoutConfig; o
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <FieldLabel>Ancho del contenido</FieldLabel>
-        <InputNumber value={layout.widthPercent} min={10} max={100} addonAfter="%" onChange={v => onUpdate({ widthPercent: v ?? 100 })} style={{ width: '100%' }} />
+        <InputNumber size="small" value={layout.widthPercent} min={10} max={100} addonAfter="%" onChange={v => onUpdate({ widthPercent: v ?? 100 })} style={{ width: '100%' }} />
       </div>
       <div>
         <FieldLabel>Estilo del contenedor</FieldLabel>
-        <Radio.Group value={layout.boxed} onChange={e => onUpdate({ boxed: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+        <Radio.Group size="small" value={layout.boxed} onChange={e => onUpdate({ boxed: e.target.value })} style={{ display: 'flex', width: '100%' }}>
           <Radio.Button value={true} style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Con margen</Radio.Button>
           <Radio.Button value={false} style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ancho completo</Radio.Button>
         </Radio.Group>
@@ -935,7 +928,7 @@ function BlockFields<T extends {
       {!excludeAlign && (
         <div>
           <FieldLabel>Alineación</FieldLabel>
-          <Radio.Group value={design.textAlign ?? 'left'} onChange={e => onUpdate({ textAlign: e.target.value } as Partial<T>)} style={{ display: 'flex', width: '100%' }}>
+          <Radio.Group size="small" value={design.textAlign ?? 'left'} onChange={e => onUpdate({ textAlign: e.target.value } as Partial<T>)} style={{ display: 'flex', width: '100%' }}>
             <Radio.Button value="left" style={{ flex: 1, textAlign: 'center' }}><AlignLeftOutlined /></Radio.Button>
             <Radio.Button value="center" style={{ flex: 1, textAlign: 'center' }}><AlignCenterOutlined /></Radio.Button>
             <Radio.Button value="right" style={{ flex: 1, textAlign: 'center' }}><AlignRightOutlined /></Radio.Button>
@@ -1062,7 +1055,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
       <div style={{ display: 'flex', gap: 8 }}>
         <div style={{ flex: 1 }}>
           <FieldLabel tooltip="Cursiva o normal — el formato tipográfico del párrafo generado.">Estilo</FieldLabel>
-          <Radio.Group value={block.fontStyle} onChange={e => onUpdate({ ...block, fontStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+          <Radio.Group size="small" value={block.fontStyle} onChange={e => onUpdate({ ...block, fontStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
             <Radio.Button value="italic" style={{ flex: 1, textAlign: 'center', fontStyle: 'italic' }}>Cursiva</Radio.Button>
             <Radio.Button value="normal" style={{ flex: 1, textAlign: 'center' }}>Normal</Radio.Button>
           </Radio.Group>
@@ -1089,7 +1082,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
         </div>
         <div style={{ flex: 1 }}>
           <FieldLabel>Estilo borde</FieldLabel>
-          <Radio.Group value={block.cardBorderStyle} onChange={e => onUpdate({ ...block, cardBorderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+          <Radio.Group size="small" value={block.cardBorderStyle} onChange={e => onUpdate({ ...block, cardBorderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
             <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
             <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
             <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
@@ -1129,35 +1122,6 @@ function TitleContentFields({ block, onUpdate }: { block: TitleBlock; onUpdate: 
     </div>
   );
 }
-function FooterContentFields({ block, onUpdate }: { block: FooterBlock; onUpdate: (b: Component) => void }) {
-  const taRef = useRef<HTMLTextAreaElement>(null);
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div>
-        <FieldLabel tooltip="Texto legal al pie del correo — nombre del cliente y aviso de desuscripción.">Texto</FieldLabel>
-        <TextArea ref={taRef} rows={3} value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} />
-      </div>
-      <div>
-        <FieldLabel>Insertar variable</FieldLabel>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-          {VARIABLES.map(v => (
-            <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 10 }} color="blue" onClick={() => {
-              const ta = taRef.current;
-              const tag = `{{${v}}}`;
-              if (!ta) { onUpdate({ ...block, text: block.text + tag }); return; }
-              const s = ta.selectionStart, e2 = ta.selectionEnd;
-              const nc = block.text.slice(0, s) + tag + block.text.slice(e2);
-              onUpdate({ ...block, text: nc });
-              setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = s + tag.length; }, 0);
-            }}>
-              {`{{${v}}}`}
-            </Tag>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 function SubSectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(0,0,0,0.35)', borderBottom: '1px solid #f0f0f0', paddingBottom: 4, marginTop: 4 }}>
@@ -1167,7 +1131,7 @@ function SubSectionHeading({ children }: { children: React.ReactNode }) {
 }
 function WeightField({ value, onChange }: { value: '400' | '600' | '700'; onChange: (v: '400' | '600' | '700') => void }) {
   return (
-    <Radio.Group value={value} onChange={e => onChange(e.target.value)} style={{ display: 'flex', width: '100%' }}>
+    <Radio.Group size="small" value={value} onChange={e => onChange(e.target.value)} style={{ display: 'flex', width: '100%' }}>
       <Radio.Button value="400" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Normal</Radio.Button>
       <Radio.Button value="600" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Semi</Radio.Button>
       <Radio.Button value="700" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Bold</Radio.Button>
@@ -1401,7 +1365,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <SubSectionHeading>Separadores y espaciado</SubSectionHeading>
         <div>
           <FieldLabel>Estilo separador</FieldLabel>
-          <Radio.Group value={block.separatorStyle} onChange={e => onUpdate({ ...block, separatorStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+          <Radio.Group size="small" value={block.separatorStyle} onChange={e => onUpdate({ ...block, separatorStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
             <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
             <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
             <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
@@ -1490,10 +1454,10 @@ function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUp
   const urlRef = useRef<InputRef>(null);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div><FieldLabel>Texto del botón</FieldLabel><Input value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} /></div>
+      <div><FieldLabel>Texto del botón</FieldLabel><Input size="small" value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} /></div>
       <div>
         <FieldLabel>URL de destino</FieldLabel>
-        <Input ref={urlRef} value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })} placeholder="https://.../{{variable}}" />
+        <Input ref={urlRef} size="small" value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })} placeholder="https://.../{{variable}}" />
       </div>
       <div>
         <FieldLabel>Insertar variable</FieldLabel>
@@ -1586,7 +1550,7 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
 
 const TYPE_SECTION_TITLE: Partial<Record<ComponentType, string>> = {
   header: 'Encabezado', title: 'Título', text: 'Texto', ai: 'Bloque IA', responses: 'Bloque de respuestas',
-  footer: 'Footer legal', image: 'Imagen', button: 'Botón', spacer: 'Espaciador', social: 'Redes Sociales',
+  image: 'Imagen', button: 'Botón', spacer: 'Espaciador', social: 'Redes Sociales',
 };
 
 function ComponentTypeFields({ component, onUpdate }: { component: Component; onUpdate: (c: Component) => void }) {
@@ -1594,7 +1558,6 @@ function ComponentTypeFields({ component, onUpdate }: { component: Component; on
   if (component.type === 'ai')        return <AiContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'header')    return <HeaderContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'title')     return <TitleContentFields block={component} onUpdate={onUpdate} />;
-  if (component.type === 'footer')    return <FooterContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'responses') return <ResponsesContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'image')     return <ImageContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'button')    return <ButtonContentFields block={component} onUpdate={onUpdate} />;
@@ -1992,7 +1955,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                         <BlockFields
                           design={selectedComponent.design}
                           onUpdate={p => updateComponent(selection.rowId, selection.columnId, { ...selectedComponent, design: { ...selectedComponent.design, ...p } })}
-                          excludeAlign={selectedComponent.type === 'header' || selectedComponent.type === 'divider' || selectedComponent.type === 'footer'}
+                          excludeAlign={selectedComponent.type === 'header' || selectedComponent.type === 'divider'}
                         />
                       </CollapsibleSection>
                       {TYPE_SECTION_TITLE[selectedComponent.type] && (
