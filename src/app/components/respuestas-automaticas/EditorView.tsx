@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   App, Button, Input, Card, Typography, Divider, Switch, Tag,
-  InputNumber, Radio, Checkbox, Tooltip, Segmented, Modal, ConfigProvider,
+  InputNumber, Radio, Checkbox, Tooltip, Segmented, Modal, ConfigProvider, Select, Slider,
 } from 'antd';
 import {
   SendOutlined, CopyOutlined, CloseOutlined, PlusOutlined, BoldOutlined, AlignLeftOutlined,
@@ -16,9 +16,9 @@ import { html as htmlLang } from '@codemirror/lang-html';
 import {
   AutoResponse, Row, RowDesign, Component, ComponentType, ComponentDesign, EmailLayoutConfig, TextAlign,
   AiBlock, TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, FooterBlock,
-  ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey, Tone,
+  ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey, Tone, AiLanguage,
 } from './types';
-import { VARIABLES, PREGUNTAS, TONO_LABELS, HEADER_COLORS, DEFAULT_RESTRICTIONS, SETUP, mockGenerateAiText, countComponents } from './data';
+import { VARIABLES, PREGUNTAS, TONO_LABELS, IDIOMA_LABELS, HEADER_COLORS, DEFAULT_RESTRICTIONS, SETUP, mockGenerateAiText, countComponents } from './data';
 import { cuid } from './cuid';
 import TestModal from './TestModal';
 
@@ -71,8 +71,8 @@ function makeComponent(type: ComponentType): Component {
     case 'header':    return { id, type, name: 'HIR Casa', bgColor: '#1890ff', design };
     case 'title':     return { id, type, text: 'Tu opinión importa', design };
     case 'text':      return { id, type, content: 'Hola {{nombre_preferido}},\n\nGracias por tomarte el tiempo de responder nuestra encuesta.', design };
-    case 'ai':        return { id, type, objetivo: '', tone: 'empatico' as Tone, customTone: '', datoPriorizar: '', restricciones: [...DEFAULT_RESTRICTIONS], generatedText: '', design };
-    case 'responses': return { id, type, questions: PREGUNTAS.map(q => ({ questionId: q.id, included: true, showStatement: true, showOnlyAnswer: false })), displayStyle: 'bold-indented', design };
+    case 'ai':        return { id, type, objetivo: '', tone: 'empatico' as Tone, customTone: '', datoPriorizar: '', restricciones: [...DEFAULT_RESTRICTIONS], idioma: 'es' as AiLanguage, generatedText: '', design };
+    case 'responses': return { id, type, questions: PREGUNTAS.map(q => ({ questionId: q.id, included: true })), displayStyle: 'bold-indented', showQuestion: true, rowGap: 10, design };
     case 'divider':   return { id, type, design };
     case 'footer':    return { id, type, text: 'Para darte de baja, responde a este correo con el asunto "Baja".\n\n© HIR Casa · Ciudad de México', design };
     case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, design };
@@ -138,6 +138,19 @@ function formatDate(iso: string | null | undefined): string {
   return `${d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })} ${d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`;
 }
 
+function mockAnswerFor(q: (typeof PREGUNTAS)[number]): string {
+  if (q.tipo === 'NPS') return '7';
+  if (q.tipo === 'CSAT') return '★★★★☆';
+  if (q.tipo === 'seleccion_simple') return q.opciones?.[0] ?? '';
+  return 'El proceso fue satisfactorio.';
+}
+function orderedIncludedQuestions(block: ResponsesBlock): (typeof PREGUNTAS)[number][] {
+  return block.questions
+    .filter(bq => bq.included)
+    .map(bq => PREGUNTAS.find(q => q.id === bq.questionId))
+    .filter((q): q is (typeof PREGUNTAS)[number] => !!q);
+}
+
 function componentToHtml(c: Component): string {
   const d = c.design;
   const border = d.borderStyle && d.borderStyle !== 'none' && (d.borderWidth ?? 0) > 0 ? `border:${d.borderWidth}px ${d.borderStyle} ${d.borderColor ?? '#000'};` : '';
@@ -147,7 +160,21 @@ function componentToHtml(c: Component): string {
     case 'title':     return `<div style="${style}"><h2 style="font-weight:700;font-size:21px;color:#000;margin:0;">${c.text}</h2></div>`;
     case 'text':      return `<div style="${style}"><p style="font-size:13.5px;line-height:1.75;color:#333;white-space:pre-line;margin:0;">${c.content}</p></div>`;
     case 'ai':        return `<div style="${style}"><p style="font-size:13px;line-height:1.7;color:#4C1D95;font-style:italic;margin:0;">${c.generatedText || '[Texto generado pendiente — envía una prueba]'}</p></div>`;
-    case 'responses': return `<div style="${style}"><p style="font-size:12px;color:#666;">[Bloque de respuestas del encuestado]</p></div>`;
+    case 'responses': {
+      const included = orderedIncludedQuestions(c);
+      if (c.displayStyle === 'table') {
+        const rows = included.map(q => `<tr>${c.showQuestion ? `<td style="padding:8px 12px;font-weight:600;color:#000;background:#fafafa;width:45%;border-top:1px solid #f0f0f0;">${q.texto}</td>` : ''}<td style="padding:8px 12px;color:#555;border-top:1px solid #f0f0f0;">${mockAnswerFor(q)}</td></tr>`).join('');
+        return `<div style="${style}"><table role="presentation" width="100%" style="border-collapse:collapse;border:1px solid #f0f0f0;font-size:12.5px;">${rows}</table></div>`;
+      }
+      const items = included.map((q, i) => {
+        const qLabel = !c.showQuestion ? '' : c.displayStyle === 'bold-indented'
+          ? `<strong style="display:block;font-size:13px;margin-bottom:2px;">${q.texto}</strong>`
+          : `<span style="font-weight:500;">${q.texto}: </span>`;
+        const indentStyle = c.displayStyle === 'bold-indented' ? 'padding-left:11px;border-left:2.5px solid #d9d9d9;' : '';
+        return `<div style="margin-bottom:${i < included.length - 1 ? c.rowGap : 0}px;">${qLabel}<p style="font-size:12.5px;color:#555;margin:0;${indentStyle}">${mockAnswerFor(q)}</p></div>`;
+      }).join('');
+      return `<div style="${style}"><div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#999;margin-bottom:10px;">TUS RESPUESTAS</div>${items}</div>`;
+    }
     case 'divider':   return `<hr style="margin:${d.paddingTop}px 26px ${d.paddingBottom}px;" />`;
     case 'footer':    return `<div style="${style}"><p style="font-size:11.5px;color:#999;text-align:center;white-space:pre-line;margin:0;">${c.text}</p></div>`;
     case 'image':     return `<div style="${style}text-align:center;">${c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : ''}</div>`;
@@ -248,15 +275,40 @@ function renderComponentContent(component: Component): React.ReactNode {
     );
   }
   if (component.type === 'responses') {
-    const included = PREGUNTAS.filter(q => component.questions.find(bq => bq.questionId === q.id && bq.included));
+    const included = orderedIncludedQuestions(component);
+    if (component.displayStyle === 'table') {
+      return (
+        <div style={{ margin: '0 32px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, border: '1px solid #f0f0f0', borderRadius: 8 }}>
+            <tbody>
+              {included.map((q, i) => (
+                <tr key={q.id} style={{ borderTop: i > 0 ? '1px solid #f0f0f0' : undefined }}>
+                  {component.showQuestion && <td style={{ padding: '8px 12px', fontWeight: 600, color: 'rgba(0,0,0,.85)', background: '#fafafa', width: '45%' }}>{q.texto}</td>}
+                  <td style={{ padding: '8px 12px', color: 'rgba(0,0,0,.65)' }}>{mockAnswerFor(q)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
     return (
       <div style={{ margin: '0 32px', border: '1px solid #f0f0f0', borderRadius: 8, background: '#fafafa', padding: '14px 16px' }}>
         <Text type="secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>TUS RESPUESTAS</Text>
         {included.map((q, i) => (
-          <div key={q.id} style={{ marginBottom: i < included.length - 1 ? 10 : 0 }}>
-            <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 2 }}>{q.texto}</Text>
-            <p style={{ fontSize: 12.5, color: 'rgba(0,0,0,.65)', margin: 0, paddingLeft: 11, borderLeft: '2.5px solid #d9d9d9' }}>
-              {q.tipo === 'NPS' ? '7' : q.tipo === 'CSAT' ? '★★★★☆' : q.tipo === 'seleccion_simple' ? 'Quito Norte' : 'El proceso fue satisfactorio.'}
+          <div key={q.id} style={{ marginBottom: i < included.length - 1 ? component.rowGap : 0 }}>
+            {component.showQuestion && component.displayStyle === 'bold-indented' && (
+              <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 2 }}>{q.texto}</Text>
+            )}
+            {component.showQuestion && component.displayStyle === 'list' && (
+              <Text style={{ fontSize: 12.5, fontWeight: 500, display: 'block' }}>{q.texto}: </Text>
+            )}
+            <p style={{
+              fontSize: 12.5, color: 'rgba(0,0,0,.65)', margin: 0,
+              paddingLeft: component.displayStyle === 'bold-indented' ? 11 : 0,
+              borderLeft: component.displayStyle === 'bold-indented' ? '2.5px solid #d9d9d9' : 'none',
+            }}>
+              {mockAnswerFor(q)}
             </p>
           </div>
         ))}
@@ -762,7 +814,10 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ padding: '7px 10px', borderRadius: 6, background: 'var(--ds-violet-bg)', border: '1px solid var(--ds-violet-mid)' }}>
         <Text style={{ fontSize: 11, color: 'var(--ds-violet-dark)' }}>
-          ✦ Usa como contexto: <strong>{SETUP.empresa}</strong> · {SETUP.industria}
+          ✦ <strong>{SETUP.empresa}</strong> · {SETUP.industria}
+        </Text>
+        <Text style={{ fontSize: 10.5, color: 'var(--ds-violet-dark)', display: 'block', marginTop: 3, opacity: 0.85 }}>
+          La IA recibe: datos de contacto, variables de la interacción (incluyendo ticket/caso si se generó) y todas las respuestas del encuestado. Solo usa variables cuyo significado entiende con certeza.
         </Text>
       </div>
       <div>
@@ -785,6 +840,15 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
           ))}
         </div>
         {block.tone === 'custom' && <Input size="small" style={{ marginTop: 6 }} value={block.customTone} onChange={e => onUpdate({ ...block, customTone: e.target.value })} placeholder="Describe el tono…" />}
+      </div>
+      <div>
+        <FieldLabel>Idioma del texto generado</FieldLabel>
+        <Select
+          size="small" style={{ width: '100%' }} value={block.idioma}
+          onChange={v => onUpdate({ ...block, idioma: v as AiLanguage })}
+          options={Object.entries(IDIOMA_LABELS).map(([value, label]) => ({ value, label }))}
+        />
+        <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 2 }}>El texto generado saldrá en este idioma, sin importar el idioma del resto del correo.</Text>
       </div>
       <div>
         <FieldLabel>Dato a mencionar (opcional)</FieldLabel>
@@ -835,24 +899,97 @@ function TitleContentFields({ block, onUpdate }: { block: TitleBlock; onUpdate: 
     </div>
   );
 }
+const RQ_ITEM = 'rq-item';
+
+function RQItem({ q, index, checked, onToggle, moveItem }: {
+  q: (typeof PREGUNTAS)[number]; index: number; checked: boolean;
+  onToggle: (checked: boolean) => void; moveItem: (from: number, to: number) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const handleRef = useRef<HTMLDivElement>(null);
+  const [, drop] = useDrop({
+    accept: RQ_ITEM,
+    hover(item: { index: number }, monitor) {
+      if (!ref.current) return;
+      const dragIndex = item.index, hoverIndex = index;
+      if (dragIndex === hoverIndex) return;
+      const rect = ref.current.getBoundingClientRect();
+      const hoverMiddleY = (rect.bottom - rect.top) / 2;
+      const clientOffset = monitor.getClientOffset();
+      const hoverClientY = (clientOffset?.y ?? 0) - rect.top;
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
+      moveItem(dragIndex, hoverIndex);
+      item.index = hoverIndex;
+    },
+  });
+  const [{ isDragging }, drag] = useDrag({
+    type: RQ_ITEM,
+    item: () => ({ index }),
+    collect: monitor => ({ isDragging: monitor.isDragging() }),
+  });
+  drag(handleRef);
+  drop(ref);
+  return (
+    <div ref={ref} style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #f0f0f0', borderRadius: 6, padding: '6px 8px', background: '#fff', opacity: isDragging ? 0.4 : 1 }}>
+      <div ref={handleRef} style={{ cursor: 'grab', color: 'rgba(0,0,0,.35)', display: 'flex', flexShrink: 0 }}>
+        <HolderOutlined style={{ fontSize: 12 }} />
+      </div>
+      <Checkbox checked={checked} onChange={e => onToggle(e.target.checked)} />
+      <Text style={{ fontSize: 12, flex: 1 }}>{q.texto}</Text>
+      <Tag style={{ margin: 0, fontSize: 10 }}>{q.tipo}</Tag>
+    </div>
+  );
+}
+
 function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; onUpdate: (b: Component) => void }) {
+  function moveQuestion(from: number, to: number) {
+    const next = [...block.questions];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    onUpdate({ ...block, questions: next });
+  }
+  function toggleQuestion(questionId: string, included: boolean) {
+    onUpdate({ ...block, questions: block.questions.map(q => q.questionId === questionId ? { ...q, included } : q) });
+  }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ padding: '7px 10px', borderRadius: 6, background: '#fafafa', border: '1px solid #f0f0f0', fontSize: 11, color: 'rgba(0,0,0,.45)' }}>
         Cada encuestado verá sus propias respuestas exactas. El contenido es dinámico y único por persona.
       </div>
-      {PREGUNTAS.map(q => {
-        const bq = block.questions.find(x => x.questionId === q.id) ?? { questionId: q.id, included: true, showStatement: true, showOnlyAnswer: false };
-        const update = (patch: object) => onUpdate({ ...block, questions: block.questions.map(x => x.questionId === q.id ? { ...x, ...patch } : x) });
-        return (
-          <div key={q.id} style={{ border: '1px solid #f0f0f0', borderRadius: 6, padding: '8px 10px' }}>
-            <Checkbox checked={bq.included} onChange={e => update({ included: e.target.checked })}>
-              <Text style={{ fontSize: 12 }}>{q.texto}</Text>
-              <Tag style={{ marginLeft: 6 }}>{q.tipo}</Tag>
-            </Checkbox>
-          </div>
-        );
-      })}
+      <div>
+        <FieldLabel>Preguntas a incluir</FieldLabel>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {block.questions.map((bq, i) => {
+            const q = PREGUNTAS.find(x => x.id === bq.questionId);
+            if (!q) return null;
+            return (
+              <RQItem key={q.id} q={q} index={i} checked={bq.included} onToggle={checked => toggleQuestion(q.id, checked)} moveItem={moveQuestion} />
+            );
+          })}
+        </div>
+        <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>Arrastra para cambiar el orden en que aparecen en el correo.</Text>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <FieldLabel inline>Mostrar enunciado de la pregunta</FieldLabel>
+        <Switch size="small" checked={block.showQuestion} onChange={checked => onUpdate({ ...block, showQuestion: checked })} />
+      </div>
+      <div>
+        <FieldLabel>Estilo de visualización</FieldLabel>
+        <Select
+          size="small" style={{ width: '100%' }} value={block.displayStyle}
+          onChange={v => onUpdate({ ...block, displayStyle: v as ResponsesBlock['displayStyle'] })}
+          options={[
+            { value: 'bold-indented', label: 'Pregunta en negrita + respuesta con sangría' },
+            { value: 'list', label: 'Solo respuestas en lista' },
+            { value: 'table', label: 'Tabla pregunta / respuesta' },
+          ]}
+        />
+      </div>
+      <div>
+        <FieldLabel>Espacio entre filas</FieldLabel>
+        <Slider min={4} max={32} value={block.rowGap} onChange={v => onUpdate({ ...block, rowGap: v })} />
+      </div>
     </div>
   );
 }

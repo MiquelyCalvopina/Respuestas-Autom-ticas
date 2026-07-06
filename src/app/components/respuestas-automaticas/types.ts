@@ -2,6 +2,7 @@ export type Trigger = 'response' | 'farewell';
 export type ComponentType = 'header' | 'title' | 'text' | 'ai' | 'responses' | 'divider' | 'footer' | 'image' | 'button' | 'spacer' | 'social';
 export type TextAlign = 'left' | 'center' | 'right';
 export type Tone = 'empatico' | 'formal' | 'calido' | 'directo' | 'custom';
+export type AiLanguage = 'es' | 'en' | 'pt' | 'fr';
 export type RuleStatus = 'draft' | 'active' | 'inactive';
 
 export interface ComponentDesign {
@@ -39,19 +40,20 @@ export interface AiBlock {
   customTone: string;
   datoPriorizar: string;
   restricciones: string[];
+  idioma: AiLanguage;
   generatedText: string;
   design: ComponentDesign;
 }
 export interface ResponseQuestion {
   questionId: string;
   included: boolean;
-  showStatement: boolean;
-  showOnlyAnswer: boolean;
 }
 export interface ResponsesBlock {
   id: string; type: 'responses';
   questions: ResponseQuestion[];
   displayStyle: 'bold-indented' | 'list' | 'table';
+  showQuestion: boolean;
+  rowGap: number;
   design: ComponentDesign;
 }
 export interface DividerBlock {
