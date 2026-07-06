@@ -3,6 +3,7 @@ import {
   App, Button, Input, Card, Typography, Divider, Switch, Tag,
   InputNumber, Radio, Checkbox, Tooltip, Segmented, Modal, ConfigProvider, Select, Slider,
 } from 'antd';
+import type { InputRef } from 'antd';
 import {
   SendOutlined, CopyOutlined, CloseOutlined, PlusOutlined, BoldOutlined, AlignLeftOutlined,
   AlignCenterOutlined, AlignRightOutlined, MinusOutlined, UnorderedListOutlined,
@@ -144,6 +145,22 @@ const SOCIAL_ICONS: Record<SocialNetworkKey, string> = { facebook: '📘', insta
 const SOCIAL_LABELS: Record<SocialNetworkKey, string> = { facebook: 'Facebook', instagram: 'Instagram', linkedin: 'Linkedin', youtube: 'Youtube', x: 'X (Twitter)', pinterest: 'Pinterest' };
 const SOCIAL_KEYS: SocialNetworkKey[] = ['facebook', 'instagram', 'linkedin', 'youtube', 'x', 'pinterest'];
 
+// Glifos como HTML puro (texto/SVG con currentColor vía "color", nunca emoji): el correo
+// exportado lo renderiza cada cliente con su propio set de fuentes de emoji — Outlook,
+// Gmail y Apple Mail difieren tanto que un ícono puede verse irreconocible o como un
+// cuadro vacío. Una sola fuente de verdad usada tanto en el HTML exportado como en la
+// vista previa del canvas, para que ambos se vean siempre idénticos.
+function socialGlyphHtml(network: SocialNetworkKey, color: string): string {
+  switch (network) {
+    case 'facebook': return `<span style="font-family:Georgia,serif;font-weight:700;font-size:1.05em;color:${color}">f</span>`;
+    case 'linkedin': return `<span style="font-family:Arial,sans-serif;font-weight:700;font-size:0.6em;letter-spacing:-0.5px;color:${color}">in</span>`;
+    case 'pinterest': return `<span style="font-family:Georgia,serif;font-weight:700;font-size:1em;color:${color}">P</span>`;
+    case 'youtube': return `<svg viewBox="0 0 24 24" width="55%" height="55%" fill="${color}"><path d="M8 5v14l11-7z"/></svg>`;
+    case 'x': return `<svg viewBox="0 0 24 24" width="50%" height="50%" fill="none" stroke="${color}" stroke-width="2.6" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>`;
+    case 'instagram': return `<svg viewBox="0 0 24 24" width="58%" height="58%" fill="none" stroke="${color}" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" fill="${color}" stroke="none"/></svg>`;
+  }
+}
+
 function renderVars(text: string) {
   return text.replace(/\{\{(\w+)\}\}/g, (_, v) =>
     `<span style="background:#e6f7ff;color:#1890ff;font-family:'JetBrains Mono',monospace;font-size:11px;padding:1px 5px;border-radius:3px;">{{${v}}}</span>`
@@ -209,7 +226,7 @@ function componentToHtml(c: Component): string {
       const iconBg = c.style === 'negro' ? '#000' : c.style === 'blanco' ? '#fff' : '#1890ff';
       const iconColor = c.style === 'blanco' ? '#000' : '#fff';
       const icons = c.networks.filter(n => n.included).map(n =>
-        `<a href="${n.url}" style="display:inline-block;width:${c.size}px;height:${c.size}px;line-height:${c.size}px;text-align:center;background:${iconBg};color:${iconColor};border-radius:${radius};margin:0 ${c.gap / 2}px;text-decoration:none;">${SOCIAL_ICONS[n.network]}</a>`
+        `<a href="${n.url}" style="display:inline-flex;align-items:center;justify-content:center;width:${c.size}px;height:${c.size}px;background:${iconBg};color:${iconColor};border-radius:${radius};margin:0 ${c.gap / 2}px;text-decoration:none;">${socialGlyphHtml(n.network, iconColor)}</a>`
       ).join('');
       return `<div style="${style}text-align:center;">${icons}</div>`;
     }
@@ -381,7 +398,7 @@ function renderComponentContent(component: Component): React.ReactNode {
     ) : (
       <div style={{ margin: '0 32px', padding: '32px', textAlign: 'center', color: '#bfbfbf', border: '1px dashed #d9d9d9', borderRadius: 8 }}>
         <PictureOutlined style={{ fontSize: 24 }} />
-        <div style={{ fontSize: 12, marginTop: 4 }}>Sin imagen — define la URL en Configuración</div>
+        <div style={{ fontSize: 12, marginTop: 4 }}>Sin imagen — selecciónala y define la URL en Diseño</div>
       </div>
     );
   }
@@ -403,13 +420,16 @@ function renderComponentContent(component: Component): React.ReactNode {
         {included.length === 0
           ? <Text type="secondary" style={{ fontSize: 12 }}>Sin redes configuradas</Text>
           : included.map(n => (
-            <span key={n.network} title={SOCIAL_LABELS[n.network]} style={{
-              width: component.size, height: component.size, lineHeight: `${component.size}px`,
-              textAlign: 'center', background: iconBg, color: iconColor, borderRadius: radius,
-              display: 'inline-block', fontSize: component.size * 0.55, border: component.style === 'blanco' ? '1px solid #e0e0e0' : undefined,
-            }}>
-              {SOCIAL_ICONS[n.network]}
-            </span>
+            <span
+              key={n.network} title={SOCIAL_LABELS[n.network]}
+              style={{
+                width: component.size, height: component.size,
+                background: iconBg, color: iconColor, borderRadius: radius,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: component.size * 0.55, border: component.style === 'blanco' ? '1px solid #e0e0e0' : undefined,
+              }}
+              dangerouslySetInnerHTML={{ __html: socialGlyphHtml(n.network, iconColor) }}
+            />
           ))}
       </div>
     );
@@ -921,7 +941,7 @@ function BlockFields<T extends {
   );
 }
 
-// ─── Campos de contenido por tipo de componente (tab "Configuración") ────────
+// ─── Campos de contenido por tipo de componente (sección específica del tab "Diseño") ────────
 
 function TextContentFields({ block, onUpdate }: { block: TextBlock; onUpdate: (b: Component) => void }) {
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -1360,6 +1380,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
   );
 }
 function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpdate: (b: Component) => void }) {
+  const urlRef = useRef<InputRef>(null);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div>
@@ -1371,8 +1392,32 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
       </div>
       <div>
         <FieldLabel>URL</FieldLabel>
-        <Input size="small" value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })} placeholder="https://..." />
+        <Input
+          ref={urlRef} size="small" value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })}
+          placeholder={block.dynamic ? 'https://.../{{variable}}.png' : 'https://...'}
+        />
       </div>
+      {block.dynamic && (
+        <div>
+          <FieldLabel>Insertar variable</FieldLabel>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {VARIABLES.map(v => (
+              <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 10 }} color="blue" onClick={() => {
+                const input = urlRef.current?.input;
+                const tag = `{{${v}}}`;
+                if (!input) { onUpdate({ ...block, src: block.src + tag }); return; }
+                const s = input.selectionStart ?? block.src.length, e2 = input.selectionEnd ?? block.src.length;
+                const next = block.src.slice(0, s) + tag + block.src.slice(e2);
+                onUpdate({ ...block, src: next });
+                setTimeout(() => { input.focus(); input.selectionStart = input.selectionEnd = s + tag.length; }, 0);
+              }}>
+                {`{{${v}}}`}
+              </Tag>
+            ))}
+          </div>
+          <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>La URL puede incluir una variable para mostrar una imagen distinta por destinatario.</Text>
+        </div>
+      )}
       <div>
         <FieldLabel>Texto alternativo</FieldLabel>
         <Input size="small" value={block.alt} onChange={e => onUpdate({ ...block, alt: e.target.value })} />
@@ -1402,7 +1447,12 @@ function SpacerContentFields({ block, onUpdate }: { block: SpacerComponent; onUp
     </div>
   );
 }
-const SHAPE_ICON: Record<'square' | 'rounded' | 'circle', string> = { square: '▢', rounded: '▢', circle: '◯' };
+// Swatch real (no un glifo de texto) para que cada opción muestre el radio que en verdad
+// va a aplicar — "square" y "rounded" se veían idénticos como caracteres Unicode.
+function ShapeSwatch({ shape }: { shape: 'square' | 'rounded' | 'circle' }) {
+  const radius = shape === 'circle' ? '50%' : shape === 'rounded' ? 4 : 0;
+  return <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid currentColor', borderRadius: radius, verticalAlign: 'middle' }} />;
+}
 function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUpdate: (b: Component) => void }) {
   function setEntry(network: SocialNetworkKey, patch: { included?: boolean; url?: string }) {
     onUpdate({ ...block, networks: block.networks.map(n => n.network === network ? { ...n, ...patch } : n) });
@@ -1430,21 +1480,21 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
       <div>
         <FieldLabel>Estilo del borde</FieldLabel>
         <Radio.Group size="small" value={block.shape} onChange={e => onUpdate({ ...block, shape: e.target.value })} style={{ display: 'flex' }}>
-          <Radio.Button value="square" style={{ flex: 1, textAlign: 'center' }}>{SHAPE_ICON.square}</Radio.Button>
-          <Radio.Button value="rounded" style={{ flex: 1, textAlign: 'center', borderRadius: 6 }}>{SHAPE_ICON.rounded}</Radio.Button>
-          <Radio.Button value="circle" style={{ flex: 1, textAlign: 'center' }}>{SHAPE_ICON.circle}</Radio.Button>
+          <Radio.Button value="square" style={{ flex: 1, textAlign: 'center' }}><ShapeSwatch shape="square" /></Radio.Button>
+          <Radio.Button value="rounded" style={{ flex: 1, textAlign: 'center' }}><ShapeSwatch shape="rounded" /></Radio.Button>
+          <Radio.Button value="circle" style={{ flex: 1, textAlign: 'center' }}><ShapeSwatch shape="circle" /></Radio.Button>
         </Radio.Group>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {block.networks.map(entry => (
           <div key={entry.network}>
             <Checkbox checked={entry.included} onChange={e => setEntry(entry.network, { included: e.target.checked })}>
               <Text style={{ fontSize: 12 }}>{SOCIAL_ICONS[entry.network]} {SOCIAL_LABELS[entry.network]}</Text>
             </Checkbox>
             <Input
-              size="small" addonBefore="https://" maxLength={2048} showCount
+              size="small" addonBefore="https://" maxLength={300}
               value={entry.url} onChange={e => setEntry(entry.network, { url: e.target.value })}
-              placeholder={`https://www.${SOCIAL_LABELS[entry.network]}.com`}
+              placeholder={`www.${SOCIAL_LABELS[entry.network].toLowerCase()}.com/hircasa`}
               style={{ marginTop: 4 }}
             />
           </div>
