@@ -24,45 +24,45 @@ function IdeasFlowIllustration() {
       <div className="absolute inset-[0.11%_0.06%_0.55%_0]">
         <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 209.878 125.164">
           <g id="Group">
-            <path d={svgPaths.p199fd80} fill="#BFBFBF" />
-            <path d={svgPaths.p354a9a00} fill="#BFBFBF" />
-            <path d={svgPaths.p2f113400} fill="#BFBFBF" />
-            <path d={svgPaths.p15a1c8c0} fill="#BFBFBF" />
-            <path d={svgPaths.p21183480} fill="#BFBFBF" />
-            <path d={svgPaths.paecd500} fill="#F0F0F0" />
+            <path d={svgPaths.p199fd80} fill="#bfbfbf" />
+            <path d={svgPaths.p354a9a00} fill="#bfbfbf" />
+            <path d={svgPaths.p2f113400} fill="#bfbfbf" />
+            <path d={svgPaths.p15a1c8c0} fill="#bfbfbf" />
+            <path d={svgPaths.p21183480} fill="#bfbfbf" />
+            <path d={svgPaths.paecd500} fill="#f0f0f0" />
             <path d={svgPaths.p3f9bbe00} fill="white" />
             <path d={svgPaths.p21b49430} fill="white" />
             <path d={svgPaths.p25c6ea00} fill="white" />
             <g>
-              <path d={svgPaths.p3b4ad600} fill="#F0F0F0" />
-              <path d={svgPaths.p241f5ff0} fill="#BFBFBF" />
-              <path d={svgPaths.paa44c00} fill="#BFBFBF" />
-              <path d={svgPaths.p1352ee80} fill="#BFBFBF" />
+              <path d={svgPaths.p3b4ad600} fill="#f0f0f0" />
+              <path d={svgPaths.p241f5ff0} fill="#bfbfbf" />
+              <path d={svgPaths.paa44c00} fill="#bfbfbf" />
+              <path d={svgPaths.p1352ee80} fill="#bfbfbf" />
             </g>
             <g>
-              <path d={svgPaths.pc446680} fill="#F0F0F0" />
-              <path d={svgPaths.p75f7880} fill="#BFBFBF" />
-              <path d={svgPaths.p9846480} fill="#BFBFBF" />
-              <path d={svgPaths.p1407a000} fill="#BFBFBF" />
+              <path d={svgPaths.pc446680} fill="#f0f0f0" />
+              <path d={svgPaths.p75f7880} fill="#bfbfbf" />
+              <path d={svgPaths.p9846480} fill="#bfbfbf" />
+              <path d={svgPaths.p1407a000} fill="#bfbfbf" />
             </g>
             <g>
-              <path d={svgPaths.p8199a80} fill="#F0F0F0" />
+              <path d={svgPaths.p8199a80} fill="#f0f0f0" />
               <g>
-                <path d={svgPaths.p10915400} fill="#FFFBE6" />
-                <path d={svgPaths.p25476a00} fill="#FAAD14" />
-                <path d={svgPaths.p115fab00} fill="#FAAD14" />
-                <path d={svgPaths.p17ed5080} fill="#FAAD14" />
-                <path d={svgPaths.p2e13fa00} fill="#FAAD14" />
-                <path d={svgPaths.p24b4f480} fill="#FAAD14" />
-                <path d={svgPaths.p3c3f6a00} fill="#FAAD14" />
-                <path d={svgPaths.p3dbdc000} fill="#FAAD14" />
-                <path d={svgPaths.p3453f000} fill="#FAAD14" />
+                <path d={svgPaths.p10915400} fill="#fffbe6" />
+                <path d={svgPaths.p25476a00} fill="#faad14" />
+                <path d={svgPaths.p115fab00} fill="#faad14" />
+                <path d={svgPaths.p17ed5080} fill="#faad14" />
+                <path d={svgPaths.p2e13fa00} fill="#faad14" />
+                <path d={svgPaths.p24b4f480} fill="#faad14" />
+                <path d={svgPaths.p3c3f6a00} fill="#faad14" />
+                <path d={svgPaths.p3dbdc000} fill="#faad14" />
+                <path d={svgPaths.p3453f000} fill="#faad14" />
               </g>
             </g>
-            <path d={svgPaths.p1aed9f40} fill="#F0F0F0" />
-            <path d={svgPaths.p2b8f3ff0} fill="#BFBFBF" />
-            <path d={svgPaths.p3d65bef0} fill="#BFBFBF" />
-            <path d={svgPaths.p396c0b00} fill="#F0F0F0" />
+            <path d={svgPaths.p1aed9f40} fill="#f0f0f0" />
+            <path d={svgPaths.p2b8f3ff0} fill="#bfbfbf" />
+            <path d={svgPaths.p3d65bef0} fill="#bfbfbf" />
+            <path d={svgPaths.p396c0b00} fill="#f0f0f0" />
           </g>
         </svg>
       </div>

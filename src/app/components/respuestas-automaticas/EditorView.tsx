@@ -260,7 +260,7 @@ function ActionOverlay({ dragHandleRef, onInsertAfter, onDuplicate, onRemove }: 
   onInsertAfter: () => void; onDuplicate: () => void; onRemove: () => void;
 }) {
   return (
-    <div className="blk-toolbar" style={{ transition: 'opacity .15s', position: 'absolute', top: -32, right: 0, zIndex: 5, display: 'flex', gap: 2, background: 'rgba(0,0,0,.75)', borderRadius: 4, padding: '2px 4px' }}>
+    <div className="blk-toolbar" style={{ transition: 'opacity .15s', position: 'absolute', top: -32, right: 0, zIndex: 5, display: 'flex', gap: 2, background: 'rgba(0,0,0,0.75)', borderRadius: 4, padding: '2px 4px' }}>
       <div ref={dragHandleRef} style={{ height: 22, width: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'grab' }}>
         <HolderOutlined style={{ color: 'white', fontSize: 10 }} />
       </div>
@@ -287,10 +287,10 @@ function renderComponentContent(component: Component): React.ReactNode {
     );
   }
   if (component.type === 'title') {
-    return <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 700, fontSize: 21, color: 'rgba(0,0,0,.85)', letterSpacing: -0.5, padding: '0 32px', margin: 0, textAlign: align }} dangerouslySetInnerHTML={{ __html: renderVars(component.text) }} />;
+    return <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 700, fontSize: 21, color: 'rgba(0,0,0,0.85)', letterSpacing: -0.5, padding: '0 32px', margin: 0, textAlign: align }} dangerouslySetInnerHTML={{ __html: renderVars(component.text) }} />;
   }
   if (component.type === 'text') {
-    return <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13.5, lineHeight: 1.75, color: 'rgba(0,0,0,.65)', padding: '0 32px', margin: 0, whiteSpace: 'pre-line', textAlign: align }} dangerouslySetInnerHTML={{ __html: renderVars(component.content) }} />;
+    return <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13.5, lineHeight: 1.75, color: 'rgba(0,0,0,0.65)', padding: '0 32px', margin: 0, whiteSpace: 'pre-line', textAlign: align }} dangerouslySetInnerHTML={{ __html: renderVars(component.content) }} />;
   }
   if (component.type === 'ai') {
     const configured = component.objetivo.trim() !== '';
@@ -511,7 +511,7 @@ function EmptyColumnSlot({ onAdd }: { onAdd: (type: ComponentType) => void }) {
         <PlusOutlined style={{ marginRight: 4 }} /> Agregar
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 25, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,.12)', padding: 6, width: 190, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 25, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 6, width: 190, display: 'flex', flexDirection: 'column', gap: 2 }}>
           {COMPONENT_PALETTE.map(item => (
             <button key={item.type} onClick={() => { onAdd(item.type); setOpen(false); }} style={{ textAlign: 'left', padding: '5px 8px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 12, borderRadius: 4 }}>
               {item.label}
@@ -692,9 +692,9 @@ function PaletteItem({ icon, label, sub, onClick, componentType }: {
         background: '#fff',
       }}
     >
-      <span style={{ fontSize: 20, color: 'rgba(0,0,0,.45)' }}>{icon}</span>
-      <div style={{ fontWeight: 500, fontSize: 11, color: 'rgba(0,0,0,.85)', lineHeight: 1.3 }}>{label}</div>
-      <div style={{ fontSize: 9, color: 'rgba(0,0,0,.45)', lineHeight: 1.3 }}>{sub}</div>
+      <span style={{ fontSize: 20, color: 'rgba(0,0,0,0.45)' }}>{icon}</span>
+      <div style={{ fontWeight: 500, fontSize: 11, color: 'rgba(0,0,0,0.85)', lineHeight: 1.3 }}>{label}</div>
+      <div style={{ fontSize: 9, color: 'rgba(0,0,0,0.45)', lineHeight: 1.3 }}>{sub}</div>
     </button>
   );
 }
@@ -704,7 +704,7 @@ function ColumnLayoutPicker({ onPick, onClose }: { onPick: (widths: number[]) =>
     <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 10, marginBottom: 10, background: '#fff' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
         <Text type="secondary" style={{ fontSize: 11 }}>Elige un layout de columnas</Text>
-        <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'rgba(0,0,0,.45)' }}>✕</button>
+        <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.45)' }}>✕</button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
         {COLUMN_LAYOUTS.map(l => (
@@ -755,7 +755,7 @@ function ColorPickerField({ value, onChange, allowTransparent, full }: { value: 
 
   const swatch = (
     <span style={{
-      width: 20, height: 20, borderRadius: 6, flexShrink: 0, border: '1px solid rgba(0,0,0,.1)',
+      width: 20, height: 20, borderRadius: 6, flexShrink: 0, border: '1px solid rgba(0,0,0,0.1)',
       background: value === 'transparent' ? 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 8px 8px' : value,
     }} />
   );
@@ -772,13 +772,13 @@ function ColorPickerField({ value, onChange, allowTransparent, full }: { value: 
       >
         {swatch}
         {full && (
-          <span style={{ fontSize: 13, color: 'rgba(0,0,0,.65)', fontFamily: "'JetBrains Mono', monospace" }}>
+          <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.65)', fontFamily: "'JetBrains Mono', monospace" }}>
             {value === 'transparent' ? 'Transparente' : value}
           </span>
         )}
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: 36, left: 0, zIndex: 30, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,.12)', padding: 10, width: 200 }}>
+        <div style={{ position: 'absolute', top: 36, left: 0, zIndex: 30, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 10, width: 200 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 8 }}>
             {COLOR_PRESETS.map(c => (
               <button
@@ -815,7 +815,7 @@ function CollapsibleSection({ title, children, defaultOpen = true, compact }: { 
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '9px 12px' }}
         >
           <Text style={{ fontSize: 12.5, fontWeight: 500 }}>{title}</Text>
-          <span style={{ color: 'rgba(0,0,0,.35)', fontSize: 10 }}>{open ? '▲' : '▼'}</span>
+          <span style={{ color: 'rgba(0,0,0,0.35)', fontSize: 10 }}>{open ? '▲' : '▼'}</span>
         </div>
         {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '0 12px 14px' }}>{children}</div>}
       </div>
@@ -825,7 +825,7 @@ function CollapsibleSection({ title, children, defaultOpen = true, compact }: { 
     <div style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 16, marginBottom: 16 }}>
       <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open ? 14 : 0 }}>
         <Text style={{ fontSize: 14, fontWeight: 500 }}>{title}</Text>
-        <span style={{ color: 'rgba(0,0,0,.35)', fontSize: 11 }}>{open ? '▲' : '▼'}</span>
+        <span style={{ color: 'rgba(0,0,0,0.35)', fontSize: 11 }}>{open ? '▲' : '▼'}</span>
       </div>
       {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>{children}</div>}
     </div>
@@ -836,11 +836,11 @@ function CollapsibleSection({ title, children, defaultOpen = true, compact }: { 
 
 function FieldLabel({ children, inline, tooltip }: { children: React.ReactNode; inline?: boolean; tooltip?: string }) {
   return (
-    <Text style={{ fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,.65)', display: inline ? 'inline' : 'block', marginBottom: inline ? 0 : 6 }}>
+    <Text style={{ fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,0.65)', display: inline ? 'inline' : 'block', marginBottom: inline ? 0 : 6 }}>
       {children}
       {tooltip && (
         <Tooltip title={tooltip}>
-          <QuestionCircleOutlined style={{ marginLeft: 5, fontSize: 12, color: 'rgba(0,0,0,.35)', cursor: 'help' }} />
+          <QuestionCircleOutlined style={{ marginLeft: 5, fontSize: 12, color: 'rgba(0,0,0,0.35)', cursor: 'help' }} />
         </Tooltip>
       )}
     </Text>
@@ -1120,7 +1120,7 @@ function TitleContentFields({ block, onUpdate }: { block: TitleBlock; onUpdate: 
 }
 function SubSectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(0,0,0,.35)', borderBottom: '1px solid #f0f0f0', paddingBottom: 4, marginTop: 4 }}>
+    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(0,0,0,0.35)', borderBottom: '1px solid #f0f0f0', paddingBottom: 4, marginTop: 4 }}>
       {children}
     </div>
   );
@@ -1179,13 +1179,13 @@ function QuestionPickerRow({ q, index, included, onToggle, moveItem }: {
       style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #f0f0f0', borderRadius: 6, padding: '6px 8px', background: included ? '#e6f7ff' : '#fff', opacity: isDragging ? 0.4 : 1, cursor: 'pointer' }}
     >
       {included ? (
-        <div ref={handleRef} onClick={e => e.stopPropagation()} style={{ cursor: 'grab', color: 'rgba(0,0,0,.35)', display: 'flex', flexShrink: 0 }}>
+        <div ref={handleRef} onClick={e => e.stopPropagation()} style={{ cursor: 'grab', color: 'rgba(0,0,0,0.35)', display: 'flex', flexShrink: 0 }}>
           <HolderOutlined style={{ fontSize: 12 }} />
         </div>
       ) : (
         <div style={{ width: 12, flexShrink: 0 }} />
       )}
-      <Text style={{ fontSize: 10, color: 'rgba(0,0,0,.35)', flexShrink: 0, width: 14 }}>{included ? index + 1 : ''}</Text>
+      <Text style={{ fontSize: 10, color: 'rgba(0,0,0,0.35)', flexShrink: 0, width: 14 }}>{included ? index + 1 : ''}</Text>
       <Checkbox checked={included} onChange={e => onToggle(e.target.checked)} onClick={e => e.stopPropagation()} />
       <Text style={{ fontSize: 12, flex: 1 }} ellipsis={{ tooltip: q.texto }}>{q.texto}</Text>
       <Tag style={{ margin: 0, fontSize: 10, flexShrink: 0 }}>{q.tipo}</Tag>
@@ -1218,7 +1218,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ padding: '7px 10px', borderRadius: 6, background: '#fafafa', border: '1px solid #f0f0f0', fontSize: 11, color: 'rgba(0,0,0,.45)' }}>
+      <div style={{ padding: '7px 10px', borderRadius: 6, background: '#fafafa', border: '1px solid #f0f0f0', fontSize: 11, color: 'rgba(0,0,0,0.45)' }}>
         Cada encuestado verá sus propias respuestas exactas. El contenido es dinámico y único por persona.
       </div>
 
@@ -1714,7 +1714,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
 
   const cardMaxWidth = 6 * draft.layout.widthPercent;
   const cardStyle: React.CSSProperties = draft.layout.boxed
-    ? { maxWidth: cardMaxWidth, margin: '0 auto', background: '#fff', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,.12)', overflow: 'hidden', minHeight: 180 }
+    ? { maxWidth: cardMaxWidth, margin: '0 auto', background: '#fff', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', overflow: 'hidden', minHeight: 180 }
     : { width: '100%', background: '#fff', overflow: 'hidden', minHeight: 180 };
 
   const subjectBar = (
@@ -1729,7 +1729,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
         />
       ) : (
         <>
-          <span style={{ flex: 1, fontSize: 13, color: draft.subject ? 'rgba(0,0,0,.85)' : 'rgba(0,0,0,.25)' }}
+          <span style={{ flex: 1, fontSize: 13, color: draft.subject ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.25)' }}
             dangerouslySetInnerHTML={{ __html: draft.subject ? renderVars(draft.subject) : 'Sin asunto…' }}
           />
           <Button size="small" onClick={() => setEditingSubject(true)}>Editar</Button>
@@ -1747,7 +1747,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
           style={{
             flex: 1, border: 'none', background: 'none', cursor: 'pointer',
             borderBottom: activeTab === tab ? '2px solid #1890ff' : '2px solid transparent',
-            color: activeTab === tab ? '#1890ff' : 'rgba(0,0,0,.45)',
+            color: activeTab === tab ? '#1890ff' : 'rgba(0,0,0,0.45)',
             fontSize: 12, fontWeight: activeTab === tab ? 600 : 400,
           }}
         >
@@ -1833,7 +1833,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
               <div style={cardStyle}>
                 {rows.length === 0 ? (
                   <AddElementDropZone onDropComponent={addComponentRow}>
-                    <div style={{ padding: '48px 32px', textAlign: 'center', color: 'rgba(0,0,0,.25)' }}>
+                    <div style={{ padding: '48px 32px', textAlign: 'center', color: 'rgba(0,0,0,0.25)' }}>
                       <PlusOutlined style={{ fontSize: 24, display: 'block', margin: '0 auto 8px' }} />
                       <Text type="secondary">Agrega elementos desde el panel derecho, o arrástralos aquí</Text>
                     </div>

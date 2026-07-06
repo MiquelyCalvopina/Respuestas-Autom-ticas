@@ -26,7 +26,7 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
 
   return (
     <div style={{ padding: '24px 32px', maxWidth: 760, margin: '0 auto' }}>
-      <Button type="text" icon={<LeftOutlined />} onClick={onBack} style={{ marginBottom: 16, color: 'rgba(0,0,0,.45)', paddingLeft: 0 }}>
+      <Button type="text" icon={<LeftOutlined />} onClick={onBack} style={{ marginBottom: 16, color: 'rgba(0,0,0,0.45)', paddingLeft: 0 }}>
         Volver
       </Button>
 
@@ -59,7 +59,7 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
           <Empty description="Sin ejecuciones" />
         ) : visible.map((exec, i) => (
           <div key={exec.id} style={{ padding: '10px 0', borderBottom: i < visible.length - 1 ? '1px solid #f0f0f0' : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <code style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(0,0,0,.85)', minWidth: 52 }}>
+            <code style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(0,0,0,0.85)', minWidth: 52 }}>
               #{exec.responseId}
             </code>
             <Tag color={exec.status === 'sent' ? 'success' : 'error'} style={{ flexShrink: 0 }}>

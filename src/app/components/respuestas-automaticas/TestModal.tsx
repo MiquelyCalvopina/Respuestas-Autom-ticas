@@ -112,7 +112,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {(q.atributos ?? []).map(a => (
           <div key={a} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <Text style={{ fontSize: 11.5, color: 'rgba(0,0,0,.65)' }}>{a}</Text>
+            <Text style={{ fontSize: 11.5, color: 'rgba(0,0,0,0.65)' }}>{a}</Text>
             <Select size="small" value={v[a]} onChange={n => onChange({ ...v, [a]: n })} style={{ width: 110 }}
               options={Array.from({ length: q.escala?.[1] ?? 5 }, (_, i) => i + 1).map(n => ({ value: n, label: `${n} de ${q.escala?.[1] ?? 5}` }))} />
           </div>
@@ -188,7 +188,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
     return (
       <div>
         {(value as string[]).map((o, i) => (
-          <Text key={o} style={{ fontSize: 12, display: 'block', color: 'rgba(0,0,0,.65)' }}>{i + 1}° {o}</Text>
+          <Text key={o} style={{ fontSize: 12, display: 'block', color: 'rgba(0,0,0,0.65)' }}>{i + 1}° {o}</Text>
         ))}
         <Text type="secondary" style={{ fontSize: 10.5, display: 'block', marginTop: 2 }}>Orden de ejemplo — se edita desde el paso de condiciones.</Text>
       </div>
