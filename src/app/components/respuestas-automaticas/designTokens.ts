@@ -24,13 +24,17 @@ export const TEXT_SECONDARY = 'rgba(0,0,0,0.45)';
 export const TEXT_DISABLED = 'rgba(0,0,0,0.25)'; // "Character/Disabled & Placeholder .25"
 
 // ─── Radio de esquinas ──────────────────────────────────────────────────────
-// Tres niveles confirmados por el equipo: componentes chicos (tags/chips/badges) van en
-// pill; componentes medium/large (inputs, botones, selects, tarjetas chicas) en 8px
-// ("--components-mediumORlarge-radius" en Figma); contenedores grandes (Card/Modal/
-// superficies de página) en 20px.
+// Tres niveles, confirmados por el equipo — la clasificación es por TIPO de componente,
+// no por su tamaño (size="small|medium|large" de un Input/Select no aplica esta escala:
+// medium y large de un mismo control comparten el mismo radio "default", confirmado en
+// Figma vía "--components-mediumORlarge-radius" = 8px sobre el propio Input):
+// - Tags/chips/badges → pill.
+// - Inputs/Selects/Botones/tarjetas chicas (cualquier tamaño) → 8px.
+// - Card/Modal/Drawer (instancias reales del componente, no cualquier div con borde
+//   estilo tarjeta) → 20px.
 export const RADIUS_PILL = 1000;
 export const RADIUS_DEFAULT = 8;
-export const RADIUS_CONTAINER_LG = 20;
+export const RADIUS_CONTAINER_LG = 20; // Card / Modal / Drawer únicamente
 
 // ─── Tipografía ─────────────────────────────────────────────────────────────
 // Confirmado en la página Typography de Figma ("TYPOGRAPHY - English - Roboto"): Roboto es

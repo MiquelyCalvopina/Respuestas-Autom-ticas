@@ -1662,6 +1662,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
       cancelText: 'Seguir editando',
       cancelButtonProps: ROUND_BTN,
       getContainer: () => rootRef.current || document.body,
+      styles: { content: { borderRadius: 20 } },
       onOk: () => onBack(),
     });
   }
@@ -1677,6 +1678,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
         icon: decisionIcon('warning'),
         okButtonProps: ROUND_BTN,
         getContainer: () => rootRef.current || document.body,
+      styles: { content: { borderRadius: 20 } },
       });
       return;
     }
@@ -1693,6 +1695,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
         cancelText: 'Seguir en HTML',
         cancelButtonProps: ROUND_BTN,
         getContainer: () => rootRef.current || document.body,
+      styles: { content: { borderRadius: 20 } },
         onOk: () => { updateDraft({ customHtml: null }); setMode('visual'); },
       });
       return;

@@ -54,7 +54,7 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
       </Space>
 
       {/* List */}
-      <Card size="small" style={{ marginBottom: 16 }}>
+      <Card size="small" style={{ marginBottom: 16, borderRadius: 20 }} styles={{ body: { borderRadius: 20 } }}>
         {visible.length === 0 ? (
           <Empty description="Sin ejecuciones" />
         ) : visible.map((exec, i) => (

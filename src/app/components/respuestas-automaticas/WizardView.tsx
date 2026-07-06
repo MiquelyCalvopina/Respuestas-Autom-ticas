@@ -1244,7 +1244,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
         getContainer={() => rootRef.current || document.body}
         footer={null}
         width={480}
-        styles={{ content: { borderRadius: 12, padding: 24 } }}
+        styles={{ content: { borderRadius: 20, padding: 24 } }}
       >
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: '#e6f4ff', flexShrink: 0, marginTop: 2 }}>

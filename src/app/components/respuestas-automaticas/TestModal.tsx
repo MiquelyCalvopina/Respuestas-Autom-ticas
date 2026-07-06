@@ -268,6 +268,7 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
       onCancel={onClose}
       footer={footer}
       width={560}
+      styles={{ content: { borderRadius: 20 } }}
     >
       <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: 4 }}>
         {step === 0 && (
