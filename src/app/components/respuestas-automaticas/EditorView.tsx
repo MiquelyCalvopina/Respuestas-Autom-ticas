@@ -1117,32 +1117,21 @@ function WeightField({ value, onChange }: { value: '400' | '600' | '700'; onChan
 
 // Fila de búsqueda — sin drag, solo para tildar/destildar. Se usa con la lista completa
 // de preguntas del estudio (hasta ~36), filtrable por texto o tipo.
-function QuestionSearchRow({ q, checked, onToggle }: { q: Pregunta; checked: boolean; onToggle: (checked: boolean) => void }) {
-  return (
-    <div
-      onClick={() => onToggle(!checked)}
-      style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #f0f0f0', borderRadius: 6, padding: '6px 8px', background: checked ? '#e6f7ff' : '#fff', cursor: 'pointer' }}
-    >
-      <Checkbox checked={checked} onChange={e => onToggle(e.target.checked)} onClick={e => e.stopPropagation()} />
-      <Text style={{ fontSize: 12, flex: 1 }} ellipsis={{ tooltip: q.texto }}>{q.texto}</Text>
-      <Tag style={{ margin: 0, fontSize: 10, flexShrink: 0 }}>{q.tipo}</Tag>
-    </div>
-  );
-}
-
 const QUESTION_ORDER_ITEM = 'question-order-item';
 
-// Fila del orden final — solo las preguntas ya incluidas (subconjunto normalmente chico),
-// arrastrable para definir el orden real en el correo.
-function QuestionOrderRow({ q, index, onRemove, moveItem }: {
-  q: Pregunta; index: number; onRemove: () => void; moveItem: (from: number, to: number) => void;
+// Fila única de selección + orden: las preguntas incluidas se arrastran para definir su
+// posición en el correo; las no incluidas solo tienen checkbox para agregarlas. Evita
+// mostrar la misma pregunta en dos listas separadas (una para elegir, otra para ordenar).
+function QuestionPickerRow({ q, index, included, onToggle, moveItem }: {
+  q: Pregunta; index: number; included: boolean; onToggle: (included: boolean) => void;
+  moveItem: (from: number, to: number) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
   const [, drop] = useDrop({
     accept: QUESTION_ORDER_ITEM,
     hover(item: { index: number }, monitor) {
-      if (!ref.current) return;
+      if (!included || !ref.current) return;
       const dragIndex = item.index, hoverIndex = index;
       if (dragIndex === hoverIndex) return;
       const rect = ref.current.getBoundingClientRect();
@@ -1158,21 +1147,28 @@ function QuestionOrderRow({ q, index, onRemove, moveItem }: {
   const [{ isDragging }, drag] = useDrag({
     type: QUESTION_ORDER_ITEM,
     item: () => ({ index }),
+    canDrag: included,
     collect: monitor => ({ isDragging: monitor.isDragging() }),
   });
   drag(handleRef);
-  drop(ref);
+  if (included) drop(ref);
   return (
-    <div ref={ref} style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #f0f0f0', borderRadius: 6, padding: '6px 8px', background: '#fff', opacity: isDragging ? 0.4 : 1 }}>
-      <div ref={handleRef} style={{ cursor: 'grab', color: 'rgba(0,0,0,.35)', display: 'flex', flexShrink: 0 }}>
-        <HolderOutlined style={{ fontSize: 12 }} />
-      </div>
-      <Text style={{ fontSize: 10, color: 'rgba(0,0,0,.35)', flexShrink: 0, width: 14 }}>{index + 1}</Text>
+    <div
+      ref={ref}
+      onClick={() => onToggle(!included)}
+      style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #f0f0f0', borderRadius: 6, padding: '6px 8px', background: included ? '#e6f7ff' : '#fff', opacity: isDragging ? 0.4 : 1, cursor: 'pointer' }}
+    >
+      {included ? (
+        <div ref={handleRef} onClick={e => e.stopPropagation()} style={{ cursor: 'grab', color: 'rgba(0,0,0,.35)', display: 'flex', flexShrink: 0 }}>
+          <HolderOutlined style={{ fontSize: 12 }} />
+        </div>
+      ) : (
+        <div style={{ width: 12, flexShrink: 0 }} />
+      )}
+      <Text style={{ fontSize: 10, color: 'rgba(0,0,0,.35)', flexShrink: 0, width: 14 }}>{included ? index + 1 : ''}</Text>
+      <Checkbox checked={included} onChange={e => onToggle(e.target.checked)} onClick={e => e.stopPropagation()} />
       <Text style={{ fontSize: 12, flex: 1 }} ellipsis={{ tooltip: q.texto }}>{q.texto}</Text>
       <Tag style={{ margin: 0, fontSize: 10, flexShrink: 0 }}>{q.tipo}</Tag>
-      <button onClick={onRemove} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'rgba(0,0,0,.35)', flexShrink: 0, padding: 0, display: 'flex' }}>
-        <CloseOutlined style={{ fontSize: 11 }} />
-      </button>
     </div>
   );
 }
@@ -1184,7 +1180,9 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
     .filter((x): x is { bq: typeof x.bq; q: Pregunta } => !!x.q);
   const included = withMeta.filter(x => x.bq.included);
   const term = search.trim().toLowerCase();
-  const filtered = term ? withMeta.filter(({ q }) => q.texto.toLowerCase().includes(term) || q.tipo.toLowerCase().includes(term)) : withMeta;
+  const matches = (q: Pregunta) => !term || q.texto.toLowerCase().includes(term) || q.tipo.toLowerCase().includes(term);
+  const includedFiltered = included.filter(({ q }) => matches(q));
+  const excludedFiltered = withMeta.filter(x => !x.bq.included && matches(x.q));
 
   function toggleQuestion(questionId: string, isIncluded: boolean) {
     onUpdate({ ...block, questions: block.questions.map(q => q.questionId === questionId ? { ...q, included: isIncluded } : q) });
@@ -1211,26 +1209,31 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
             size="small" allowClear value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por texto o tipo…" prefix={<Text type="secondary" style={{ fontSize: 12 }}>🔍</Text>}
           />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto', marginTop: 8, paddingRight: 2 }}>
-            {filtered.length === 0 && <Text type="secondary" style={{ fontSize: 12, padding: '8px 0' }}>Sin resultados para "{search}".</Text>}
-            {filtered.map(({ bq, q }) => (
-              <QuestionSearchRow key={q.id} q={q} checked={bq.included} onToggle={checked => toggleQuestion(q.id, checked)} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 320, overflowY: 'auto', marginTop: 8, paddingRight: 2 }}>
+            {includedFiltered.length === 0 && excludedFiltered.length === 0 && (
+              <Text type="secondary" style={{ fontSize: 12, padding: '8px 0' }}>Sin resultados para "{search}".</Text>
+            )}
+            {includedFiltered.map(({ q }) => (
+              <QuestionPickerRow
+                key={q.id} q={q} included
+                index={included.findIndex(x => x.q.id === q.id)}
+                onToggle={checked => toggleQuestion(q.id, checked)}
+                moveItem={moveIncluded}
+              />
+            ))}
+            {includedFiltered.length > 0 && excludedFiltered.length > 0 && (
+              <div style={{ borderTop: '1px dashed #e8e8e8', margin: '2px 0' }} />
+            )}
+            {excludedFiltered.map(({ q }) => (
+              <QuestionPickerRow
+                key={q.id} q={q} included={false} index={-1}
+                onToggle={checked => toggleQuestion(q.id, checked)}
+                moveItem={moveIncluded}
+              />
             ))}
           </div>
         </div>
-        <div>
-          <FieldLabel>Orden en el correo ({included.length} incluida{included.length === 1 ? '' : 's'})</FieldLabel>
-          {included.length === 0 ? (
-            <Text type="secondary" style={{ fontSize: 12 }}>Selecciona al menos una pregunta arriba.</Text>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto', paddingRight: 2 }}>
-              {included.map(({ q }, i) => (
-                <QuestionOrderRow key={q.id} q={q} index={i} onRemove={() => toggleQuestion(q.id, false)} moveItem={moveIncluded} />
-              ))}
-            </div>
-          )}
-          <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>Arrastra para cambiar el orden en que aparecen en el correo.</Text>
-        </div>
+        <Text type="secondary" style={{ fontSize: 10, display: 'block' }}>Marca una pregunta para incluirla · arrastra las incluidas para definir su orden en el correo.</Text>
       </CollapsibleSection>
 
       <CollapsibleSection compact defaultOpen={false} title="Visualización y contenedor">
