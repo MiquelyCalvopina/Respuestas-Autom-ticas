@@ -42,6 +42,16 @@ export interface AiBlock {
   restricciones: string[];
   idioma: AiLanguage;
   generatedText: string;
+  textBgColor: string;
+  textColor: string;
+  fontSize: number;
+  lineHeight: number;
+  fontStyle: 'italic' | 'normal';
+  fontWeight: '400' | '600' | '700';
+  cardBorderColor: string;
+  cardBorderWidth: number;
+  cardBorderStyle: 'solid' | 'dotted' | 'none';
+  cardBorderRadius: number;
   design: ComponentDesign;
 }
 export interface ResponseQuestion {

@@ -71,7 +71,12 @@ function makeComponent(type: ComponentType): Component {
     case 'header':    return { id, type, name: 'HIR Casa', bgColor: '#1890ff', design };
     case 'title':     return { id, type, text: 'Tu opinión importa', design };
     case 'text':      return { id, type, content: 'Hola {{nombre_preferido}},\n\nGracias por tomarte el tiempo de responder nuestra encuesta.', design };
-    case 'ai':        return { id, type, objetivo: '', tone: 'empatico' as Tone, customTone: '', datoPriorizar: '', restricciones: [...DEFAULT_RESTRICTIONS], idioma: 'es' as AiLanguage, generatedText: '', design };
+    case 'ai':        return {
+      id, type, objetivo: '', tone: 'empatico' as Tone, customTone: '', datoPriorizar: '', restricciones: [...DEFAULT_RESTRICTIONS], idioma: 'es' as AiLanguage, generatedText: '',
+      textBgColor: '#F5F3FF', textColor: '#4C1D95', fontSize: 13, lineHeight: 1.75, fontStyle: 'italic', fontWeight: '400',
+      cardBorderColor: '#DDD6FE', cardBorderWidth: 1, cardBorderStyle: 'solid', cardBorderRadius: 10,
+      design,
+    };
     case 'responses': return {
       id, type,
       questions: PREGUNTAS.map(q => ({ questionId: q.id, included: true })),
@@ -169,7 +174,10 @@ function componentToHtml(c: Component): string {
     case 'header':    return `<div style="${style}background:${c.bgColor};text-align:center;"><span style="font-weight:700;font-size:22px;color:#fff;">${c.name}</span></div>`;
     case 'title':     return `<div style="${style}"><h2 style="font-weight:700;font-size:21px;color:#000;margin:0;">${c.text}</h2></div>`;
     case 'text':      return `<div style="${style}"><p style="font-size:13.5px;line-height:1.75;color:#333;white-space:pre-line;margin:0;">${c.content}</p></div>`;
-    case 'ai':        return `<div style="${style}"><p style="font-size:13px;line-height:1.7;color:#4C1D95;font-style:italic;margin:0;">${c.generatedText || '[Texto generado pendiente — envía una prueba]'}</p></div>`;
+    case 'ai': {
+      const cardBorder = c.cardBorderStyle !== 'none' && c.cardBorderWidth > 0 ? `border:${c.cardBorderWidth}px ${c.cardBorderStyle} ${c.cardBorderColor};` : '';
+      return `<div style="${style}"><div style="${cardBorder}border-radius:${c.cardBorderRadius}px;background:${c.textBgColor};overflow:hidden;"><p style="font-size:${c.fontSize}px;line-height:${c.lineHeight};color:${c.textColor};font-style:${c.fontStyle};font-weight:${c.fontWeight};margin:0;padding:13px 15px;">${c.generatedText || '[Texto generado pendiente — envía una prueba]'}</p></div></div>`;
+    }
     case 'responses': {
       const included = orderedIncludedQuestions(c);
       const label = `<div style="font-size:${c.headerSize}px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.headerColor};margin-bottom:${c.rowGap}px;">${c.headerLabel}</div>`;
@@ -271,22 +279,28 @@ function renderComponentContent(component: Component): React.ReactNode {
   }
   if (component.type === 'ai') {
     const configured = component.objetivo.trim() !== '';
+    const cardBorder = component.cardBorderStyle !== 'none' && component.cardBorderWidth > 0
+      ? `${component.cardBorderWidth}px ${component.cardBorderStyle} ${component.cardBorderColor}` : 'none';
     return (
-      <div style={{ border: '1.5px solid var(--ds-violet-mid)', borderRadius: 8, background: 'var(--ds-violet-bg)', margin: '0 32px', padding: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+      <div style={{ border: cardBorder, borderRadius: component.cardBorderRadius, background: component.textBgColor, margin: '0 32px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px 0' }}>
           <Tag color="purple" icon={<ThunderboltOutlined />} style={{ fontWeight: 600 }}>IA</Tag>
-          <Text style={{ fontSize: 11, color: 'var(--ds-violet-dark)' }}>
+          <Text style={{ fontSize: 11, color: component.textColor }}>
             {configured ? `Tono: ${TONO_LABELS[component.tone]?.label ?? component.tone} · ${component.generatedText ? 'Generado' : 'Pendiente'}` : 'Sin configurar — selecciona para configurar'}
           </Text>
         </div>
         {!configured ? (
-          <div style={{ textAlign: 'center', padding: '12px 0' }}>
-            <p style={{ fontSize: 28, margin: '0 0 4px' }}>✦</p>
-            <Text strong style={{ display: 'block', color: 'var(--ds-violet-dark)' }}>Bloque IA sin objetivo</Text>
-            <Text type="secondary" style={{ fontSize: 11 }}>Define el objetivo en el panel de configuración.</Text>
+          <div style={{ textAlign: 'center', padding: '18px 15px' }}>
+            <p style={{ fontSize: 22, margin: '0 0 7px' }}>✦</p>
+            <Text strong style={{ display: 'block', color: component.textColor }}>Bloque IA sin objetivo</Text>
+            <Text style={{ fontSize: 11, color: component.textColor, opacity: 0.7 }}>Define el objetivo en el panel de configuración.</Text>
           </div>
         ) : (
-          <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, lineHeight: 1.7, color: 'var(--ds-violet-dark)', fontStyle: 'italic', margin: 0 }}>
+          <p style={{
+            fontFamily: "'Roboto', sans-serif", margin: 0, padding: '13px 15px',
+            fontSize: component.fontSize, lineHeight: component.lineHeight,
+            fontStyle: component.fontStyle, fontWeight: Number(component.fontWeight), color: component.textColor,
+          }}>
             {component.generatedText || 'Usa "Enviar prueba" para ver el texto real.'}
           </p>
         )}
@@ -909,6 +923,72 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
           onKeyDown={e => { if (e.key === 'Enter' && newRestr.trim()) { onUpdate({ ...block, restricciones: [...block.restricciones, newRestr.trim()] }); setNewRestr(''); } }}
         />
         <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 2 }}>La IA respeta estas restricciones en todos los correos.</Text>
+      </div>
+
+      <SubSectionHeading>Contenido IA</SubSectionHeading>
+      <div>
+        <FieldLabel>Fondo del área de texto</FieldLabel>
+        <ColorPickerField value={block.textBgColor} onChange={c => onUpdate({ ...block, textBgColor: c })} allowTransparent full />
+      </div>
+      <div>
+        <FieldLabel>Color del texto</FieldLabel>
+        <ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} />
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Tamaño px</FieldLabel>
+          <InputNumber size="small" min={10} max={24} value={block.fontSize} onChange={v => onUpdate({ ...block, fontSize: v ?? 13 })} style={{ width: '100%' }} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Interlineado</FieldLabel>
+          <Select
+            size="small" style={{ width: '100%' }} value={block.lineHeight}
+            onChange={v => onUpdate({ ...block, lineHeight: v })}
+            options={[
+              { value: 1.4, label: 'Compacto' },
+              { value: 1.6, label: 'Normal' },
+              { value: 1.75, label: 'Cómodo' },
+              { value: 2.0, label: 'Espaciado' },
+            ]}
+          />
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Estilo</FieldLabel>
+          <Radio.Group value={block.fontStyle} onChange={e => onUpdate({ ...block, fontStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+            <Radio.Button value="italic" style={{ flex: 1, textAlign: 'center', fontStyle: 'italic' }}>Cursiva</Radio.Button>
+            <Radio.Button value="normal" style={{ flex: 1, textAlign: 'center' }}>Normal</Radio.Button>
+          </Radio.Group>
+        </div>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Peso</FieldLabel>
+          <WeightField value={block.fontWeight} onChange={v => onUpdate({ ...block, fontWeight: v })} />
+        </div>
+      </div>
+
+      <SubSectionHeading>Tarjeta IA</SubSectionHeading>
+      <div>
+        <FieldLabel>Color del borde</FieldLabel>
+        <ColorPickerField value={block.cardBorderColor} onChange={c => onUpdate({ ...block, cardBorderColor: c })} />
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Grosor borde</FieldLabel>
+          <InputNumber size="small" min={0} max={8} value={block.cardBorderWidth} onChange={v => onUpdate({ ...block, cardBorderWidth: v ?? 1 })} style={{ width: '100%' }} addonAfter="px" />
+        </div>
+        <div style={{ flex: 1 }}>
+          <FieldLabel>Estilo borde</FieldLabel>
+          <Radio.Group value={block.cardBorderStyle} onChange={e => onUpdate({ ...block, cardBorderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+            <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
+            <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
+            <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
+          </Radio.Group>
+        </div>
+      </div>
+      <div>
+        <FieldLabel>Radio de esquinas</FieldLabel>
+        <Slider min={0} max={24} value={block.cardBorderRadius} onChange={v => onUpdate({ ...block, cardBorderRadius: v })} tooltip={{ formatter: v => `${v}px` }} />
       </div>
     </div>
   );
