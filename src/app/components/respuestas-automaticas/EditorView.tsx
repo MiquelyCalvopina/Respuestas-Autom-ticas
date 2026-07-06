@@ -127,7 +127,7 @@ const COLUMN_LAYOUTS: { label: string; widths: number[] }[] = [
   { label: '25×4', widths: [25, 25, 25, 25] },
 ];
 
-const COMPONENT_PALETTE: { type: ComponentType; label: string; sub: string; icon: React.ReactNode; violet?: boolean }[] = [
+const COMPONENT_PALETTE: { type: ComponentType; label: string; sub: string; icon: React.ReactNode }[] = [
   { type: 'header', label: 'Header de marca', sub: 'Logo y color corporativo', icon: <BoldOutlined /> },
   { type: 'title', label: 'Título', sub: 'Texto grande destacado', icon: 'T' },
   { type: 'text', label: 'Texto', sub: 'Con variables del encuestado', icon: <AlignLeftOutlined /> },
@@ -136,7 +136,7 @@ const COMPONENT_PALETTE: { type: ComponentType; label: string; sub: string; icon
   { type: 'divider', label: 'Divisor', sub: 'Línea separadora', icon: <MinusOutlined /> },
   { type: 'spacer', label: 'Espaciador', sub: 'Espacio en blanco', icon: <ColumnHeightOutlined /> },
   { type: 'social', label: 'Redes Sociales', sub: 'Íconos con enlaces', icon: <ShareAltOutlined /> },
-  { type: 'ai', label: 'Bloque IA', sub: 'Texto único por encuestado', icon: '✦', violet: true },
+  { type: 'ai', label: 'Bloque IA', sub: 'Texto único por encuestado', icon: '✦' },
   { type: 'responses', label: 'Bloque de respuestas', sub: 'Las respuestas del encuestado', icon: <UnorderedListOutlined /> },
 ];
 
@@ -651,8 +651,8 @@ function ColumnBox({ column, onAddComponentToColumn, selectedComponentId, onSele
 
 // ─── Paleta ────────────────────────────────────────────────────────────────────
 
-function PaletteItem({ icon, label, sub, onClick, violet, componentType }: {
-  icon: React.ReactNode; label: string; sub: string; onClick: () => void; violet?: boolean; componentType?: ComponentType;
+function PaletteItem({ icon, label, sub, onClick, componentType }: {
+  icon: React.ReactNode; label: string; sub: string; onClick: () => void; componentType?: ComponentType;
 }) {
   const [{ isDragging }, drag] = useDrag({
     type: PALETTE_ITEM,
@@ -667,13 +667,13 @@ function PaletteItem({ icon, label, sub, onClick, violet, componentType }: {
       style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
         padding: '14px 8px', cursor: componentType ? 'grab' : 'pointer', textAlign: 'center',
-        border: `1px solid ${violet ? 'var(--ds-violet-mid)' : '#d9d9d9'}`,
+        border: '1px solid #d9d9d9',
         borderRadius: 8, opacity: isDragging ? 0.4 : 1,
-        background: violet ? 'var(--ds-violet-bg)' : '#fff',
+        background: '#fff',
       }}
     >
-      <span style={{ fontSize: 20, color: violet ? 'var(--ds-violet)' : 'rgba(0,0,0,.45)' }}>{icon}</span>
-      <div style={{ fontWeight: 500, fontSize: 11, color: violet ? 'var(--ds-violet-dark)' : 'rgba(0,0,0,.85)', lineHeight: 1.3 }}>{label}</div>
+      <span style={{ fontSize: 20, color: 'rgba(0,0,0,.45)' }}>{icon}</span>
+      <div style={{ fontWeight: 500, fontSize: 11, color: 'rgba(0,0,0,.85)', lineHeight: 1.3 }}>{label}</div>
       <div style={{ fontSize: 9, color: 'rgba(0,0,0,.45)', lineHeight: 1.3 }}>{sub}</div>
     </button>
   );
@@ -785,8 +785,22 @@ function ColorPickerField({ value, onChange, allowTransparent, full }: { value: 
 
 // ─── Sección colapsable — usada en toda la pestaña "Diseño" ──────────────────
 
-function CollapsibleSection({ title, children }: { title: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(true);
+function CollapsibleSection({ title, children, defaultOpen = true, compact }: { title: string; children: React.ReactNode; defaultOpen?: boolean; compact?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  if (compact) {
+    return (
+      <div style={{ border: '1px solid #f0f0f0', borderRadius: 8 }}>
+        <div
+          onClick={() => setOpen(o => !o)}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '9px 12px' }}
+        >
+          <Text style={{ fontSize: 12.5, fontWeight: 500 }}>{title}</Text>
+          <span style={{ color: 'rgba(0,0,0,.35)', fontSize: 10 }}>{open ? '▲' : '▼'}</span>
+        </div>
+        {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '0 12px 14px' }}>{children}</div>}
+      </div>
+    );
+  }
   return (
     <div style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 16, marginBottom: 16 }}>
       <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open ? 14 : 0 }}>
@@ -1052,7 +1066,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
         </div>
       </div>
       <div>
-        <FieldLabel>Radio de esquinas</FieldLabel>
+        <FieldLabel>Radio de esquinas — {block.cardBorderRadius}px</FieldLabel>
         <Slider min={0} max={24} value={block.cardBorderRadius} onChange={v => onUpdate({ ...block, cardBorderRadius: v })} tooltip={{ formatter: v => `${v}px` }} />
       </div>
     </div>
@@ -1189,148 +1203,156 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
       <div style={{ padding: '7px 10px', borderRadius: 6, background: '#fafafa', border: '1px solid #f0f0f0', fontSize: 11, color: 'rgba(0,0,0,.45)' }}>
         Cada encuestado verá sus propias respuestas exactas. El contenido es dinámico y único por persona.
       </div>
-      <div>
-        <FieldLabel>Buscar preguntas del estudio</FieldLabel>
-        <Input
-          size="small" allowClear value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar por texto o tipo…" prefix={<Text type="secondary" style={{ fontSize: 12 }}>🔍</Text>}
-        />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 240, overflowY: 'auto', marginTop: 8, paddingRight: 2 }}>
-          {filtered.length === 0 && <Text type="secondary" style={{ fontSize: 12, padding: '8px 0' }}>Sin resultados para "{search}".</Text>}
-          {filtered.map(({ bq, q }) => (
-            <QuestionSearchRow key={q.id} q={q} checked={bq.included} onToggle={checked => toggleQuestion(q.id, checked)} />
-          ))}
-        </div>
-      </div>
-      <div>
-        <FieldLabel>Orden en el correo ({included.length} incluida{included.length === 1 ? '' : 's'})</FieldLabel>
-        {included.length === 0 ? (
-          <Text type="secondary" style={{ fontSize: 12 }}>Selecciona al menos una pregunta arriba.</Text>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 240, overflowY: 'auto', paddingRight: 2 }}>
-            {included.map(({ q }, i) => (
-              <QuestionOrderRow key={q.id} q={q} index={i} onRemove={() => toggleQuestion(q.id, false)} moveItem={moveIncluded} />
+
+      <CollapsibleSection compact title={`Preguntas incluidas (${included.length})`}>
+        <div>
+          <FieldLabel>Buscar preguntas del estudio</FieldLabel>
+          <Input
+            size="small" allowClear value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar por texto o tipo…" prefix={<Text type="secondary" style={{ fontSize: 12 }}>🔍</Text>}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto', marginTop: 8, paddingRight: 2 }}>
+            {filtered.length === 0 && <Text type="secondary" style={{ fontSize: 12, padding: '8px 0' }}>Sin resultados para "{search}".</Text>}
+            {filtered.map(({ bq, q }) => (
+              <QuestionSearchRow key={q.id} q={q} checked={bq.included} onToggle={checked => toggleQuestion(q.id, checked)} />
             ))}
           </div>
-        )}
-        <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>Arrastra para cambiar el orden en que aparecen en el correo.</Text>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <FieldLabel inline>Mostrar enunciado de la pregunta</FieldLabel>
-        <Switch size="small" checked={block.showQuestion} onChange={checked => onUpdate({ ...block, showQuestion: checked })} />
-      </div>
-      <div>
-        <FieldLabel>Estilo de visualización</FieldLabel>
-        <Select
-          size="small" style={{ width: '100%' }} value={block.displayStyle}
-          onChange={v => onUpdate({ ...block, displayStyle: v as ResponsesBlock['displayStyle'] })}
-          options={[
-            { value: 'bold-indented', label: 'Pregunta en negrita + respuesta con sangría' },
-            { value: 'list', label: 'Solo respuestas en lista' },
-            { value: 'table', label: 'Tabla pregunta / respuesta' },
-          ]}
-        />
-      </div>
+        </div>
+        <div>
+          <FieldLabel>Orden en el correo ({included.length} incluida{included.length === 1 ? '' : 's'})</FieldLabel>
+          {included.length === 0 ? (
+            <Text type="secondary" style={{ fontSize: 12 }}>Selecciona al menos una pregunta arriba.</Text>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto', paddingRight: 2 }}>
+              {included.map(({ q }, i) => (
+                <QuestionOrderRow key={q.id} q={q} index={i} onRemove={() => toggleQuestion(q.id, false)} moveItem={moveIncluded} />
+              ))}
+            </div>
+          )}
+          <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>Arrastra para cambiar el orden en que aparecen en el correo.</Text>
+        </div>
+      </CollapsibleSection>
 
-      <SubSectionHeading>Contenedor</SubSectionHeading>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Ancho del contenedor</FieldLabel>
-          <InputNumber size="small" min={40} max={100} value={block.containerWidth} onChange={v => onUpdate({ ...block, containerWidth: v ?? 100 })} style={{ width: '100%' }} addonAfter="%" />
+      <CollapsibleSection compact defaultOpen={false} title="Visualización y contenedor">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <FieldLabel inline>Mostrar enunciado de la pregunta</FieldLabel>
+          <Switch size="small" checked={block.showQuestion} onChange={checked => onUpdate({ ...block, showQuestion: checked })} />
         </div>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Radio de esquinas</FieldLabel>
-          <InputNumber size="small" min={0} max={24} value={block.containerBorderRadius} onChange={v => onUpdate({ ...block, containerBorderRadius: v ?? 0 })} style={{ width: '100%' }} addonAfter="px" />
+        <div>
+          <FieldLabel>Estilo de visualización</FieldLabel>
+          <Select
+            size="small" style={{ width: '100%' }} value={block.displayStyle}
+            onChange={v => onUpdate({ ...block, displayStyle: v as ResponsesBlock['displayStyle'] })}
+            options={[
+              { value: 'bold-indented', label: 'Pregunta en negrita + respuesta con sangría' },
+              { value: 'list', label: 'Solo respuestas en lista' },
+              { value: 'table', label: 'Tabla pregunta / respuesta' },
+            ]}
+          />
         </div>
-      </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <FieldLabel>Ancho del contenedor</FieldLabel>
+            <InputNumber size="small" min={40} max={100} value={block.containerWidth} onChange={v => onUpdate({ ...block, containerWidth: v ?? 100 })} style={{ width: '100%' }} addonAfter="%" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <FieldLabel>Radio de esquinas</FieldLabel>
+            <InputNumber size="small" min={0} max={24} value={block.containerBorderRadius} onChange={v => onUpdate({ ...block, containerBorderRadius: v ?? 0 })} style={{ width: '100%' }} addonAfter="px" />
+          </div>
+        </div>
+      </CollapsibleSection>
 
-      <SubSectionHeading>Etiqueta del bloque</SubSectionHeading>
-      <div>
-        <FieldLabel>Texto</FieldLabel>
-        <Input size="small" value={block.headerLabel} onChange={e => onUpdate({ ...block, headerLabel: e.target.value })} />
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Color</FieldLabel>
-          <ColorPickerField value={block.headerColor} onChange={c => onUpdate({ ...block, headerColor: c })} />
+      <CollapsibleSection compact defaultOpen={false} title="Etiqueta y textos">
+        <SubSectionHeading>Etiqueta del bloque</SubSectionHeading>
+        <div>
+          <FieldLabel>Texto</FieldLabel>
+          <Input size="small" value={block.headerLabel} onChange={e => onUpdate({ ...block, headerLabel: e.target.value })} />
         </div>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Tamaño</FieldLabel>
-          <InputNumber size="small" min={8} max={16} value={block.headerSize} onChange={v => onUpdate({ ...block, headerSize: v ?? 10 })} style={{ width: '100%' }} addonAfter="px" />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <FieldLabel>Color</FieldLabel>
+            <ColorPickerField value={block.headerColor} onChange={c => onUpdate({ ...block, headerColor: c })} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <FieldLabel>Tamaño</FieldLabel>
+            <InputNumber size="small" min={8} max={16} value={block.headerSize} onChange={v => onUpdate({ ...block, headerSize: v ?? 10 })} style={{ width: '100%' }} addonAfter="px" />
+          </div>
         </div>
-      </div>
 
-      <SubSectionHeading>Preguntas</SubSectionHeading>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Color del texto</FieldLabel>
-          <ColorPickerField value={block.questionColor} onChange={c => onUpdate({ ...block, questionColor: c })} />
+        <SubSectionHeading>Preguntas</SubSectionHeading>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <FieldLabel>Color del texto</FieldLabel>
+            <ColorPickerField value={block.questionColor} onChange={c => onUpdate({ ...block, questionColor: c })} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <FieldLabel>Fondo de la fila</FieldLabel>
+            <ColorPickerField value={block.questionBg} onChange={c => onUpdate({ ...block, questionBg: c })} allowTransparent full />
+          </div>
         </div>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Fondo de la fila</FieldLabel>
-          <ColorPickerField value={block.questionBg} onChange={c => onUpdate({ ...block, questionBg: c })} allowTransparent full />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <FieldLabel>Tamaño px</FieldLabel>
+            <InputNumber size="small" min={9} max={20} value={block.questionSize} onChange={v => onUpdate({ ...block, questionSize: v ?? 13 })} style={{ width: '100%' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <FieldLabel>Peso</FieldLabel>
+            <WeightField value={block.questionWeight} onChange={v => onUpdate({ ...block, questionWeight: v })} />
+          </div>
         </div>
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Tamaño px</FieldLabel>
-          <InputNumber size="small" min={9} max={20} value={block.questionSize} onChange={v => onUpdate({ ...block, questionSize: v ?? 13 })} style={{ width: '100%' }} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Peso</FieldLabel>
-          <WeightField value={block.questionWeight} onChange={v => onUpdate({ ...block, questionWeight: v })} />
-        </div>
-      </div>
 
-      <SubSectionHeading>Respuestas</SubSectionHeading>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Color del texto</FieldLabel>
-          <ColorPickerField value={block.answerColor} onChange={c => onUpdate({ ...block, answerColor: c })} />
+        <SubSectionHeading>Respuestas</SubSectionHeading>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <FieldLabel>Color del texto</FieldLabel>
+            <ColorPickerField value={block.answerColor} onChange={c => onUpdate({ ...block, answerColor: c })} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <FieldLabel>Fondo de la respuesta</FieldLabel>
+            <ColorPickerField value={block.answerBg} onChange={c => onUpdate({ ...block, answerBg: c })} allowTransparent full />
+          </div>
         </div>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Fondo de la respuesta</FieldLabel>
-          <ColorPickerField value={block.answerBg} onChange={c => onUpdate({ ...block, answerBg: c })} allowTransparent full />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <FieldLabel>Tamaño px</FieldLabel>
+            <InputNumber size="small" min={9} max={20} value={block.answerSize} onChange={v => onUpdate({ ...block, answerSize: v ?? 13 })} style={{ width: '100%' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <FieldLabel>Peso</FieldLabel>
+            <WeightField value={block.answerWeight} onChange={v => onUpdate({ ...block, answerWeight: v })} />
+          </div>
         </div>
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Tamaño px</FieldLabel>
-          <InputNumber size="small" min={9} max={20} value={block.answerSize} onChange={v => onUpdate({ ...block, answerSize: v ?? 13 })} style={{ width: '100%' }} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Peso</FieldLabel>
-          <WeightField value={block.answerWeight} onChange={v => onUpdate({ ...block, answerWeight: v })} />
-        </div>
-      </div>
+      </CollapsibleSection>
 
-      <SubSectionHeading>Acento lateral</SubSectionHeading>
-      <div>
-        <FieldLabel>Color del acento</FieldLabel>
-        <ColorPickerField value={block.accentColor} onChange={c => onUpdate({ ...block, accentColor: c })} />
-      </div>
-      <div>
-        <FieldLabel>Grosor del acento</FieldLabel>
-        <Slider min={0} max={8} value={block.accentWidth} onChange={v => onUpdate({ ...block, accentWidth: v })} tooltip={{ formatter: v => `${v}px` }} />
-      </div>
+      <CollapsibleSection compact defaultOpen={false} title="Acento y separadores">
+        <SubSectionHeading>Acento lateral</SubSectionHeading>
+        <div>
+          <FieldLabel>Color del acento</FieldLabel>
+          <ColorPickerField value={block.accentColor} onChange={c => onUpdate({ ...block, accentColor: c })} />
+        </div>
+        <div>
+          <FieldLabel>Grosor del acento — {block.accentWidth}px</FieldLabel>
+          <Slider min={0} max={8} value={block.accentWidth} onChange={v => onUpdate({ ...block, accentWidth: v })} tooltip={{ formatter: v => `${v}px` }} />
+        </div>
 
-      <SubSectionHeading>Separadores y espaciado</SubSectionHeading>
-      <div>
-        <FieldLabel>Estilo separador</FieldLabel>
-        <Radio.Group value={block.separatorStyle} onChange={e => onUpdate({ ...block, separatorStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
-          <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
-          <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
-          <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
-        </Radio.Group>
-      </div>
-      <div>
-        <FieldLabel>Color del separador</FieldLabel>
-        <ColorPickerField value={block.separatorColor} onChange={c => onUpdate({ ...block, separatorColor: c })} />
-      </div>
-      <div>
-        <FieldLabel>Espacio entre filas</FieldLabel>
-        <Slider min={4} max={32} value={block.rowGap} onChange={v => onUpdate({ ...block, rowGap: v })} tooltip={{ formatter: v => `${v}px` }} />
-      </div>
+        <SubSectionHeading>Separadores y espaciado</SubSectionHeading>
+        <div>
+          <FieldLabel>Estilo separador</FieldLabel>
+          <Radio.Group value={block.separatorStyle} onChange={e => onUpdate({ ...block, separatorStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+            <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
+            <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
+            <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
+          </Radio.Group>
+        </div>
+        <div>
+          <FieldLabel>Color del separador</FieldLabel>
+          <ColorPickerField value={block.separatorColor} onChange={c => onUpdate({ ...block, separatorColor: c })} />
+        </div>
+        <div>
+          <FieldLabel>Espacio entre filas — {block.rowGap}px</FieldLabel>
+          <Slider min={4} max={32} value={block.rowGap} onChange={v => onUpdate({ ...block, rowGap: v })} tooltip={{ formatter: v => `${v}px` }} />
+        </div>
+      </CollapsibleSection>
     </div>
   );
 }
@@ -1809,7 +1831,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                     <Text type="secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '10px 0 8px' }}>Componentes</Text>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                       {COMPONENT_PALETTE.map(item => (
-                        <PaletteItem key={item.type} icon={item.icon} label={item.label} sub={item.sub} violet={item.violet} componentType={item.type} onClick={() => addComponentRow(item.type)} />
+                        <PaletteItem key={item.type} icon={item.icon} label={item.label} sub={item.sub} componentType={item.type} onClick={() => addComponentRow(item.type)} />
                       ))}
                     </div>
                   </div>
