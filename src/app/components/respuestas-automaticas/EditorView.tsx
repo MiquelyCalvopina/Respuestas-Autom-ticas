@@ -7,7 +7,7 @@ import type { InputRef } from 'antd';
 import {
   BiSend, BiCopy, BiX, BiPlus, BiBold, BiAlignLeft,
   BiAlignMiddle, BiAlignRight, BiMinus, BiListUl,
-  BiBolt, BiMove, BiTable, BiImage, BiLink,
+  BiBoltCircle, BiMove, BiTable, BiImage, BiLink,
   BiExpandVertical, BiShareAlt, BiInfoCircle, BiErrorCircle, BiHelpCircle,
   BiUpload, BiSearch,
 } from 'react-icons/bi';
@@ -300,7 +300,7 @@ function renderComponentContent(component: Component): React.ReactNode {
     return (
       <div style={{ border: cardBorder, borderRadius: component.cardBorderRadius, background: component.textBgColor, margin: '0 32px', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px 0' }}>
-          <Tag color="purple" icon={<BiBolt />} style={{ fontWeight: 600 }}>IA</Tag>
+          <Tag color="purple" icon={<BiBoltCircle />} style={{ fontWeight: 600 }}>IA</Tag>
           <Text style={{ fontSize: 12, color: component.textColor }}>
             {configured ? `Tono: ${TONO_LABELS[component.tone]?.label ?? component.tone} · ${component.generatedText ? 'Generado' : 'Pendiente'}` : 'Sin configurar — selecciona para configurar'}
           </Text>

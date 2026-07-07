@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Dropdown, Button, Switch, Popconfirm, Popover, DatePicker } from 'antd';
-import { BiPlus, BiChevronDown, BiEditAlt, BiImport, BiEnvelope, BiEdit, BiTrash, BiBolt, BiCopy, BiTime } from 'react-icons/bi';
+import { BiPlus, BiChevronDown, BiEditAlt, BiImport, BiEnvelope, BiEdit, BiTrash, BiBoltCircle, BiCopy, BiTime } from 'react-icons/bi';
 import type { MenuProps } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import svgPaths from "@/imports/BoostersPage-1/svg-hnea2jkxqi";
