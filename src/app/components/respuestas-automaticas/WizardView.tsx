@@ -126,7 +126,7 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
       </div>
 
       {/* Nombre de la regla */}
-      <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
         <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 12px 0' }}>
           Nombre de la regla <span style={{ color: '#ff4d4f' }}>*</span>
         </p>
@@ -136,7 +136,7 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
           placeholder="Ej: Recuperación de detractores"
           style={{ borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
         />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
           <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.25)' }}>
             {rule.name.length} / 70
           </span>
@@ -160,14 +160,6 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
         <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '8px 0 0 0', lineHeight: 'normal' }}>
           El sistema enviará el correo al valor de este dato para cada encuestado. Si está vacío, ese envío se omite y queda registrado en el historial como <strong style={{ color: 'rgba(0,0,0,0.65)' }}>No enviado</strong>.
         </p>
-        <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 8, padding: '10px 16px', marginTop: 10 }}>
-          <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.65)', margin: 0, lineHeight: 1.6 }}>
-            Esta regla funciona cuando el encuestado recibió el estudio por <strong>correo</strong> vía Plugthem, por <strong>WhatsApp</strong> vía Plugthem si la fuente elegida tiene valor, o por <strong>enlace personalizado</strong> si la base cargada incluía ese dato. No funciona para encuestados que respondieron por <strong>enlace genérico o QR</strong>, porque no tienen datos de contacto registrados.
-          </p>
-          <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '6px 0 0 0', lineHeight: 1.6 }}>
-            WhatsApp como canal de respuesta automática llega en una próxima versión — requiere plantillas aprobadas por Meta, un proveedor de envío y costo por mensaje.
-          </p>
-        </div>
       </div>
 
       {/* Disparador */}
@@ -190,7 +182,7 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
           />
         </div>
         <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '12px 0 0 0', lineHeight: 1.6 }}>
-          El correo no llega en el momento exacto de la respuesta, sino entre 2 y 7 minutos después — el sistema primero procesa la respuesta completa antes de enviarlo.
+          El correo no se envía en el instante exacto de la respuesta, sino poco después, una vez que el sistema termina de procesarla.
         </p>
       </div>
 
