@@ -98,7 +98,7 @@ function AgregarReglaButton({ onNew, onCopyFromStudy }: { onNew: () => void; onC
   return (
     <Dropdown menu={{ items }} trigger={['click']} placement="bottom">
       <Button type="primary" icon={<PlusOutlined />}>
-        Agregar regla <DownOutlined style={{ fontSize: 10, marginLeft: 2 }} />
+        Agregar regla <DownOutlined style={{ fontSize: 12, marginLeft: 2 }} />
       </Button>
     </Dropdown>
   );

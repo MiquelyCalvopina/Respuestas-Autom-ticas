@@ -37,7 +37,7 @@ function StepNode({ num, label, active, done }: { num: number; label: string; ac
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         {done
-          ? <CheckOutlined style={{ fontSize: 10, color: '#1890ff' }} />
+          ? <CheckOutlined style={{ fontSize: 12, color: '#1890ff' }} />
           : <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: active ? '#fff' : 'rgba(0,0,0,0.25)', lineHeight: 1 }}>{num}</span>
         }
       </div>

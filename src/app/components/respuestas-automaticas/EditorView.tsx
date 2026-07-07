@@ -301,7 +301,7 @@ function renderComponentContent(component: Component): React.ReactNode {
       <div style={{ border: cardBorder, borderRadius: component.cardBorderRadius, background: component.textBgColor, margin: '0 32px', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px 0' }}>
           <Tag color="purple" icon={<ThunderboltOutlined />} style={{ fontWeight: 600 }}>IA</Tag>
-          <Text style={{ fontSize: 11, color: component.textColor }}>
+          <Text style={{ fontSize: 12, color: component.textColor }}>
             {configured ? `Tono: ${TONO_LABELS[component.tone]?.label ?? component.tone} · ${component.generatedText ? 'Generado' : 'Pendiente'}` : 'Sin configurar — selecciona para configurar'}
           </Text>
         </div>
@@ -309,7 +309,7 @@ function renderComponentContent(component: Component): React.ReactNode {
           <div style={{ textAlign: 'center', padding: '18px 15px' }}>
             <p style={{ fontSize: 22, margin: '0 0 7px' }}>✦</p>
             <Text strong style={{ display: 'block', color: component.textColor }}>Bloque IA sin objetivo</Text>
-            <Text style={{ fontSize: 11, color: component.textColor, opacity: 0.7 }}>Define el objetivo en el panel de configuración.</Text>
+            <Text style={{ fontSize: 12, color: component.textColor, opacity: 0.7 }}>Define el objetivo en el panel de configuración.</Text>
           </div>
         ) : (
           <p style={{
@@ -694,7 +694,7 @@ function PaletteItem({ icon, label, sub, onClick, componentType }: {
       }}
     >
       <span style={{ fontSize: 20, color: 'rgba(0,0,0,0.45)' }}>{icon}</span>
-      <div style={{ fontWeight: 500, fontSize: 11, color: 'rgba(0,0,0,0.85)', lineHeight: 1.3 }}>{label}</div>
+      <div style={{ fontWeight: 500, fontSize: 12, color: 'rgba(0,0,0,0.85)', lineHeight: 1.3 }}>{label}</div>
       <div style={{ fontSize: 9, color: 'rgba(0,0,0,0.45)', lineHeight: 1.3 }}>{sub}</div>
     </button>
   );
@@ -971,7 +971,7 @@ function TextContentFields({ block, onUpdate }: { block: TextBlock; onUpdate: (b
             </Tag>
           ))}
         </div>
-        <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>Se reemplaza con el dato real al enviarse.</Text>
+        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>Se reemplaza con el dato real al enviarse.</Text>
       </div>
     </div>
   );
@@ -980,17 +980,17 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ padding: '7px 10px', borderRadius: 6, background: 'var(--ds-violet-bg)', border: '1px solid var(--ds-violet-mid)' }}>
-        <Text style={{ fontSize: 11, color: 'var(--ds-violet-dark)' }}>
+        <Text style={{ fontSize: 12, color: 'var(--ds-violet-dark)' }}>
           ✦ <strong>{SETUP.empresa}</strong> · {SETUP.industria}
         </Text>
-        <Text style={{ fontSize: 10.5, color: 'var(--ds-violet-dark)', display: 'block', marginTop: 3, opacity: 0.85 }}>
+        <Text style={{ fontSize: 12, color: 'var(--ds-violet-dark)', display: 'block', marginTop: 3, opacity: 0.85 }}>
           La IA recibe: datos de contacto, variables de la interacción (incluyendo ticket/caso si se generó) y todas las respuestas del encuestado. Solo usa variables cuyo significado entiende con certeza.
         </Text>
       </div>
       <div>
         <FieldLabel>¿Qué debe lograr este bloque? *</FieldLabel>
         <TextArea rows={3} value={block.objetivo} onChange={e => onUpdate({ ...block, objetivo: e.target.value })} placeholder="Ej: Que el cliente sienta que su queja fue escuchada…" />
-        <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 2 }}>La IA genera texto único usando la respuesta real como contexto.</Text>
+        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 2 }}>La IA genera texto único usando la respuesta real como contexto.</Text>
       </div>
       <div>
         <FieldLabel tooltip="Ajusta el estilo emocional del texto generado — no cambia lo que dice, solo cómo lo dice.">Tono del mensaje</FieldLabel>
@@ -1001,7 +1001,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
               style={{ cursor: 'pointer', borderColor: block.tone === k ? 'var(--ds-violet)' : '#d9d9d9', background: block.tone === k ? 'var(--ds-violet-bg)' : '#fff' }}
               styles={{ body: { padding: '6px 8px' } }}
             >
-              <Text style={{ fontSize: 11, fontWeight: 500, color: block.tone === k ? 'var(--ds-violet-dark)' : undefined, display: 'block' }}>{v.label}</Text>
+              <Text style={{ fontSize: 12, fontWeight: 500, color: block.tone === k ? 'var(--ds-violet-dark)' : undefined, display: 'block' }}>{v.label}</Text>
               <Text type="secondary" style={{ fontSize: 10 }}>{v.sub}</Text>
             </Card>
           ))}
@@ -1123,7 +1123,7 @@ function TitleContentFields({ block, onUpdate }: { block: TitleBlock; onUpdate: 
 }
 function SubSectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(0,0,0,0.35)', borderBottom: '1px solid #f0f0f0', paddingBottom: 4, marginTop: 4 }}>
+    <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(0,0,0,0.35)', borderBottom: '1px solid #f0f0f0', paddingBottom: 4, marginTop: 4 }}>
       {children}
     </div>
   );
@@ -1188,10 +1188,10 @@ function QuestionPickerRow({ q, index, included, onToggle, moveItem }: {
       ) : (
         <div style={{ width: 12, flexShrink: 0 }} />
       )}
-      <Text style={{ fontSize: 10, color: 'rgba(0,0,0,0.35)', flexShrink: 0, width: 14 }}>{included ? index + 1 : ''}</Text>
+      <Text style={{ fontSize: 12, color: 'rgba(0,0,0,0.35)', flexShrink: 0, width: 14 }}>{included ? index + 1 : ''}</Text>
       <Checkbox checked={included} onChange={e => onToggle(e.target.checked)} onClick={e => e.stopPropagation()} />
       <Text style={{ fontSize: 12, flex: 1 }} ellipsis={{ tooltip: q.texto }}>{q.texto}</Text>
-      <Tag style={{ margin: 0, fontSize: 10, flexShrink: 0 }}>{q.tipo}</Tag>
+      <Tag style={{ margin: 0, fontSize: 12, flexShrink: 0 }}>{q.tipo}</Tag>
     </div>
   );
 }
@@ -1224,7 +1224,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ padding: '7px 10px', borderRadius: 6, background: '#fafafa', border: '1px solid #f0f0f0', fontSize: 11, color: 'rgba(0,0,0,0.45)' }}>
+      <div style={{ padding: '7px 10px', borderRadius: 6, background: '#fafafa', border: '1px solid #f0f0f0', fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>
         Cada encuestado verá sus propias respuestas exactas. El contenido es dinámico y único por persona.
       </div>
 
@@ -1280,7 +1280,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
             ))}
           </div>
         </div>
-        <Text type="secondary" style={{ fontSize: 10, display: 'block' }}>Marca una pregunta para incluirla · arrastra las incluidas para definir su orden en el correo.</Text>
+        <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Marca una pregunta para incluirla · arrastra las incluidas para definir su orden en el correo.</Text>
       </CollapsibleSection>
 
       <CollapsibleSection compact defaultOpen={false} title="Visualización y contenedor">
@@ -1439,7 +1439,7 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
           <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
           <Button icon={<UploadOutlined />} onClick={() => fileInputRef.current?.click()}>Subir</Button>
         </div>
-        <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>Sube un archivo o pega el enlace de una imagen.</Text>
+        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>Sube un archivo o pega el enlace de una imagen.</Text>
       </div>
       {block.dynamic && (
         <div>
@@ -1459,7 +1459,7 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
               </Tag>
             ))}
           </div>
-          <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>La URL puede incluir una variable para mostrar una imagen distinta por destinatario.</Text>
+          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>La URL puede incluir una variable para mostrar una imagen distinta por destinatario.</Text>
         </div>
       )}
       <div>
@@ -1499,7 +1499,7 @@ function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUp
             </Tag>
           ))}
         </div>
-        <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>El enlace puede incluir una variable para llevar a una URL distinta por destinatario.</Text>
+        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>El enlace puede incluir una variable para llevar a una URL distinta por destinatario.</Text>
       </div>
       <div><FieldLabel>Color de fondo</FieldLabel><ColorPickerField value={block.bgColor} onChange={c => onUpdate({ ...block, bgColor: c })} full /></div>
       <div><FieldLabel>Color de texto</FieldLabel><ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} full /></div>
@@ -1789,7 +1789,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
 
   const subjectBar = (
     <div style={{ maxWidth: cardMaxWidth, margin: '0 auto 10px', display: 'flex', alignItems: 'center', gap: 10, padding: '5px 12px', background: '#fff', borderRadius: 6, border: '1px solid #f0f0f0' }}>
-      <Text type="secondary" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', flexShrink: 0 }}>ASUNTO</Text>
+      <Text type="secondary" style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', flexShrink: 0 }}>ASUNTO</Text>
       {editingSubject ? (
         <Input
           autoFocus bordered={false}
@@ -1946,12 +1946,12 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
               <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 12px' }}>
                 {activeTab === 'elementos' && (
                   <div id="palette-section">
-                    <Text type="secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Estructura</Text>
+                    <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Estructura</Text>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
                       <PaletteItem icon={<TableOutlined />} label="Columnas" sub="Elige un layout" onClick={() => setColumnPickerOpen(o => !o)} />
                     </div>
                     {columnPickerOpen && <ColumnLayoutPicker onPick={addRow} onClose={() => setColumnPickerOpen(false)} />}
-                    <Text type="secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '10px 0 8px' }}>Componentes</Text>
+                    <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '10px 0 8px' }}>Componentes</Text>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                       {COMPONENT_PALETTE.map(item => (
                         <PaletteItem key={item.type} icon={item.icon} label={item.label} sub={item.sub} componentType={item.type} onClick={() => addComponentRow(item.type)} />

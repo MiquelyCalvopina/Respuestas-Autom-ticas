@@ -112,7 +112,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {(q.atributos ?? []).map(a => (
           <div key={a} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <Text style={{ fontSize: 11.5, color: 'rgba(0,0,0,0.65)' }}>{a}</Text>
+            <Text style={{ fontSize: 12, color: 'rgba(0,0,0,0.65)' }}>{a}</Text>
             <Select value={v[a]} onChange={n => onChange({ ...v, [a]: n })} style={{ width: 110 }}
               options={Array.from({ length: q.escala?.[1] ?? 5 }, (_, i) => i + 1).map(n => ({ value: n, label: `${n} de ${q.escala?.[1] ?? 5}` }))} />
           </div>
@@ -129,7 +129,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {(q.campos ?? []).map(c => (
           <div key={c.nombre}>
-            <Text type="secondary" style={{ fontSize: 10.5, display: 'block', marginBottom: 2 }}>{c.nombre}</Text>
+            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 2 }}>{c.nombre}</Text>
             <Input value={v[c.nombre]} onChange={e => onChange({ ...v, [c.nombre]: e.target.value })} />
           </div>
         ))}
@@ -174,11 +174,11 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
     return (
       <div style={{ display: 'flex', gap: 8 }}>
         <div>
-          <Text type="secondary" style={{ fontSize: 10.5, display: 'block' }}>Más importante</Text>
+          <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Más importante</Text>
           <Select value={v.mas} onChange={mas => onChange({ ...v, mas })} options={opts} style={{ width: 160 }} />
         </div>
         <div>
-          <Text type="secondary" style={{ fontSize: 10.5, display: 'block' }}>Menos importante</Text>
+          <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Menos importante</Text>
           <Select value={v.menos} onChange={menos => onChange({ ...v, menos })} options={opts} style={{ width: 160 }} />
         </div>
       </div>
@@ -190,7 +190,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
         {(value as string[]).map((o, i) => (
           <Text key={o} style={{ fontSize: 12, display: 'block', color: 'rgba(0,0,0,0.65)' }}>{i + 1}° {o}</Text>
         ))}
-        <Text type="secondary" style={{ fontSize: 10.5, display: 'block', marginTop: 2 }}>Orden de ejemplo — se edita desde el paso de condiciones.</Text>
+        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 2 }}>Orden de ejemplo — se edita desde el paso de condiciones.</Text>
       </div>
     );
   }
@@ -278,7 +278,7 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
               autoFocus type="email" value={email} onChange={e => setEmail(e.target.value)}
               placeholder="tu@correo.com"
             />
-            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 4 }}>
+            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
               Recibirás el correo tal como lo verá el encuestado.
             </Text>
           </div>
@@ -314,7 +314,7 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
                   style={{ width: '100%' }}
                   placeholder="Escribe o busca un ID (ej: 4821)"
                 />
-                <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 3 }}>
+                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 3 }}>
                   El ID lo encuentras en el módulo de Descarga de Resultados.
                 </Text>
                 <Alert
@@ -327,7 +327,7 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
 
             {dataMode === 'synthetic' && (
               <>
-                <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 8 }}>
+                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
                   Precargado con datos de ejemplo — ajusta solo lo que necesites. Agrupado por tipo de pregunta del estudio.
                 </Text>
                 <Collapse
