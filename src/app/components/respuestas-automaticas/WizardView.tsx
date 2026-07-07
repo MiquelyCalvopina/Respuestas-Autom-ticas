@@ -1251,7 +1251,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
       {/* Topbar */}
       <div style={{
         background: '#fff', borderBottom: '1px solid #f0f0f0',
-        padding: '24px 32px', display: 'flex', alignItems: 'center',
+        padding: '16px 24px', display: 'flex', alignItems: 'center',
         justifyContent: 'space-between', flexShrink: 0,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

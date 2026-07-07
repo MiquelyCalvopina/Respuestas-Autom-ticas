@@ -485,6 +485,10 @@ Dos patrones aceptados, según la profundidad de la jerarquía de navegación:
   clásico separado por `/`, cada ancestro clickeable en `{colors.primary}`, el ítem actual (no
   clickeable) en `{colors.text-secondary}`. A partir de 4+ niveles, los intermedios se colapsan
   con `…` para no alargar la fila indefinidamente.
+- **Barra contenedora del breadcrumb**: cuando el breadcrumb vive en una barra superior (topbar de
+  una vista/wizard), esa barra usa padding `{spacing.md} {spacing.base}` (16px vertical, 24px
+  horizontal) y un `border-bottom` de 1px en `{colors.border-subtle}`. No usar padding vertical
+  grande (24px+) — la barra debe leerse compacta, no aireada.
 
 ### Anchor
 Para navegación dentro de contenido de lectura muy extenso (un documento largo, una página de
