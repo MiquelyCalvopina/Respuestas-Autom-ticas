@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button, Input, Select, Segmented, Radio, DatePicker, InputNumber, Popconfirm, Modal } from 'antd';
-import { RightOutlined, PlusOutlined, CheckOutlined, DeleteOutlined, CheckCircleFilled, BranchesOutlined, HolderOutlined, InfoCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
+import { BiChevronRight, BiPlus, BiCheck, BiTrash, BiCheckCircle, BiGitBranch, BiMove, BiInfoCircle, BiErrorCircle } from 'react-icons/bi';
 import dayjs from 'dayjs';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -26,8 +26,8 @@ function StepNode({ num, label, active, done }: { num: number; label: string; ac
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 8,
-      padding: '4px 8px', borderRadius: 8,
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '8px 12px', borderRadius: 8,
       background: active ? 'rgba(24,144,255,0.08)' : 'transparent',
     }}>
       <div style={{
@@ -37,7 +37,7 @@ function StepNode({ num, label, active, done }: { num: number; label: string; ac
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         {done
-          ? <CheckOutlined style={{ fontSize: 12, color: '#1890ff' }} />
+          ? <BiCheck style={{ fontSize: 12, color: '#1890ff' }} />
           : <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: active ? '#fff' : 'rgba(0,0,0,0.25)', lineHeight: 1 }}>{num}</span>
         }
       </div>
@@ -50,7 +50,7 @@ function StepNode({ num, label, active, done }: { num: number; label: string; ac
 
 function StepChevron() {
   return (
-    <svg width="6" height="10" viewBox="0 0 6 10" fill="none" style={{ flexShrink: 0, margin: '0 2px' }}>
+    <svg width="6" height="10" viewBox="0 0 6 10" fill="none" style={{ flexShrink: 0, margin: '0 4px' }}>
       <path d="M1 1L5 5L1 9" stroke="rgba(0,0,0,0.25)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -58,8 +58,8 @@ function StepChevron() {
 
 function NavigationSteps({ current }: { current: number }) {
   return (
-    <div style={{ background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 24px', flexShrink: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+    <div style={{ background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 32px', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <StepNode num={1} label="Detalles"    active={current === 0} done={current > 0} />
         <StepChevron />
         <StepNode num={2} label="Condiciones" active={current === 1} done={current > 1} />
@@ -80,17 +80,17 @@ function TriggerCard({ selected, onSelect, title, description }: {
       style={{
         background: selected ? 'rgba(24,144,255,0.04)' : '#fff',
         border: `1px solid ${selected ? '#40a9ff' : '#f0f0f0'}`,
-        borderRadius: 8, padding: 12, cursor: 'pointer', width: '100%',
-        display: 'flex', gap: 8, alignItems: 'flex-start',
+        borderRadius: 8, padding: 16, cursor: 'pointer', width: '100%',
+        display: 'flex', gap: 12, alignItems: 'flex-start',
         boxSizing: 'border-box',
       }}
     >
       {/* Radio circle */}
-      <div style={{ width: 16, height: 16, borderRadius: '50%', flexShrink: 0, marginTop: 2, position: 'relative', border: `1px solid ${selected ? '#1890ff' : '#d9d9d9'}`, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 16, height: 16, borderRadius: '50%', flexShrink: 0, marginTop: 4, position: 'relative', border: `1px solid ${selected ? '#1890ff' : '#d9d9d9'}`, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {selected && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#1890ff' }} />}
       </div>
       <div style={{ flex: 1 }}>
-        <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 4px 0', lineHeight: 'normal' }}>{title}</p>
+        <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 8px 0', lineHeight: 'normal' }}>{title}</p>
         <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: 0, lineHeight: 'normal' }}>{description}</p>
       </div>
     </div>
@@ -113,10 +113,10 @@ const RECIPIENT_EMAIL_QUESTIONS = PREGUNTAS_EJEMPLO.flatMap(q => {
 
 function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoResponse) => void }) {
   return (
-    <div style={{ padding: '24px 250px', display: 'flex', flexDirection: 'column', gap: 16, background: '#fff' }}>
+    <div style={{ padding: '32px 250px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
 
       {/* Section title */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 20, color: 'rgba(0,0,0,0.45)', margin: 0, lineHeight: 'normal' }}>
           Configura los detalles de la regla
         </p>
@@ -126,8 +126,8 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
       </div>
 
       {/* Nombre de la regla */}
-      <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 4 }}>
-        <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 8px 0' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 8 }}>
+        <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 12px 0' }}>
           Nombre de la regla <span style={{ color: '#ff4d4f' }}>*</span>
         </p>
         <Input
@@ -136,7 +136,7 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
           placeholder="Ej: Recuperación de detractores"
           style={{ borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
         />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
           <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.25)' }}>
             {rule.name.length} / 70
           </span>
@@ -145,7 +145,7 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
 
       {/* Variable destinatario */}
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 8px 0' }}>
+        <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 12px 0' }}>
           ¿A qué correo llega el mensaje? <span style={{ color: '#ff4d4f' }}>*</span>
         </p>
         <Select
@@ -157,10 +157,10 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
             ...(RECIPIENT_EMAIL_QUESTIONS.length ? [{ label: 'Preguntas del estudio', options: RECIPIENT_EMAIL_QUESTIONS }] : []),
           ]}
         />
-        <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '4px 0 0 0', lineHeight: 'normal' }}>
+        <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '8px 0 0 0', lineHeight: 'normal' }}>
           El sistema enviará el correo al valor de este dato para cada encuestado. Si está vacío, ese envío se omite y queda registrado en el historial como <strong style={{ color: 'rgba(0,0,0,0.65)' }}>No enviado</strong>.
         </p>
-        <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 8, padding: '10px 12px', marginTop: 10 }}>
+        <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 8, padding: '10px 16px', marginTop: 10 }}>
           <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.65)', margin: 0, lineHeight: 1.6 }}>
             Esta regla funciona cuando el encuestado recibió el estudio por <strong>correo</strong> vía Plugthem, por <strong>WhatsApp</strong> vía Plugthem si la fuente elegida tiene valor, o por <strong>enlace personalizado</strong> si la base cargada incluía ese dato. No funciona para encuestados que respondieron por <strong>enlace genérico o QR</strong>, porque no tienen datos de contacto registrados.
           </p>
@@ -172,10 +172,10 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
 
       {/* Disparador */}
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 8px 0' }}>
+        <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 12px 0' }}>
           Disparador <span style={{ color: '#ff4d4f' }}>*</span>
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <TriggerCard
             selected={rule.trigger === 'response'}
             onSelect={() => onChange({ ...rule, trigger: 'response' })}
@@ -189,16 +189,16 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
             description="Se ejecuta cuando un encuestado termina el estudio. Aplica a todas las despedidas o una específica."
           />
         </div>
-        <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '8px 0 0 0', lineHeight: 1.6 }}>
+        <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '12px 0 0 0', lineHeight: 1.6 }}>
           El correo no llega en el momento exacto de la respuesta, sino entre 2 y 7 minutos después — el sistema primero procesa la respuesta completa antes de enviarlo.
         </p>
       </div>
 
       {/* Remitente + Reply-to */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
         {/* Remitente */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 8px 0' }}>
+          <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 12px 0' }}>
             Remitente <span style={{ color: '#ff4d4f' }}>*</span>
           </p>
           <Select
@@ -213,7 +213,7 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
         </div>
         {/* Reply-to */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 8px 0' }}>
+          <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 12px 0' }}>
             Reply-to <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 400, color: 'rgba(0,0,0,0.45)' }}>(opcional)</span>
           </p>
           <Input
@@ -224,11 +224,11 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
             style={{ borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
           />
           {rule.replyTo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rule.replyTo) ? (
-            <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: '#ff4d4f', margin: '4px 0 0 0', lineHeight: 'normal' }}>
+            <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: '#ff4d4f', margin: '8px 0 0 0', lineHeight: 'normal' }}>
               Ingresa un correo electrónico válido.
             </p>
           ) : (
-            <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '4px 0 0 0', lineHeight: 'normal' }}>
+            <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '8px 0 0 0', lineHeight: 'normal' }}>
               Si el encuestado responde, el correo llega aquí.
             </p>
           )}
@@ -434,10 +434,10 @@ function RankRow({ index, text, moveItem }: { index: number; text: string; moveI
 
   return (
     <div ref={ref} style={{
-      opacity: isDragging ? 0.4 : 1, display: 'flex', alignItems: 'center', gap: 8,
-      border: '1px solid #f0f0f0', borderRadius: 8, padding: '8px 12px', background: '#fff', cursor: 'grab',
+      opacity: isDragging ? 0.4 : 1, display: 'flex', alignItems: 'center', gap: 12,
+      border: '1px solid #f0f0f0', borderRadius: 8, padding: '12px 16px', background: '#fff', cursor: 'grab',
     }}>
-      <HolderOutlined style={{ color: 'rgba(0,0,0,0.25)' }} />
+      <BiMove style={{ color: 'rgba(0,0,0,0.25)' }} />
       <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', minWidth: 16 }}>{index + 1}</span>
       <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, color: 'rgba(0,0,0,0.85)' }}>{text}</span>
     </div>
@@ -631,7 +631,7 @@ function DeleteConfirm({ what, onConfirm, children }: { what: string; onConfirm:
       overlayStyle={{ maxWidth: 320 }}
       icon={
         <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: '#fff1f0', flexShrink: 0 }}>
-          <DeleteOutlined style={{ color: '#ff4d4f', fontSize: 12 }} />
+          <BiTrash style={{ color: '#ff4d4f', fontSize: 12 }} />
         </span>
       }
     >
@@ -661,8 +661,8 @@ function CondRowUI({ row, onUpdate, onDelete, canDelete }: {
   return (
     <div style={{ position: 'relative' }}>
       <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 2, background: '#bae7ff', borderRadius: '2px 0 0 2px' }} />
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: 16 }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: 24 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', flex: 1, minWidth: 0 }}>
 
         {/* Subject */}
         <Select
@@ -760,8 +760,8 @@ function CondRowUI({ row, onUpdate, onDelete, canDelete }: {
         {/* Delete */}
         {canDelete && (
           <DeleteConfirm what="esta condición" onConfirm={onDelete}>
-            <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ff4d4f', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-              <DeleteOutlined style={{ fontSize: 14 }} />
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, color: '#ff4d4f', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+              <BiTrash style={{ fontSize: 14 }} />
             </button>
           </DeleteConfirm>
         )}
@@ -769,13 +769,13 @@ function CondRowUI({ row, onUpdate, onDelete, canDelete }: {
 
       {/* Condición lista / rango inválido */}
       {complete && (
-        <div style={{ paddingLeft: 20, paddingBottom: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-          <CheckCircleFilled style={{ color: '#52c41a', fontSize: 12 }} />
+        <div style={{ paddingLeft: 20, paddingBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <BiCheckCircle style={{ color: '#52c41a', fontSize: 12 }} />
           <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: '#52c41a' }}>Condición lista</span>
         </div>
       )}
       {rangeError && (
-        <div style={{ paddingLeft: 20, paddingBottom: 12 }}>
+        <div style={{ paddingLeft: 20, paddingBottom: 16 }}>
           <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: '#ff4d4f' }}>
             El primer valor debe ser menor o igual al segundo.
           </span>
@@ -807,9 +807,9 @@ function SubConditionUI({ subCondition, onUpdateRow, onSetConnector, onDelete }:
   const selStyle:   React.CSSProperties = { minWidth: 160, borderRadius: 8 };
 
   return (
-    <div style={{ borderLeft: '2px solid #e6f7ff', padding: '8px 16px 8px 16px', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
-        <div style={{ background: 'rgba(0,0,0,0.04)', padding: 4, borderRadius: 8, display: 'flex', alignItems: 'center' }}>
+    <div style={{ borderLeft: '2px solid #e6f7ff', padding: '12px 24px 12px 24px', display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
+        <div style={{ background: 'rgba(0,0,0,0.04)', padding: 8, borderRadius: 8, display: 'flex', alignItems: 'center' }}>
           {(['Y', 'O'] as const).map(opt => (
             <button
               key={opt}
@@ -817,7 +817,7 @@ function SubConditionUI({ subCondition, onUpdateRow, onSetConnector, onDelete }:
               style={{
                 background: subCondition.connector === opt ? '#fff' : 'transparent',
                 boxShadow: subCondition.connector === opt ? '0px 2px 8px 0px rgba(0,0,0,0.05)' : 'none',
-                borderRadius: 100, border: 'none', cursor: 'pointer', padding: '2px 8px',
+                borderRadius: 100, border: 'none', cursor: 'pointer', padding: '4px 12px',
                 color: subCondition.connector === opt ? '#1890ff' : 'rgba(0,0,0,0.45)',
                 fontFamily: "'Roboto', sans-serif", fontSize: 14, lineHeight: 'normal',
                 transition: 'all .15s',
@@ -832,7 +832,7 @@ function SubConditionUI({ subCondition, onUpdateRow, onSetConnector, onDelete }:
         </span>
         <DeleteConfirm what="esta sub-condición" onConfirm={onDelete}>
           <button style={{ background: '#fff', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)', flexShrink: 0 }}>
-            <DeleteOutlined style={{ fontSize: 12, color: '#ff4d4f' }} />
+            <BiTrash style={{ fontSize: 12, color: '#ff4d4f' }} />
           </button>
         </DeleteConfirm>
       </div>
@@ -983,8 +983,8 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
     <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, overflow: 'hidden' }}>
       {/* Connector row (Y/O) — only for 2nd+ groups */}
       {index > 0 && (
-        <div style={{ background: '#fafafa', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #f0f0f0' }}>
-          <div style={{ background: 'rgba(0,0,0,0.04)', padding: 4, borderRadius: 8, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+        <div style={{ background: '#fafafa', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #f0f0f0' }}>
+          <div style={{ background: 'rgba(0,0,0,0.04)', padding: 8, borderRadius: 8, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
             {(['Y', 'O'] as const).map(opt => (
               <button
                 key={opt}
@@ -993,7 +993,7 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
                   background: group.connector === opt ? '#fff' : 'rgba(255,255,255,0)',
                   boxShadow: group.connector === opt ? '0px 2px 8px 0px rgba(0,0,0,0.05)' : 'none',
                   borderRadius: 100, border: 'none', cursor: 'pointer',
-                  padding: '4px 8px',
+                  padding: '8px 12px',
                   color: group.connector === opt ? '#1890ff' : 'rgba(0,0,0,0.45)',
                   fontFamily: "'Roboto', sans-serif", fontSize: 14, lineHeight: 'normal',
                   transition: 'all .15s',
@@ -1007,12 +1007,12 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
             se cumple que...
           </span>
           <button onClick={addSubCondition} style={{ background: 'white', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)' }}>
-            <BranchesOutlined style={{ fontSize: 12, color: '#434343', transform: 'rotate(90deg)' }} />
+            <BiGitBranch style={{ fontSize: 12, color: '#434343', transform: 'rotate(90deg)' }} />
           </button>
           {canDelete && (
             <DeleteConfirm what="este grupo (se perderán sus condiciones y subcondiciones)" onConfirm={onDelete}>
-              <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ff4d4f', display: 'flex', alignItems: 'center' }}>
-                <DeleteOutlined style={{ fontSize: 14 }} />
+              <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, color: '#ff4d4f', display: 'flex', alignItems: 'center' }}>
+                <BiTrash style={{ fontSize: 14 }} />
               </button>
             </DeleteConfirm>
           )}
@@ -1020,17 +1020,17 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
       )}
       {/* Header */}
       {index === 0 && (
-        <div style={{ background: '#fafafa', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #f0f0f0' }}>
+        <div style={{ background: '#fafafa', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #f0f0f0' }}>
           <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', flex: 1 }}>
             Dispara una respuesta automática cuando:
           </span>
           <button onClick={addSubCondition} style={{ background: 'white', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)' }}>
-            <BranchesOutlined style={{ fontSize: 12, color: '#434343', transform: 'rotate(90deg)' }} />
+            <BiGitBranch style={{ fontSize: 12, color: '#434343', transform: 'rotate(90deg)' }} />
           </button>
           {canDelete && (
             <DeleteConfirm what="este grupo (se perderán sus condiciones y subcondiciones)" onConfirm={onDelete}>
-              <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ff4d4f', display: 'flex', alignItems: 'center' }}>
-                <DeleteOutlined style={{ fontSize: 14 }} />
+              <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, color: '#ff4d4f', display: 'flex', alignItems: 'center' }}>
+                <BiTrash style={{ fontSize: 14 }} />
               </button>
             </DeleteConfirm>
           )}
@@ -1077,10 +1077,10 @@ function Step2({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div style={{ padding: '24px 250px', display: 'flex', flexDirection: 'column', gap: 16, background: '#fff' }}>
+      <div style={{ padding: '32px 250px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
 
         {/* Section title */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 20, color: 'rgba(0,0,0,0.45)', margin: 0, lineHeight: 'normal' }}>
             Define las condiciones de envío
           </p>
@@ -1090,12 +1090,12 @@ function Step2({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
         </div>
 
         {/* Conditions area */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
           {/* Empty state — only when no groups */}
           {groups.length === 0 && (
             <div style={{ border: '1px dashed #f0f0f0', borderRadius: 8 }}>
-              <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+              <div style={{ padding: '32px 24px', textAlign: 'center' }}>
                 <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.45)', margin: 0, lineHeight: 'normal' }}>
                   Sin condiciones configuradas. La regla se aplicará a toda respuesta que cumpla el disparador.
                 </p>
@@ -1122,11 +1122,11 @@ function Step2({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
               width: '100%', borderRadius: 8, background: '#fff',
               border: '1px dashed #69c0ff',
               boxShadow: '0px 2px 0px 0px rgba(0,0,0,0.02)',
-              padding: '8px 9px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '12px 9px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
             }}
           >
-            <PlusOutlined style={{ color: '#1890ff', fontSize: 14 }} />
+            <BiPlus style={{ color: '#1890ff', fontSize: 14 }} />
             <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: '#1890ff', lineHeight: 'normal' }}>
               Agregar condición
             </span>
@@ -1143,7 +1143,7 @@ function Step2({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
       <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', width: 100, flexShrink: 0 }}>{label}</span>
       <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)' }}>{value}</span>
     </div>
@@ -1154,7 +1154,7 @@ function VariablePill({ value }: { value: string }) {
   const isQuestion = value.startsWith('pregunta:');
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 2,
+      display: 'inline-flex', alignItems: 'center', gap: 4,
       background: 'var(--ds-violet-bg)', color: 'var(--ds-violet)',
       border: '1px solid var(--ds-violet-mid)', borderRadius: 100,
       padding: '1px 10px', fontFamily: isQuestion ? "'Roboto', sans-serif" : "'JetBrains Mono', monospace", fontSize: 12,
@@ -1179,9 +1179,9 @@ function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () =>
     .some((comp): comp is AiBlock => comp.type === 'ai' && comp.objetivo.trim() === '');
 
   return (
-    <div style={{ padding: '24px 250px', display: 'flex', flexDirection: 'column', gap: 16, background: '#fff' }}>
+    <div style={{ padding: '32px 250px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 20, color: 'rgba(0,0,0,0.45)', margin: 0, lineHeight: 'normal' }}>
           Diseña el mensaje
         </p>
@@ -1190,7 +1190,7 @@ function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () =>
         </p>
       </div>
 
-      <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: 0 }}>
           Correo configurado
         </p>
@@ -1217,8 +1217,8 @@ function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () =>
       </div>
 
       {aiBlockSinObjetivo && (
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 8, padding: '10px 12px' }}>
-          <ExclamationCircleFilled style={{ color: '#faad14', fontSize: 14, marginTop: 2 }} />
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 8, padding: '10px 16px' }}>
+          <BiErrorCircle style={{ color: '#faad14', fontSize: 14, marginTop: 4 }} />
           <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.65)', margin: 0, lineHeight: 1.6 }}>
             Tienes un bloque IA sin objetivo configurado. Ábrelo en el editor de correo y completa "¿Qué debe lograr este bloque?" antes de activar la regla.
           </p>
@@ -1259,10 +1259,10 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
       {/* Topbar */}
       <div style={{
         background: '#fff', borderBottom: '1px solid #f0f0f0',
-        padding: '16px 24px', display: 'flex', alignItems: 'center',
+        padding: '24px 32px', display: 'flex', alignItems: 'center',
         justifyContent: 'space-between', flexShrink: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => setShowExitDialog(true)}
             style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -1285,20 +1285,20 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
         getContainer={() => rootRef.current || document.body}
         footer={null}
         width={480}
-        styles={{ content: { borderRadius: 20, padding: 24 } }}
+        styles={{ content: { borderRadius: 20, padding: 32 } }}
       >
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: '#e6f4ff', flexShrink: 0, marginTop: 2 }}>
-            <InfoCircleFilled style={{ color: '#1890ff', fontSize: 14 }} />
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: '#e6f4ff', flexShrink: 0, marginTop: 4 }}>
+            <BiInfoCircle style={{ color: '#1890ff', fontSize: 14 }} />
           </span>
           <div style={{ flex: 1 }}>
-            <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 16, color: 'rgba(0,0,0,0.85)', margin: '0 0 4px' }}>
+            <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 16, color: 'rgba(0,0,0,0.85)', margin: '0 0 8px' }}>
               ¿Salir de la creación de esta regla?
             </p>
             <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.65)', margin: 0 }}>
               Puedes descartar el avance o guardarlo como borrador para continuar después.
             </p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 20 }}>
               <Button danger style={{ borderRadius: 8 }} onClick={onBack}>Descartar y salir</Button>
               <Button type="primary" style={{ borderRadius: 8 }} onClick={onSaveDraft}>Guardar como borrador y salir</Button>
             </div>
@@ -1319,8 +1319,8 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
       {/* Footer */}
       <div style={{
         background: '#fff', borderTop: '1px solid #f0f0f0',
-        padding: '16px 24px', display: 'flex', alignItems: 'center',
-        justifyContent: 'flex-end', gap: 8, flexShrink: 0,
+        padding: '24px 32px', display: 'flex', alignItems: 'center',
+        justifyContent: 'flex-end', gap: 12, flexShrink: 0,
       }}>
         {current > 0 && (
           <Button onClick={() => setCurrent(c => c - 1)}>← Anterior</Button>
@@ -1328,7 +1328,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
         <Button
           type="primary"
           disabled={!canNext}
-          icon={<RightOutlined />}
+          icon={<BiChevronRight />}
           iconPlacement="end"
           onClick={() => isLast ? onSaveAndActivate() : setCurrent(c => c + 1)}
         >

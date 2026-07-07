@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Card, Tag, Typography, Empty, Alert, Space } from 'antd';
-import { LeftOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { BiArrowBack, BiInfoCircle } from 'react-icons/bi';
 import { AutoResponse } from './types';
 
 const { Title, Text } = Typography;
@@ -25,8 +25,8 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
   const visible = filter === 'all' ? MOCK : MOCK.filter(e => e.status === (filter === 'sent' ? 'sent' : 'not_sent'));
 
   return (
-    <div style={{ padding: '24px 32px', maxWidth: 760, margin: '0 auto' }}>
-      <Button type="text" icon={<LeftOutlined />} onClick={onBack} style={{ marginBottom: 16, color: 'rgba(0,0,0,0.45)', paddingLeft: 0 }}>
+    <div style={{ padding: '32px 32px', maxWidth: 760, margin: '0 auto' }}>
+      <Button type="text" icon={<BiArrowBack />} onClick={onBack} style={{ marginBottom: 24, color: 'rgba(0,0,0,0.45)', paddingLeft: 0 }}>
         Volver
       </Button>
 
@@ -36,7 +36,7 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
       </div>
 
       {/* Filter bar */}
-      <Space style={{ marginBottom: 16 }}>
+      <Space style={{ marginBottom: 24 }}>
         {([
           { key: 'all',      label: 'Todos',        count: MOCK.length },
           { key: 'sent',     label: 'Enviados',     count: sent },
@@ -53,11 +53,11 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
       </Space>
 
       {/* List */}
-      <Card size="small" style={{ marginBottom: 16, borderRadius: 20 }} styles={{ body: { borderRadius: 20 } }}>
+      <Card size="small" style={{ marginBottom: 24, borderRadius: 20 }} styles={{ body: { borderRadius: 20 } }}>
         {visible.length === 0 ? (
           <Empty description="Sin ejecuciones" />
         ) : visible.map((exec, i) => (
-          <div key={exec.id} style={{ padding: '10px 0', borderBottom: i < visible.length - 1 ? '1px solid #f0f0f0' : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div key={exec.id} style={{ padding: '10px 0', borderBottom: i < visible.length - 1 ? '1px solid #f0f0f0' : 'none', display: 'flex', alignItems: 'center', gap: 16 }}>
             <code style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(0,0,0,0.85)', minWidth: 52 }}>
               #{exec.responseId}
             </code>
@@ -75,7 +75,7 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
       {notSent > 0 && (
         <Alert
           type="info"
-          icon={<InfoCircleOutlined />}
+          icon={<BiInfoCircle />}
           showIcon
           title='Los registros "No enviado" por variable vacía son comportamiento esperado, no un error del sistema. Ocurren cuando la respuesta no incluye el campo correo_electronico.'
           style={{ fontSize: 12 }}

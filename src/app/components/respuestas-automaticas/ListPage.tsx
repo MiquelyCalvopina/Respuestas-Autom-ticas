@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Dropdown, Button, Switch, Popconfirm, Popover, DatePicker } from 'antd';
-import { PlusOutlined, DownOutlined, FormOutlined, ImportOutlined, MailOutlined, EditOutlined, DeleteOutlined, ThunderboltOutlined, CopyOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { BiPlus, BiChevronDown, BiEditAlt, BiImport, BiEnvelope, BiEdit, BiTrash, BiBolt, BiCopy, BiTime } from 'react-icons/bi';
 import type { MenuProps } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import svgPaths from "@/imports/BoostersPage-1/svg-hnea2jkxqi";
@@ -83,13 +83,13 @@ function AgregarReglaButton({ onNew, onCopyFromStudy }: { onNew: () => void; onC
   const items: MenuProps['items'] = [
     {
       key: 'new',
-      icon: <FormOutlined />,
+      icon: <BiEditAlt />,
       label: 'Desde cero',
       onClick: onNew,
     },
     {
       key: 'copy',
-      icon: <ImportOutlined />,
+      icon: <BiImport />,
       label: 'Copiar de otro estudio',
       onClick: onCopyFromStudy,
     },
@@ -97,8 +97,8 @@ function AgregarReglaButton({ onNew, onCopyFromStudy }: { onNew: () => void; onC
 
   return (
     <Dropdown menu={{ items }} trigger={['click']} placement="bottom">
-      <Button type="primary" icon={<PlusOutlined />}>
-        Agregar regla <DownOutlined style={{ fontSize: 12, marginLeft: 2 }} />
+      <Button type="primary" icon={<BiPlus />}>
+        Agregar regla <BiChevronDown style={{ fontSize: 12, marginLeft: 4 }} />
       </Button>
     </Dropdown>
   );
@@ -131,7 +131,7 @@ function Badge({ tone, children }: { tone: 'warning' | 'success' | 'neutral' | '
   }[tone];
   return (
     <span
-      className={`inline-flex items-center border border-solid rounded-[4px] px-[8px] leading-[20px] text-[12px] font-['Roboto:Regular',sans-serif] ${toneClass}`}
+      className={`inline-flex items-center border border-solid rounded-[4px] px-[12px] leading-[20px] text-[12px] font-['Roboto:Regular',sans-serif] ${toneClass}`}
       style={{ fontVariationSettings: '"wdth" 100' }}
     >
       {children}
@@ -167,7 +167,7 @@ function SchedulePopover({ rule, onSchedule, onCancelSchedule }: {
       onOpenChange={setOpen}
       placement="bottomRight"
       content={
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 240 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 240 }}>
           {scheduled ? (
             <>
               <span style={{ fontSize: 12, fontFamily: "'Roboto', sans-serif", color: 'rgba(0,0,0,0.65)' }}>
@@ -204,7 +204,7 @@ function SchedulePopover({ rule, onSchedule, onCancelSchedule }: {
         style={{ width: 24, height: 24, borderColor: scheduled ? '#91d5ff' : '#d9d9d9', color: scheduled ? '#1890ff' : 'rgba(0,0,0,0.45)' }}
         aria-label="Programar activación"
       >
-        <ClockCircleOutlined style={{ fontSize: 12 }} />
+        <BiTime style={{ fontSize: 12 }} />
       </button>
     </Popover>
   );
@@ -220,18 +220,18 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSche
   const condCount = rule.condGroups.flatMap(g => g.rows).length;
 
   return (
-    <div className="bg-white border border-[#f0f0f0] border-solid rounded-[8px] p-[16px] flex flex-col gap-[12px] w-full">
+    <div className="bg-white border border-[#f0f0f0] border-solid rounded-[8px] p-[24px] flex flex-col gap-[16px] w-full">
       {/* Title row */}
-      <div className="flex items-center gap-[12px]">
+      <div className="flex items-center gap-[16px]">
         <div
           className="rounded-full flex items-center justify-center shrink-0 size-[32px] border border-solid text-[15px]"
           style={hasAi
             ? { background: 'var(--ds-violet-bg)', borderColor: 'var(--ds-violet-mid)', color: 'var(--ds-violet)' }
             : { background: '#e6f7ff', borderColor: '#91d5ff', color: '#1890ff' }}
         >
-          {hasAi ? '✦' : <MailOutlined />}
+          {hasAi ? '✦' : <BiEnvelope />}
         </div>
-        <div className="flex-[1_0_0] min-w-px flex flex-col gap-[2px]">
+        <div className="flex-[1_0_0] min-w-px flex flex-col gap-[4px]">
           <span
             className="font-['Roboto:Medium',sans-serif] font-medium text-[14px] text-[rgba(0,0,0,0.85)] truncate block"
             style={{ fontVariationSettings: '"wdth" 100' }}
@@ -261,43 +261,43 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSche
       </div>
 
       {/* Badges */}
-      <div className="flex flex-wrap gap-[8px]">
+      <div className="flex flex-wrap gap-[12px]">
         {statusBadge(rule)}
         {triggerBadge(rule.trigger)}
         <Badge tone="neutral">{condCount > 0 ? `${condCount} condici${condCount !== 1 ? 'ones' : 'ón'}` : 'Todas las respuestas'}</Badge>
-        {hasAi && <Badge tone="ai"><ThunderboltOutlined style={{ marginRight: 4 }} />Bloque IA</Badge>}
-        {rule.scheduledAt && <Badge tone="info"><ClockCircleOutlined style={{ marginRight: 4 }} />Se activa {dayjs(rule.scheduledAt).format('DD MMM, HH:mm')}</Badge>}
+        {hasAi && <Badge tone="ai"><BiBolt style={{ marginRight: 8 }} />Bloque IA</Badge>}
+        {rule.scheduledAt && <Badge tone="info"><BiTime style={{ marginRight: 8 }} />Se activa {dayjs(rule.scheduledAt).format('DD MMM, HH:mm')}</Badge>}
       </div>
 
       {/* Actions */}
-      <div className="flex gap-[8px] pt-[4px]">
+      <div className="flex gap-[12px] pt-[8px]">
         <button
           onClick={onEdit}
-          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[4px] items-center px-[9px] py-[8px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
+          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center px-[9px] py-[12px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
           style={{ fontVariationSettings: '"wdth" 100' }}
         >
-          <EditOutlined style={{ fontSize: 12 }} /> Editar
+          <BiEdit style={{ fontSize: 12 }} /> Editar
         </button>
         <button
           onClick={onLog}
-          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[4px] items-center px-[9px] py-[8px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
+          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center px-[9px] py-[12px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
           style={{ fontVariationSettings: '"wdth" 100' }}
         >
           <LogsIcon /> Ver ejecuciones
         </button>
         <button
           onClick={onDuplicate}
-          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[4px] items-center px-[9px] py-[8px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
+          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center px-[9px] py-[12px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
           style={{ fontVariationSettings: '"wdth" 100' }}
         >
-          <CopyOutlined style={{ fontSize: 12 }} /> Duplicar
+          <BiCopy style={{ fontSize: 12 }} /> Duplicar
         </button>
         <button
           onClick={onDelete}
-          className="bg-white border border-[#ffccc7] border-solid cursor-pointer flex items-center justify-center px-[9px] py-[8px] rounded-[8px] text-[#ff4d4f]"
+          className="bg-white border border-[#ffccc7] border-solid cursor-pointer flex items-center justify-center px-[9px] py-[12px] rounded-[8px] text-[#ff4d4f]"
           aria-label="Eliminar"
         >
-          <DeleteOutlined style={{ fontSize: 14 }} />
+          <BiTrash style={{ fontSize: 14 }} />
         </button>
       </div>
     </div>
@@ -311,13 +311,13 @@ export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onTogg
 
   return (
     <div className="bg-white flex-[1_0_0] min-h-px relative w-full z-[1]">
-      <div className="content-stretch flex flex-col gap-[24px] isolate items-start pb-[16px] pt-[24px] px-[32px] relative size-full">
+      <div className="content-stretch flex flex-col gap-[32px] isolate items-start pb-[24px] pt-[32px] px-[32px] relative size-full">
 
         {/* Sub-header row */}
-        <div className="content-stretch flex gap-[16px] items-center relative shrink-0 w-full z-[2]">
+        <div className="content-stretch flex gap-[24px] items-center relative shrink-0 w-full z-[2]">
 
           {/* Breadcrumb + description */}
-          <div className="content-stretch flex flex-[1_0_0] flex-col gap-[4px] items-start min-w-px relative">
+          <div className="content-stretch flex flex-[1_0_0] flex-col gap-[8px] items-start min-w-px relative">
             {/* Breadcrumb */}
             <div className="content-stretch flex items-center overflow-clip relative shrink-0">
               <button
@@ -328,7 +328,7 @@ export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onTogg
                 <span className="leading-[normal]">Potenciadores</span>
               </button>
               {/* Chevron separator */}
-              <div className="flex items-center justify-center mx-[4px] relative shrink-0">
+              <div className="flex items-center justify-center mx-[8px] relative shrink-0">
                 <div className="-scale-y-100 flex-none">
                   <div className="relative size-[20px]">
                     <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20 20">
@@ -354,14 +354,14 @@ export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onTogg
           </div>
 
           {/* Action buttons */}
-          <div className="content-stretch flex gap-[8px] items-center relative shrink-0">
+          <div className="content-stretch flex gap-[12px] items-center relative shrink-0">
             {rules.length > 0 && (
               <AgregarReglaButton onNew={onNew} onCopyFromStudy={onCopyFromStudy} />
             )}
             {/* Ver logs */}
             <button
               onClick={goToFirstRuleLog}
-              className="bg-white border border-[#d9d9d9] border-solid content-stretch cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[4px] items-center justify-center px-[9px] py-[8px] relative rounded-[8px] shrink-0"
+              className="bg-white border border-[#d9d9d9] border-solid content-stretch cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center justify-center px-[9px] py-[12px] relative rounded-[8px] shrink-0"
             >
               <LogsIcon />
               <span
@@ -378,12 +378,12 @@ export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onTogg
         {rules.length === 0 ? (
           /* Empty state */
           <div className="w-full">
-            <div className="flex flex-col gap-[16px] items-center py-[80px] w-full">
+            <div className="flex flex-col gap-[24px] items-center py-[80px] w-full">
                 <IdeasFlowIllustration />
 
                 {/* Title + subtitle */}
                 <div
-                  className="[word-break:break-word] content-stretch flex flex-col gap-[8px] items-center justify-center leading-[0] relative shrink-0 text-[rgba(0,0,0,0.45)] text-center w-full"
+                  className="[word-break:break-word] content-stretch flex flex-col gap-[12px] items-center justify-center leading-[0] relative shrink-0 text-[rgba(0,0,0,0.45)] text-center w-full"
                 >
                   <div
                     className="flex flex-col font-['Roboto:Medium',sans-serif] font-medium justify-center relative shrink-0 text-[20px] w-full"
@@ -405,7 +405,7 @@ export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onTogg
           </div>
         ) : (
           /* Rules list */
-          <div className="flex flex-col gap-[12px] w-full">
+          <div className="flex flex-col gap-[16px] w-full">
             {rules.map(rule => (
               <RuleCard
                 key={rule.id}

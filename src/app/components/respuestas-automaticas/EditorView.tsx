@@ -5,12 +5,12 @@ import {
 } from 'antd';
 import type { InputRef } from 'antd';
 import {
-  SendOutlined, CopyOutlined, CloseOutlined, PlusOutlined, BoldOutlined, AlignLeftOutlined,
-  AlignCenterOutlined, AlignRightOutlined, MinusOutlined, UnorderedListOutlined,
-  ThunderboltOutlined, HolderOutlined, TableOutlined, PictureOutlined, LinkOutlined,
-  ColumnHeightOutlined, ShareAltOutlined, InfoCircleFilled, ExclamationCircleFilled, QuestionCircleOutlined,
-  UploadOutlined, SearchOutlined,
-} from '@ant-design/icons';
+  BiSend, BiCopy, BiX, BiPlus, BiBold, BiAlignLeft,
+  BiAlignMiddle, BiAlignRight, BiMinus, BiListUl,
+  BiBolt, BiMove, BiTable, BiImage, BiLink,
+  BiExpandVertical, BiShareAlt, BiInfoCircle, BiErrorCircle, BiHelpCircle,
+  BiUpload, BiSearch,
+} from 'react-icons/bi';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import CodeMirror from '@uiw/react-codemirror';
@@ -49,9 +49,9 @@ const EDITOR_THEME = {
 // grande por defecto de AntD.
 function decisionIcon(tone: 'info' | 'warning') {
   const palette = tone === 'info' ? { bg: '#e6f4ff', fg: '#1890ff' } : { bg: '#fffbe6', fg: '#faad14' };
-  const Icon = tone === 'info' ? InfoCircleFilled : ExclamationCircleFilled;
+  const Icon = tone === 'info' ? BiInfoCircle : BiErrorCircle;
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: palette.bg, marginRight: 4 }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: palette.bg, marginRight: 8 }}>
       <Icon style={{ color: palette.fg, fontSize: 14 }} />
     </span>
   );
@@ -65,7 +65,7 @@ const SIDEBAR_WIDTH: React.CSSProperties = { width: '36%', minWidth: 380, maxWid
 // ─── Construcción de filas/columnas/componentes ───────────────────────────────
 
 const DEFAULT_COMPONENT_DESIGN: ComponentDesign = {
-  paddingTop: 16, paddingBottom: 16, paddingLeft: 0, paddingRight: 0,
+  paddingTop: 24, paddingBottom: 24, paddingLeft: 0, paddingRight: 0,
   textAlign: 'left', bgColor: 'transparent',
   borderStyle: 'none', borderWidth: 0, borderColor: '#000000', hideMobile: false,
 };
@@ -99,7 +99,7 @@ function makeComponent(type: ComponentType): Component {
     case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, design };
     case 'button':    return { id, type, text: 'Responder estudio', url: '', bgColor: '#1890ff', textColor: '#ffffff', design };
     case 'spacer':    return { id, type, height: 24, design };
-    case 'social':    return { id, type, style: 'negro', size: 26, gap: 8, shape: 'square', networks: SOCIAL_KEYS.map(k => ({ network: k, included: false, url: '' })), design };
+    case 'social':    return { id, type, style: 'negro', size: 26, gap: 12, shape: 'square', networks: SOCIAL_KEYS.map(k => ({ network: k, included: false, url: '' })), design };
     default: return { id, type: 'divider', design };
   }
 }
@@ -108,7 +108,7 @@ function makeRow(widths: number[]): Row {
   return {
     id: cuid(),
     columns: widths.map(w => ({ id: cuid(), widthPercent: w, components: [] })),
-    design: { bgColor: 'transparent', textAlign: 'left', paddingTop: 16, paddingBottom: 16, paddingLeft: 0, paddingRight: 0, borderStyle: 'none', borderWidth: 0, borderColor: '#000000', hideMobile: false },
+    design: { bgColor: 'transparent', textAlign: 'left', paddingTop: 24, paddingBottom: 24, paddingLeft: 0, paddingRight: 0, borderStyle: 'none', borderWidth: 0, borderColor: '#000000', hideMobile: false },
   };
 }
 function makeSingleComponentRow(type: ComponentType): Row {
@@ -130,16 +130,16 @@ const COLUMN_LAYOUTS: { label: string; widths: number[] }[] = [
 ];
 
 const COMPONENT_PALETTE: { type: ComponentType; label: string; sub: string; icon: React.ReactNode }[] = [
-  { type: 'header', label: 'Header de marca', sub: 'Logo y color corporativo', icon: <BoldOutlined /> },
+  { type: 'header', label: 'Header de marca', sub: 'Logo y color corporativo', icon: <BiBold /> },
   { type: 'title', label: 'Título', sub: 'Texto grande destacado', icon: 'T' },
-  { type: 'text', label: 'Texto', sub: 'Con variables del encuestado', icon: <AlignLeftOutlined /> },
-  { type: 'image', label: 'Imagen', sub: 'Estática o dinámica', icon: <PictureOutlined /> },
-  { type: 'button', label: 'Botón', sub: 'Llamado a la acción', icon: <LinkOutlined /> },
-  { type: 'divider', label: 'Divisor', sub: 'Línea separadora', icon: <MinusOutlined /> },
-  { type: 'spacer', label: 'Espaciador', sub: 'Espacio en blanco', icon: <ColumnHeightOutlined /> },
-  { type: 'social', label: 'Redes Sociales', sub: 'Íconos con enlaces', icon: <ShareAltOutlined /> },
+  { type: 'text', label: 'Texto', sub: 'Con variables del encuestado', icon: <BiAlignLeft /> },
+  { type: 'image', label: 'Imagen', sub: 'Estática o dinámica', icon: <BiImage /> },
+  { type: 'button', label: 'Botón', sub: 'Llamado a la acción', icon: <BiLink /> },
+  { type: 'divider', label: 'Divisor', sub: 'Línea separadora', icon: <BiMinus /> },
+  { type: 'spacer', label: 'Espaciador', sub: 'Espacio en blanco', icon: <BiExpandVertical /> },
+  { type: 'social', label: 'Redes Sociales', sub: 'Íconos con enlaces', icon: <BiShareAlt /> },
   { type: 'ai', label: 'Bloque IA', sub: 'Texto único por encuestado', icon: '✦' },
-  { type: 'responses', label: 'Bloque de respuestas', sub: 'Las respuestas del encuestado', icon: <UnorderedListOutlined /> },
+  { type: 'responses', label: 'Bloque de respuestas', sub: 'Las respuestas del encuestado', icon: <BiListUl /> },
 ];
 
 const SOCIAL_ICONS: Record<SocialNetworkKey, string> = { facebook: '📘', instagram: '📷', linkedin: '💼', youtube: '▶️', x: '✖️', pinterest: '📌' };
@@ -261,13 +261,13 @@ function ActionOverlay({ dragHandleRef, onInsertAfter, onDuplicate, onRemove }: 
   onInsertAfter: () => void; onDuplicate: () => void; onRemove: () => void;
 }) {
   return (
-    <div className="blk-toolbar" style={{ transition: 'opacity .15s', position: 'absolute', top: -32, right: 0, zIndex: 5, display: 'flex', gap: 2, background: 'rgba(0,0,0,0.75)', borderRadius: 4, padding: '2px 4px' }}>
+    <div className="blk-toolbar" style={{ transition: 'opacity .15s', position: 'absolute', top: -32, right: 0, zIndex: 5, display: 'flex', gap: 4, background: 'rgba(0,0,0,0.75)', borderRadius: 4, padding: '4px 8px' }}>
       <div ref={dragHandleRef} style={{ height: 22, width: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'grab' }}>
-        <HolderOutlined style={{ color: 'white', fontSize: 10 }} />
+        <BiMove style={{ color: 'white', fontSize: 10 }} />
       </div>
-      <ToolbarBtn title="Insertar debajo" icon={<PlusOutlined style={{ color: 'white', fontSize: 10 }} />} onClick={onInsertAfter} />
-      <ToolbarBtn title="Duplicar" icon={<CopyOutlined style={{ color: 'white', fontSize: 10 }} />} onClick={onDuplicate} />
-      <ToolbarBtn title="Eliminar" icon={<CloseOutlined style={{ color: 'white', fontSize: 10 }} />} onClick={onRemove} />
+      <ToolbarBtn title="Insertar debajo" icon={<BiPlus style={{ color: 'white', fontSize: 10 }} />} onClick={onInsertAfter} />
+      <ToolbarBtn title="Duplicar" icon={<BiCopy style={{ color: 'white', fontSize: 10 }} />} onClick={onDuplicate} />
+      <ToolbarBtn title="Eliminar" icon={<BiX style={{ color: 'white', fontSize: 10 }} />} onClick={onRemove} />
     </div>
   );
 }
@@ -299,8 +299,8 @@ function renderComponentContent(component: Component): React.ReactNode {
       ? `${component.cardBorderWidth}px ${component.cardBorderStyle} ${component.cardBorderColor}` : 'none';
     return (
       <div style={{ border: cardBorder, borderRadius: component.cardBorderRadius, background: component.textBgColor, margin: '0 32px', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px 0' }}>
-          <Tag color="purple" icon={<ThunderboltOutlined />} style={{ fontWeight: 600 }}>IA</Tag>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px 0' }}>
+          <Tag color="purple" icon={<BiBolt />} style={{ fontWeight: 600 }}>IA</Tag>
           <Text style={{ fontSize: 12, color: component.textColor }}>
             {configured ? `Tono: ${TONO_LABELS[component.tone]?.label ?? component.tone} · ${component.generatedText ? 'Generado' : 'Pendiente'}` : 'Sin configurar — selecciona para configurar'}
           </Text>
@@ -332,7 +332,7 @@ function renderComponentContent(component: Component): React.ReactNode {
     );
     const questionStyle: React.CSSProperties = {
       fontSize: component.questionSize, fontWeight: Number(component.questionWeight), color: component.questionColor,
-      ...(component.questionBg !== 'transparent' ? { background: component.questionBg, padding: '4px 6px', borderRadius: 4 } : {}),
+      ...(component.questionBg !== 'transparent' ? { background: component.questionBg, padding: '8px 6px', borderRadius: 4 } : {}),
     };
     const sepStyle: React.CSSProperties = component.separatorStyle !== 'none'
       ? { borderBottom: `1px ${component.separatorStyle} ${component.separatorColor}`, paddingBottom: Math.floor(component.rowGap / 2) }
@@ -347,8 +347,8 @@ function renderComponentContent(component: Component): React.ReactNode {
               <tbody>
                 {included.map((q, i) => (
                   <tr key={q.id} style={{ borderTop: i > 0 ? '1px solid #f0f0f0' : undefined }}>
-                    {component.showQuestion && <td style={{ padding: '8px 12px', width: '45%', ...questionStyle }}>{q.texto}</td>}
-                    <td style={{ padding: '8px 12px', fontSize: component.answerSize, fontWeight: Number(component.answerWeight), color: component.answerColor }}>{mockAnswerFor(q)}</td>
+                    {component.showQuestion && <td style={{ padding: '12px 16px', width: '45%', ...questionStyle }}>{q.texto}</td>}
+                    <td style={{ padding: '12px 16px', fontSize: component.answerSize, fontWeight: Number(component.answerWeight), color: component.answerColor }}>{mockAnswerFor(q)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -366,7 +366,7 @@ function renderComponentContent(component: Component): React.ReactNode {
           return (
             <div key={q.id} style={{ marginBottom: component.rowGap, ...(!isLast ? sepStyle : {}) }}>
               {component.showQuestion && component.displayStyle === 'bold-indented' && (
-                <Text style={{ display: 'block', marginBottom: 2, ...questionStyle }}>{q.texto}</Text>
+                <Text style={{ display: 'block', marginBottom: 4, ...questionStyle }}>{q.texto}</Text>
               )}
               {component.showQuestion && component.displayStyle === 'list' && (
                 <Text style={{ display: 'inline', fontWeight: Number(component.questionWeight), color: component.questionColor }}>{q.texto}: </Text>
@@ -398,15 +398,15 @@ function renderComponentContent(component: Component): React.ReactNode {
       </div>
     ) : (
       <div style={{ margin: '0 32px', padding: '32px', textAlign: 'center', color: '#bfbfbf', border: '1px dashed #d9d9d9', borderRadius: 8 }}>
-        <PictureOutlined style={{ fontSize: 24 }} />
-        <div style={{ fontSize: 12, marginTop: 4 }}>Sin imagen — selecciónala y define la URL en Diseño</div>
+        <BiImage style={{ fontSize: 24 }} />
+        <div style={{ fontSize: 12, marginTop: 8 }}>Sin imagen — selecciónala y define la URL en Diseño</div>
       </div>
     );
   }
   if (component.type === 'button') {
     return (
-      <div style={{ textAlign: 'center', padding: '8px 32px' }}>
-        <span style={{ display: 'inline-block', padding: '10px 24px', borderRadius: 6, background: component.bgColor, color: component.textColor, fontWeight: 600, fontSize: 14 }}>{component.text}</span>
+      <div style={{ textAlign: 'center', padding: '12px 32px' }}>
+        <span style={{ display: 'inline-block', padding: '10px 32px', borderRadius: 8, background: component.bgColor, color: component.textColor, fontWeight: 600, fontSize: 14 }}>{component.text}</span>
       </div>
     );
   }
@@ -417,7 +417,7 @@ function renderComponentContent(component: Component): React.ReactNode {
     const iconBg = component.style === 'negro' ? '#000' : component.style === 'blanco' ? '#fff' : '#1890ff';
     const iconColor = component.style === 'blanco' ? '#000' : '#fff';
     return (
-      <div style={{ display: 'flex', gap: component.gap, justifyContent: 'center', padding: '8px 32px' }}>
+      <div style={{ display: 'flex', gap: component.gap, justifyContent: 'center', padding: '12px 32px' }}>
         {included.length === 0
           ? <Text type="secondary" style={{ fontSize: 12 }}>Sin redes configuradas</Text>
           : included.map(n => (
@@ -507,14 +507,14 @@ function EmptyColumnSlot({ onAdd }: { onAdd: (type: ComponentType) => void }) {
     return () => document.removeEventListener('mousedown', onDocMouseDown);
   }, [open]);
   return (
-    <div ref={wrapRef} style={{ position: 'relative', margin: '4px 8px' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', border: '1px dashed #d9d9d9', borderRadius: 6, padding: '14px 0', background: '#fafafa', cursor: 'pointer', color: '#8c8c8c', fontSize: 12 }}>
-        <PlusOutlined style={{ marginRight: 4 }} /> Agregar
+    <div ref={wrapRef} style={{ position: 'relative', margin: '8px 12px' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', border: '1px dashed #d9d9d9', borderRadius: 8, padding: '14px 0', background: '#fafafa', cursor: 'pointer', color: '#8c8c8c', fontSize: 12 }}>
+        <BiPlus style={{ marginRight: 8 }} /> Agregar
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 25, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 6, width: 190, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 25, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 6, width: 190, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {COMPONENT_PALETTE.map(item => (
-            <button key={item.type} onClick={() => { onAdd(item.type); setOpen(false); }} style={{ textAlign: 'left', padding: '5px 8px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 12, borderRadius: 4 }}>
+            <button key={item.type} onClick={() => { onAdd(item.type); setOpen(false); }} style={{ textAlign: 'left', padding: '5px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 12, borderRadius: 4 }}>
               {item.label}
             </button>
           ))}
@@ -602,7 +602,7 @@ function RowBox({ row, index, selected, onSelectRow, selectedComponentId, onSele
         onClick={e => { e.stopPropagation(); onSelectRow(); }}
         style={{ cursor: 'pointer', ...pad, background: bg, border, textAlign: d.textAlign ?? 'left', boxShadow: selected ? 'inset 0 0 0 2px #1890ff' : 'none', transition: 'box-shadow .1s' }}
       >
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 12 }}>
           {row.columns.map(col => (
             <ColumnBox
               key={col.id} column={col}
@@ -646,7 +646,7 @@ function ColumnBox({ column, onAddComponentToColumn, selectedComponentId, onSele
     <div
       ref={dropRef}
       style={{
-        width: `${column.widthPercent}%`, display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0,
+        width: `${column.widthPercent}%`, display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0,
         background: isOver ? 'var(--ds-violet-bg)' : undefined, borderRadius: isOver ? 6 : undefined,
         outline: isOver ? '1.5px dashed var(--ds-violet)' : 'none', transition: 'background .1s',
       }}
@@ -687,7 +687,7 @@ function PaletteItem({ icon, label, sub, onClick, componentType }: {
       onClick={onClick}
       style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-        padding: '14px 8px', cursor: componentType ? 'grab' : 'pointer', textAlign: 'center',
+        padding: '14px 12px', cursor: componentType ? 'grab' : 'pointer', textAlign: 'center',
         border: '1px solid #d9d9d9',
         borderRadius: 8, opacity: isDragging ? 0.4 : 1,
         background: '#fff',
@@ -703,13 +703,13 @@ function PaletteItem({ icon, label, sub, onClick, componentType }: {
 function ColumnLayoutPicker({ onPick, onClose }: { onPick: (widths: number[]) => void; onClose: () => void }) {
   return (
     <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 10, marginBottom: 10, background: '#fff' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
         <Text type="secondary" style={{ fontSize: 11 }}>Elige un layout de columnas</Text>
         <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.45)' }}>✕</button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
         {COLUMN_LAYOUTS.map(l => (
-          <button key={l.label} onClick={() => onPick(l.widths)} title={l.label} style={{ display: 'flex', gap: 2, border: '1px solid #d9d9d9', borderRadius: 6, padding: 6, cursor: 'pointer', background: '#fff' }}>
+          <button key={l.label} onClick={() => onPick(l.widths)} title={l.label} style={{ display: 'flex', gap: 4, border: '1px solid #d9d9d9', borderRadius: 8, padding: 6, cursor: 'pointer', background: '#fff' }}>
             {l.widths.map((w, i) => <div key={i} style={{ flex: w, height: 24, background: '#e6f4ff', borderRadius: 2 }} />)}
           </button>
         ))}
@@ -726,7 +726,7 @@ function ColumnsAndSizesField({ row, onChange }: { row: Row; onChange: (widths: 
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
       {COLUMN_LAYOUTS.map(l => (
         <button key={l.label} onClick={() => onChange(l.widths)} title={l.label} style={{
-          display: 'flex', gap: 2, borderRadius: 6, padding: 6, cursor: 'pointer',
+          display: 'flex', gap: 4, borderRadius: 8, padding: 6, cursor: 'pointer',
           border: isActive(l.widths) ? '1.5px solid #1890ff' : '1px solid #d9d9d9',
           background: isActive(l.widths) ? '#e6f4ff' : '#fff',
         }}>
@@ -756,7 +756,7 @@ function ColorPickerField({ value, onChange, allowTransparent, full }: { value: 
 
   const swatch = (
     <span style={{
-      width: 20, height: 20, borderRadius: 6, flexShrink: 0, border: '1px solid rgba(0,0,0,0.1)',
+      width: 20, height: 20, borderRadius: 4, flexShrink: 0, border: '1px solid rgba(0,0,0,0.1)',
       background: value === 'transparent' ? 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 8px 8px' : value,
     }} />
   );
@@ -768,7 +768,7 @@ function ColorPickerField({ value, onChange, allowTransparent, full }: { value: 
         onClick={() => setOpen(o => !o)}
         style={{
           width: full ? '100%' : 32, height: 32, borderRadius: 8, border: '1px solid #d9d9d9', cursor: 'pointer',
-          padding: full ? '0 10px' : 0, display: 'flex', alignItems: 'center', justifyContent: full ? 'flex-start' : 'center', gap: 8, background: '#fff', boxSizing: 'border-box',
+          padding: full ? '0 10px' : 0, display: 'flex', alignItems: 'center', justifyContent: full ? 'flex-start' : 'center', gap: 12, background: '#fff', boxSizing: 'border-box',
         }}
       >
         {swatch}
@@ -780,11 +780,11 @@ function ColorPickerField({ value, onChange, allowTransparent, full }: { value: 
       </button>
       {open && (
         <div style={{ position: 'absolute', top: 36, left: 0, zIndex: 30, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 10, width: 200 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 12 }}>
             {COLOR_PRESETS.map(c => (
               <button
                 key={c} type="button" onClick={() => { onChange(c); setOpen(false); }}
-                style={{ width: 26, height: 26, borderRadius: 6, background: c, border: '1px solid #f0f0f0', cursor: 'pointer', padding: 0 }}
+                style={{ width: 26, height: 26, borderRadius: 4, background: c, border: '1px solid #f0f0f0', cursor: 'pointer', padding: 0 }}
               />
             ))}
           </div>
@@ -794,7 +794,7 @@ function ColorPickerField({ value, onChange, allowTransparent, full }: { value: 
             onChange={e => onChange(e.target.value)}
           />
           {allowTransparent && (
-            <Button block style={{ marginTop: 8 }} onClick={() => { onChange('transparent'); setOpen(false); }}>
+            <Button block style={{ marginTop: 12 }} onClick={() => { onChange('transparent'); setOpen(false); }}>
               Transparente
             </Button>
           )}
@@ -813,22 +813,22 @@ function CollapsibleSection({ title, children, defaultOpen = true, compact }: { 
       <div style={{ border: '1px solid #f0f0f0', borderRadius: 8 }}>
         <div
           onClick={() => setOpen(o => !o)}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '9px 12px' }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '9px 16px' }}
         >
           <Text style={{ fontSize: 12.5, fontWeight: 500 }}>{title}</Text>
           <span style={{ color: 'rgba(0,0,0,0.35)', fontSize: 10 }}>{open ? '▲' : '▼'}</span>
         </div>
-        {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '0 12px 14px' }}>{children}</div>}
+        {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '0 16px 14px' }}>{children}</div>}
       </div>
     );
   }
   return (
-    <div style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 16, marginBottom: 16 }}>
+    <div style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 24, marginBottom: 24 }}>
       <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open ? 14 : 0 }}>
         <Text style={{ fontSize: 14, fontWeight: 500 }}>{title}</Text>
         <span style={{ color: 'rgba(0,0,0,0.35)', fontSize: 11 }}>{open ? '▲' : '▼'}</span>
       </div>
-      {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>{children}</div>}
+      {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>{children}</div>}
     </div>
   );
 }
@@ -841,7 +841,7 @@ function FieldLabel({ children, inline, tooltip }: { children: React.ReactNode; 
       {children}
       {tooltip && (
         <Tooltip title={tooltip}>
-          <QuestionCircleOutlined style={{ marginLeft: 5, fontSize: 12, color: 'rgba(0,0,0,0.35)', cursor: 'help' }} />
+          <BiHelpCircle style={{ marginLeft: 5, fontSize: 12, color: 'rgba(0,0,0,0.35)', cursor: 'help' }} />
         </Tooltip>
       )}
     </Text>
@@ -850,7 +850,7 @@ function FieldLabel({ children, inline, tooltip }: { children: React.ReactNode; 
 function PaddingField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
     <div>
-      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>{label}</Text>
+      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>{label}</Text>
       <InputNumber value={value} onChange={v => onChange(v ?? 0)} style={{ width: '100%' }} min={0} addonAfter="px" />
     </div>
   );
@@ -862,7 +862,7 @@ function BorderFields({ borderColor, borderWidth, borderStyle, onUpdate }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <FieldLabel>Borde</FieldLabel>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <ColorPickerField value={borderColor} onChange={c => onUpdate({ borderColor: c })} />
         <InputNumber min={0} value={borderWidth} onChange={v => onUpdate({ borderWidth: v ?? 0 })} style={{ flex: 1 }} addonAfter="px" />
       </div>
@@ -891,7 +891,7 @@ function PaddingGrid({ design, onUpdate }: { design: { paddingTop: number; paddi
 // Tab "Configuración" — layout global del correo (fijo, no depende de la selección)
 function LayoutConfigFields({ layout, onUpdate }: { layout: EmailLayoutConfig; onUpdate: (p: Partial<EmailLayoutConfig>) => void }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div>
         <FieldLabel>Ancho del contenido</FieldLabel>
         <InputNumber value={layout.widthPercent} min={10} max={100} addonAfter="%" onChange={v => onUpdate({ widthPercent: v ?? 100 })} style={{ width: '100%' }} />
@@ -919,7 +919,7 @@ function BlockFields<T extends {
   hideMobile?: boolean;
 }>({ design, onUpdate, excludeAlign }: { design: T; onUpdate: (p: Partial<T>) => void; excludeAlign?: boolean }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div>
         <FieldLabel>Color de fondo</FieldLabel>
         <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent full />
@@ -928,9 +928,9 @@ function BlockFields<T extends {
         <div>
           <FieldLabel>Alineación</FieldLabel>
           <Radio.Group value={design.textAlign ?? 'left'} onChange={e => onUpdate({ textAlign: e.target.value } as Partial<T>)} style={{ display: 'flex', width: '100%' }}>
-            <Radio.Button value="left" style={{ flex: 1, textAlign: 'center' }}><AlignLeftOutlined /></Radio.Button>
-            <Radio.Button value="center" style={{ flex: 1, textAlign: 'center' }}><AlignCenterOutlined /></Radio.Button>
-            <Radio.Button value="right" style={{ flex: 1, textAlign: 'center' }}><AlignRightOutlined /></Radio.Button>
+            <Radio.Button value="left" style={{ flex: 1, textAlign: 'center' }}><BiAlignLeft /></Radio.Button>
+            <Radio.Button value="center" style={{ flex: 1, textAlign: 'center' }}><BiAlignMiddle /></Radio.Button>
+            <Radio.Button value="right" style={{ flex: 1, textAlign: 'center' }}><BiAlignRight /></Radio.Button>
           </Radio.Group>
         </div>
       )}
@@ -949,14 +949,14 @@ function BlockFields<T extends {
 function TextContentFields({ block, onUpdate }: { block: TextBlock; onUpdate: (b: Component) => void }) {
   const taRef = useRef<HTMLTextAreaElement>(null);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <FieldLabel>Contenido</FieldLabel>
         <TextArea ref={taRef} rows={4} value={block.content} onChange={e => onUpdate({ ...block, content: e.target.value })} />
       </div>
       <div>
         <FieldLabel>Insertar variable</FieldLabel>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {VARIABLES.map(v => (
             <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 10 }} color="blue" onClick={() => {
               const ta = taRef.current;
@@ -971,15 +971,15 @@ function TextContentFields({ block, onUpdate }: { block: TextBlock; onUpdate: (b
             </Tag>
           ))}
         </div>
-        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>Se reemplaza con el dato real al enviarse.</Text>
+        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>Se reemplaza con el dato real al enviarse.</Text>
       </div>
     </div>
   );
 }
 function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Component) => void }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ padding: '7px 10px', borderRadius: 6, background: 'var(--ds-violet-bg)', border: '1px solid var(--ds-violet-mid)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ padding: '7px 10px', borderRadius: 8, background: 'var(--ds-violet-bg)', border: '1px solid var(--ds-violet-mid)' }}>
         <Text style={{ fontSize: 12, color: 'var(--ds-violet-dark)' }}>
           ✦ <strong>{SETUP.empresa}</strong> · {SETUP.industria}
         </Text>
@@ -990,16 +990,16 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
       <div>
         <FieldLabel>¿Qué debe lograr este bloque? *</FieldLabel>
         <TextArea rows={3} value={block.objetivo} onChange={e => onUpdate({ ...block, objetivo: e.target.value })} placeholder="Ej: Que el cliente sienta que su queja fue escuchada…" />
-        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 2 }}>La IA genera texto único usando la respuesta real como contexto.</Text>
+        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>La IA genera texto único usando la respuesta real como contexto.</Text>
       </div>
       <div>
         <FieldLabel tooltip="Ajusta el estilo emocional del texto generado — no cambia lo que dice, solo cómo lo dice.">Tono del mensaje</FieldLabel>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           {Object.entries(TONO_LABELS).map(([k, v]) => (
             <Card
               key={k} size="small" hoverable onClick={() => onUpdate({ ...block, tone: k as Tone })}
               style={{ cursor: 'pointer', borderColor: block.tone === k ? 'var(--ds-violet)' : '#d9d9d9', background: block.tone === k ? 'var(--ds-violet-bg)' : '#fff' }}
-              styles={{ body: { padding: '6px 8px' } }}
+              styles={{ body: { padding: '6px 12px' } }}
             >
               <Text style={{ fontSize: 12, fontWeight: 500, color: block.tone === k ? 'var(--ds-violet-dark)' : undefined, display: 'block' }}>{v.label}</Text>
               <Text type="secondary" style={{ fontSize: 10 }}>{v.sub}</Text>
@@ -1032,7 +1032,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
         <FieldLabel>Color del texto</FieldLabel>
         <ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} />
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 12 }}>
         <div style={{ flex: 1 }}>
           <FieldLabel>Tamaño px</FieldLabel>
           <InputNumber min={10} max={24} value={block.fontSize} onChange={v => onUpdate({ ...block, fontSize: v ?? 13 })} style={{ width: '100%' }} />
@@ -1051,7 +1051,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
           />
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 12 }}>
         <div style={{ flex: 1 }}>
           <FieldLabel tooltip="Cursiva o normal — el formato tipográfico del párrafo generado.">Estilo</FieldLabel>
           <Radio.Group value={block.fontStyle} onChange={e => onUpdate({ ...block, fontStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
@@ -1074,7 +1074,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
         <FieldLabel>Color del borde</FieldLabel>
         <ColorPickerField value={block.cardBorderColor} onChange={c => onUpdate({ ...block, cardBorderColor: c })} />
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 12 }}>
         <div style={{ flex: 1 }}>
           <FieldLabel>Grosor borde</FieldLabel>
           <InputNumber min={0} max={8} value={block.cardBorderWidth} onChange={v => onUpdate({ ...block, cardBorderWidth: v ?? 1 })} style={{ width: '100%' }} addonAfter="px" />
@@ -1097,7 +1097,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
 }
 function HeaderContentFields({ block, onUpdate }: { block: HeaderBlock; onUpdate: (b: Component) => void }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <FieldLabel>Nombre o logo</FieldLabel>
         <Input value={block.name} onChange={e => onUpdate({ ...block, name: e.target.value })} />
@@ -1123,7 +1123,7 @@ function TitleContentFields({ block, onUpdate }: { block: TitleBlock; onUpdate: 
 }
 function SubSectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(0,0,0,0.35)', borderBottom: '1px solid #f0f0f0', paddingBottom: 4, marginTop: 4 }}>
+    <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(0,0,0,0.35)', borderBottom: '1px solid #f0f0f0', paddingBottom: 8, marginTop: 8 }}>
       {children}
     </div>
   );
@@ -1179,11 +1179,11 @@ function QuestionPickerRow({ q, index, included, onToggle, moveItem }: {
     <div
       ref={ref}
       onClick={() => onToggle(!included)}
-      style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #f0f0f0', borderRadius: 6, padding: '6px 8px', background: included ? '#e6f7ff' : '#fff', opacity: isDragging ? 0.4 : 1, cursor: 'pointer' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 12, border: '1px solid #f0f0f0', borderRadius: 8, padding: '6px 12px', background: included ? '#e6f7ff' : '#fff', opacity: isDragging ? 0.4 : 1, cursor: 'pointer' }}
     >
       {included ? (
         <div ref={handleRef} onClick={e => e.stopPropagation()} style={{ cursor: 'grab', color: 'rgba(0,0,0,0.35)', display: 'flex', flexShrink: 0 }}>
-          <HolderOutlined style={{ fontSize: 12 }} />
+          <BiMove style={{ fontSize: 12 }} />
         </div>
       ) : (
         <div style={{ width: 12, flexShrink: 0 }} />
@@ -1223,8 +1223,8 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ padding: '7px 10px', borderRadius: 6, background: '#fafafa', border: '1px solid #f0f0f0', fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ padding: '7px 10px', borderRadius: 8, background: '#fafafa', border: '1px solid #f0f0f0', fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>
         Cada encuestado verá sus propias respuestas exactas. El contenido es dinámico y único por persona.
       </div>
 
@@ -1233,7 +1233,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
           <FieldLabel>Buscar preguntas del estudio</FieldLabel>
           <Input
             allowClear value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por texto o tipo…" prefix={<SearchOutlined style={{ color: 'rgba(0,0,0,0.25)' }} />}
+            placeholder="Buscar por texto o tipo…" prefix={<BiSearch style={{ color: 'rgba(0,0,0,0.25)' }} />}
           />
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
             {term ? (
@@ -1256,9 +1256,9 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
               </>
             )}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 320, overflowY: 'auto', marginTop: 8, paddingRight: 2 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 320, overflowY: 'auto', marginTop: 12, paddingRight: 4 }}>
             {includedFiltered.length === 0 && excludedFiltered.length === 0 && (
-              <Text type="secondary" style={{ fontSize: 12, padding: '8px 0' }}>Sin resultados para "{search}".</Text>
+              <Text type="secondary" style={{ fontSize: 12, padding: '12px 0' }}>Sin resultados para "{search}".</Text>
             )}
             {includedFiltered.map(({ q }) => (
               <QuestionPickerRow
@@ -1269,7 +1269,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
               />
             ))}
             {includedFiltered.length > 0 && excludedFiltered.length > 0 && (
-              <div style={{ borderTop: '1px dashed #e8e8e8', margin: '2px 0' }} />
+              <div style={{ borderTop: '1px dashed #e8e8e8', margin: '4px 0' }} />
             )}
             {excludedFiltered.map(({ q }) => (
               <QuestionPickerRow
@@ -1300,7 +1300,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
             ]}
           />
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <FieldLabel>Ancho del contenedor</FieldLabel>
             <InputNumber min={40} max={100} value={block.containerWidth} onChange={v => onUpdate({ ...block, containerWidth: v ?? 100 })} style={{ width: '100%' }} addonAfter="%" />
@@ -1318,7 +1318,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
           <FieldLabel>Texto</FieldLabel>
           <Input value={block.headerLabel} onChange={e => onUpdate({ ...block, headerLabel: e.target.value })} />
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <FieldLabel>Color</FieldLabel>
             <ColorPickerField value={block.headerColor} onChange={c => onUpdate({ ...block, headerColor: c })} />
@@ -1330,7 +1330,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         </div>
 
         <SubSectionHeading>Preguntas</SubSectionHeading>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <FieldLabel>Color del texto</FieldLabel>
             <ColorPickerField value={block.questionColor} onChange={c => onUpdate({ ...block, questionColor: c })} />
@@ -1340,7 +1340,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
             <ColorPickerField value={block.questionBg} onChange={c => onUpdate({ ...block, questionBg: c })} allowTransparent full />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <FieldLabel>Tamaño px</FieldLabel>
             <InputNumber min={9} max={20} value={block.questionSize} onChange={v => onUpdate({ ...block, questionSize: v ?? 13 })} style={{ width: '100%' }} />
@@ -1352,7 +1352,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         </div>
 
         <SubSectionHeading>Respuestas</SubSectionHeading>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <FieldLabel>Color del texto</FieldLabel>
             <ColorPickerField value={block.answerColor} onChange={c => onUpdate({ ...block, answerColor: c })} />
@@ -1362,7 +1362,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
             <ColorPickerField value={block.answerBg} onChange={c => onUpdate({ ...block, answerBg: c })} allowTransparent full />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <FieldLabel>Tamaño px</FieldLabel>
             <InputNumber min={9} max={20} value={block.answerSize} onChange={v => onUpdate({ ...block, answerSize: v ?? 13 })} style={{ width: '100%' }} />
@@ -1420,7 +1420,7 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <FieldLabel>Origen</FieldLabel>
         <Radio.Group value={block.dynamic} onChange={e => onUpdate({ ...block, dynamic: e.target.value })}>
@@ -1430,21 +1430,21 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
       </div>
       <div>
         <FieldLabel>Imagen</FieldLabel>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 12 }}>
           <Input
             ref={urlRef} value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })}
             placeholder={block.dynamic ? 'https://.../{{variable}}.png' : 'https://...'}
             style={{ flex: 1 }}
           />
           <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
-          <Button icon={<UploadOutlined />} onClick={() => fileInputRef.current?.click()}>Subir</Button>
+          <Button icon={<BiUpload />} onClick={() => fileInputRef.current?.click()}>Subir</Button>
         </div>
-        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>Sube un archivo o pega el enlace de una imagen.</Text>
+        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>Sube un archivo o pega el enlace de una imagen.</Text>
       </div>
       {block.dynamic && (
         <div>
           <FieldLabel>Insertar variable</FieldLabel>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {VARIABLES.map(v => (
               <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 10 }} color="blue" onClick={() => {
                 const input = urlRef.current?.input;
@@ -1459,7 +1459,7 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
               </Tag>
             ))}
           </div>
-          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>La URL puede incluir una variable para mostrar una imagen distinta por destinatario.</Text>
+          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>La URL puede incluir una variable para mostrar una imagen distinta por destinatario.</Text>
         </div>
       )}
       <div>
@@ -1476,7 +1476,7 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
 function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUpdate: (b: Component) => void }) {
   const urlRef = useRef<InputRef>(null);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div><FieldLabel>Texto del botón</FieldLabel><Input value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} /></div>
       <div>
         <FieldLabel>URL de destino</FieldLabel>
@@ -1484,7 +1484,7 @@ function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUp
       </div>
       <div>
         <FieldLabel>Insertar variable</FieldLabel>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {VARIABLES.map(v => (
             <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 10 }} color="blue" onClick={() => {
               const input = urlRef.current?.input;
@@ -1499,7 +1499,7 @@ function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUp
             </Tag>
           ))}
         </div>
-        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>El enlace puede incluir una variable para llevar a una URL distinta por destinatario.</Text>
+        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>El enlace puede incluir una variable para llevar a una URL distinta por destinatario.</Text>
       </div>
       <div><FieldLabel>Color de fondo</FieldLabel><ColorPickerField value={block.bgColor} onChange={c => onUpdate({ ...block, bgColor: c })} full /></div>
       <div><FieldLabel>Color de texto</FieldLabel><ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} full /></div>
@@ -1525,7 +1525,7 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
     onUpdate({ ...block, networks: block.networks.map(n => n.network === network ? { ...n, ...patch } : n) });
   }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <FieldLabel>Tipo</FieldLabel>
         <Radio.Group value={block.style} onChange={e => onUpdate({ ...block, style: e.target.value })} style={{ width: '100%', display: 'flex' }}>
@@ -1534,7 +1534,7 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
           <Radio.Button value="color" style={{ flex: 1, textAlign: 'center' }}>Color</Radio.Button>
         </Radio.Group>
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 12 }}>
         <div style={{ flex: 1 }}>
           <FieldLabel>Tamaño</FieldLabel>
           <InputNumber min={12} max={64} value={block.size} addonAfter="px" onChange={v => onUpdate({ ...block, size: v ?? 26 })} style={{ width: '100%' }} />
@@ -1562,7 +1562,7 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
               addonBefore="https://" maxLength={300}
               value={entry.url} onChange={e => setEntry(entry.network, { url: e.target.value })}
               placeholder={`www.${SOCIAL_LABELS[entry.network].toLowerCase()}.com/hircasa`}
-              style={{ marginTop: 4 }}
+              style={{ marginTop: 8 }}
             />
           </div>
         ))}
@@ -1788,7 +1788,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     : { width: '100%', background: '#fff', overflow: 'hidden', minHeight: 180 };
 
   const subjectBar = (
-    <div style={{ maxWidth: cardMaxWidth, margin: '0 auto 10px', display: 'flex', alignItems: 'center', gap: 10, padding: '5px 12px', background: '#fff', borderRadius: 6, border: '1px solid #f0f0f0' }}>
+    <div style={{ maxWidth: cardMaxWidth, margin: '0 auto 10px', display: 'flex', alignItems: 'center', gap: 10, padding: '5px 16px', background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0' }}>
       <Text type="secondary" style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', flexShrink: 0 }}>ASUNTO</Text>
       {editingSubject ? (
         <Input
@@ -1831,17 +1831,17 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     <ConfigProvider theme={EDITOR_THEME}>
     <div ref={rootRef} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f5f5f5', overflow: 'hidden', fontFamily: "'Roboto', sans-serif", position: 'relative' }}>
       {/* Header fila 1 — título + acciones */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '9px 24px', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '9px 32px', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
         <button
           onClick={handleExit}
-          style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+          style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 8 }}
         >
           ← Volver al asistente
         </button>
         <div style={{ width: 1, height: 16, background: '#d9d9d9' }} />
         <Text style={{ fontSize: 15, fontWeight: 500, whiteSpace: 'nowrap' }}>Diseño del correo de respuesta</Text>
         <div style={{ flex: 1 }} />
-        <Button icon={<SendOutlined />} onClick={() => setShowTestModal(true)} style={{ borderColor: '#13c2c2', color: '#13c2c2', background: '#e6fffb' }}>
+        <Button icon={<BiSend />} onClick={() => setShowTestModal(true)} style={{ borderColor: '#13c2c2', color: '#13c2c2', background: '#e6fffb' }}>
           Enviar prueba
         </Button>
         <Tooltip title={!testValidated ? 'Envía una prueba con el diseño actual antes de guardar' : ''}>
@@ -1853,7 +1853,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
 
       {/* Header fila 2 — últ. actualización + toggle de modo + pestañas alineadas con el sidebar */}
       <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'stretch', flexShrink: 0, height: 44 }}>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16, padding: '0 24px', minWidth: 0 }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 24, padding: '0 32px', minWidth: 0 }}>
           <Text type="secondary" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
             Últ. actualización: {formatDate(draft.blocksUpdatedAt)}
           </Text>
@@ -1871,7 +1871,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
       {mode === 'html' ? (
         <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
           {/* Vista previa en vivo */}
-          <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 20px 16px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
+          <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 20px 24px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
             {subjectBar}
             <div style={cardStyle}
               dangerouslySetInnerHTML={{ __html: htmlValue }}
@@ -1879,7 +1879,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
           </div>
           {/* Código */}
           <div style={{ width: '45%', display: 'flex', flexDirection: 'column', borderLeft: '1px solid #f0f0f0' }}>
-            <Text type="secondary" style={{ fontSize: 12, padding: '8px 16px 4px' }}>
+            <Text type="secondary" style={{ fontSize: 12, padding: '12px 24px 8px' }}>
               Asegúrate de incluir la referencia al estudio ($URLSurvey). La vista previa de la
               izquierda se actualiza en tiempo real. Al volver al editor visual se descartarán
               estos cambios manuales.
@@ -1898,13 +1898,13 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
         <DndProvider backend={HTML5Backend}>
           <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
             {/* Canvas */}
-            <div ref={canvasRef} className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 20px 16px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
+            <div ref={canvasRef} className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 20px 24px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
               {subjectBar}
               <div style={cardStyle}>
                 {rows.length === 0 ? (
                   <AddElementDropZone onDropComponent={addComponentRow}>
                     <div style={{ padding: '48px 32px', textAlign: 'center', color: 'rgba(0,0,0,0.25)' }}>
-                      <PlusOutlined style={{ fontSize: 24, display: 'block', margin: '0 auto 8px' }} />
+                      <BiPlus style={{ fontSize: 24, display: 'block', margin: '0 auto 12px' }} />
                       <Text type="secondary">Agrega elementos desde el panel derecho, o arrástralos aquí</Text>
                     </div>
                   </AddElementDropZone>
@@ -1933,7 +1933,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                         onClick={() => { setActiveTab('elementos'); requestAnimationFrame(() => document.getElementById('palette-section')?.scrollIntoView({ behavior: 'smooth' })); }}
                         style={{ padding: 14, textAlign: 'center', cursor: 'pointer', borderTop: '1px dashed #d9d9d9' }}
                       >
-                        <Text type="secondary" style={{ fontSize: 12 }}><PlusOutlined style={{ marginRight: 4 }} />Agregar elemento, o arrastra uno aquí</Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}><BiPlus style={{ marginRight: 8 }} />Agregar elemento, o arrastra uno aquí</Text>
                       </div>
                     </AddElementDropZone>
                   </div>
@@ -1943,16 +1943,16 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
 
             {/* Sidebar */}
             <div style={{ ...SIDEBAR_WIDTH, background: '#fff', borderLeft: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-              <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 12px' }}>
+              <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 16px' }}>
                 {activeTab === 'elementos' && (
                   <div id="palette-section">
-                    <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Estructura</Text>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-                      <PaletteItem icon={<TableOutlined />} label="Columnas" sub="Elige un layout" onClick={() => setColumnPickerOpen(o => !o)} />
+                    <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 12 }}>Estructura</Text>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                      <PaletteItem icon={<BiTable />} label="Columnas" sub="Elige un layout" onClick={() => setColumnPickerOpen(o => !o)} />
                     </div>
                     {columnPickerOpen && <ColumnLayoutPicker onPick={addRow} onClose={() => setColumnPickerOpen(false)} />}
-                    <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '10px 0 8px' }}>Componentes</Text>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '10px 0 12px' }}>Componentes</Text>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                       {COMPONENT_PALETTE.map(item => (
                         <PaletteItem key={item.type} icon={item.icon} label={item.label} sub={item.sub} componentType={item.type} onClick={() => addComponentRow(item.type)} />
                       ))}

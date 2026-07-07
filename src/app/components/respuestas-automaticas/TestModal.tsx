@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal, Steps, Input, Button, Alert, Radio, Checkbox, Segmented, AutoComplete, Rate, Select, Collapse, Typography } from 'antd';
-import { SendOutlined, LeftOutlined } from '@ant-design/icons';
+import { BiSend, BiArrowBack } from 'react-icons/bi';
 import { AutoResponse, Pregunta } from './types';
 import { PREGUNTAS_EJEMPLO, optionTexts, commentableOptionTexts } from './data';
 
@@ -89,7 +89,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
   if (q.tipo === 'NPS' || q.tipo === 'CLI') {
     const max = q.escala?.[1] ?? 10;
     return (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {Array.from({ length: max + 1 }, (_, n) => n).map(n => (
           <Button key={n} type={value === n ? 'primary' : 'default'} onClick={() => onChange(n)} style={{ minWidth: 30 }}>{n}</Button>
         ))}
@@ -109,9 +109,9 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
   if (q.tipo === 'matriz_escalas') {
     const v = value as Record<string, number>;
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {(q.atributos ?? []).map(a => (
-          <div key={a} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div key={a} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <Text style={{ fontSize: 12, color: 'rgba(0,0,0,0.65)' }}>{a}</Text>
             <Select value={v[a]} onChange={n => onChange({ ...v, [a]: n })} style={{ width: 110 }}
               options={Array.from({ length: q.escala?.[1] ?? 5 }, (_, i) => i + 1).map(n => ({ value: n, label: `${n} de ${q.escala?.[1] ?? 5}` }))} />
@@ -129,7 +129,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {(q.campos ?? []).map(c => (
           <div key={c.nombre}>
-            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 2 }}>{c.nombre}</Text>
+            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>{c.nombre}</Text>
             <Input value={v[c.nombre]} onChange={e => onChange({ ...v, [c.nombre]: e.target.value })} />
           </div>
         ))}
@@ -141,7 +141,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
     const canComment = commentableOptionTexts(q).includes(v.option);
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <Radio.Group value={v.option} onChange={e => onChange({ ...v, option: e.target.value })} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <Radio.Group value={v.option} onChange={e => onChange({ ...v, option: e.target.value })} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {optionTexts(q).map(opt => <Radio key={opt} value={opt} style={{ fontSize: 12 }}>{opt}</Radio>)}
         </Radio.Group>
         {canComment && <Input placeholder="Comentario de la opción…" value={v.comment} onChange={e => onChange({ ...v, comment: e.target.value })} />}
@@ -153,7 +153,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
     const canComment = v.options.some(o => commentableOptionTexts(q).includes(o));
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <Checkbox.Group value={v.options} onChange={opts => onChange({ ...v, options: opts as string[] })} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <Checkbox.Group value={v.options} onChange={opts => onChange({ ...v, options: opts as string[] })} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {optionTexts(q).map(opt => <Checkbox key={opt} value={opt} style={{ fontSize: 12 }}>{opt}</Checkbox>)}
         </Checkbox.Group>
         {canComment && <Input placeholder="Comentario de una opción…" value={v.comment} onChange={e => onChange({ ...v, comment: e.target.value })} />}
@@ -172,7 +172,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
     const v = value as { mas: string; menos: string };
     const opts = optionTexts(q).map(o => ({ value: o, label: o }));
     return (
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 12 }}>
         <div>
           <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Más importante</Text>
           <Select value={v.mas} onChange={mas => onChange({ ...v, mas })} options={opts} style={{ width: 160 }} />
@@ -190,7 +190,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
         {(value as string[]).map((o, i) => (
           <Text key={o} style={{ fontSize: 12, display: 'block', color: 'rgba(0,0,0,0.65)' }}>{i + 1}° {o}</Text>
         ))}
-        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 2 }}>Orden de ejemplo — se edita desde el paso de condiciones.</Text>
+        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>Orden de ejemplo — se edita desde el paso de condiciones.</Text>
       </div>
     );
   }
@@ -239,12 +239,12 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
   const footer = (
     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
       <Button onClick={onClose}>Cancelar</Button>
-      <div style={{ display: 'flex', gap: 8 }}>
-        {step === 1 && <Button icon={<LeftOutlined />} onClick={() => setStep(0)}>Anterior</Button>}
+      <div style={{ display: 'flex', gap: 12 }}>
+        {step === 1 && <Button icon={<BiArrowBack />} onClick={() => setStep(0)}>Anterior</Button>}
         {step < totalSteps - 1 ? (
           <Button type="primary" disabled={!validEmail} onClick={() => setStep(1)}>Siguiente →</Button>
         ) : (
-          <Button type="primary" icon={<SendOutlined />} disabled={!canSend} loading={sending} onClick={handleSend}>
+          <Button type="primary" icon={<BiSend />} disabled={!canSend} loading={sending} onClick={handleSend}>
             Enviar prueba
           </Button>
         )}
@@ -261,7 +261,7 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
             current={step}
             size="small"
             items={[{ title: 'Correo destino' }, { title: 'Datos de simulación' }]}
-            style={{ marginTop: 4 }}
+            style={{ marginTop: 8 }}
           />
         ) : 'Enviar correo de prueba'
       }
@@ -270,24 +270,24 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
       width={560}
       styles={{ content: { borderRadius: 20 } }}
     >
-      <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: 4 }}>
+      <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: 8 }}>
         {step === 0 && (
-          <div style={{ paddingTop: 16 }}>
-            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>Correo destino *</Text>
+          <div style={{ paddingTop: 24 }}>
+            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>Correo destino *</Text>
             <Input
               autoFocus type="email" value={email} onChange={e => setEmail(e.target.value)}
               placeholder="tu@correo.com"
             />
-            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
+            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>
               Recibirás el correo tal como lo verá el encuestado.
             </Text>
           </div>
         )}
 
         {step === 1 && (
-          <div style={{ paddingTop: 16 }}>
-            <Paragraph strong style={{ marginBottom: 4 }}>¿Qué respuesta simulamos?</Paragraph>
-            <Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 12 }}>
+          <div style={{ paddingTop: 24 }}>
+            <Paragraph strong style={{ marginBottom: 8 }}>¿Qué respuesta simulamos?</Paragraph>
+            <Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 16 }}>
               Los bloques ✦ IA y 📋 Respuestas necesitan datos para generar el correo de prueba.
             </Paragraph>
 
@@ -327,7 +327,7 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
 
             {dataMode === 'synthetic' && (
               <>
-                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
+                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
                   Precargado con datos de ejemplo — ajusta solo lo que necesites. Agrupado por tipo de pregunta del estudio.
                 </Text>
                 <Collapse
