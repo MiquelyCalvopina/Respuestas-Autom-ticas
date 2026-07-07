@@ -584,6 +584,12 @@ artefacto real, como un documento o correo).
 en vez del ícono grande por defecto de AntD. Aplica a eliminar elementos estructurados/anidados
 (ej. una condición dentro de un grupo). Acciones de bajo riesgo y fácilmente reversibles
 (duplicar, reordenar) no necesitan este patrón — ver "Interaction Principles".
+- **Botones de acción de un confirm/diálogo**: los botones de confirmar/cancelar (tanto en
+  `Popconfirm` como en `Modal.confirm`) usan forma píldora (`shape: 'round'`, `{rounded.pill}`) y
+  altura estándar 32px (`size: 'middle'` — AntD pone los botones de `Popconfirm` en `small`/24px
+  por defecto, hay que forzar `middle`). El confirmar es primario sólido (o `danger` si la acción
+  es destructiva) y el cancelar es default outline. Esto distingue el botón de un confirm (píldora)
+  del botón de acción persistente de una vista (radio de control 8px, ej. Guardar/Siguiente).
 
 **`toast`** — feedback global de operaciones (guardar, activar, error). **Decisión: componente
 100% custom, no `message` ni `notification` de AntD** — ninguno de los dos ofrece nativamente la

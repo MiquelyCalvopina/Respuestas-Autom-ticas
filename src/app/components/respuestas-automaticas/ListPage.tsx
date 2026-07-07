@@ -252,6 +252,8 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSche
             description="Dejará de enviar correos hasta que la vuelvas a activar."
             okText="Sí, desactivar" cancelText="Cancelar"
             onConfirm={onToggle}
+            okButtonProps={{ shape: 'round', size: 'middle' }}
+            cancelButtonProps={{ shape: 'round', size: 'middle' }}
           >
             <Switch checked={rule.active} size="small" />
           </Popconfirm>

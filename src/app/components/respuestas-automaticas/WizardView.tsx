@@ -618,8 +618,8 @@ function DeleteConfirm({ what, onConfirm, children }: { what: string; onConfirm:
       okText="Sí, seguro"
       cancelText="Cancelar"
       onConfirm={onConfirm}
-      okButtonProps={{ shape: 'round' }}
-      cancelButtonProps={{ shape: 'round' }}
+      okButtonProps={{ shape: 'round', size: 'middle' }}
+      cancelButtonProps={{ shape: 'round', size: 'middle' }}
       overlayStyle={{ maxWidth: 320 }}
       icon={
         <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: '#fff1f0', flexShrink: 0 }}>

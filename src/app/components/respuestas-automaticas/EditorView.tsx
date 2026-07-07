@@ -56,7 +56,7 @@ function decisionIcon(tone: 'info' | 'warning') {
     </span>
   );
 }
-const ROUND_BTN = { style: { borderRadius: 8 } };
+const ROUND_BTN = { shape: 'round' as const };
 
 // Panel de propiedades — al menos 35% del ancho del editor, con un piso/techo en px
 // para que no se vuelva inusable en pantallas muy angostas ni excesivo en muy anchas.
