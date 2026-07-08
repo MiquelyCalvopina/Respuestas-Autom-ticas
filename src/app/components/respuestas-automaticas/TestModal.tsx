@@ -126,7 +126,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
   if (q.tipo === 'formulario') {
     const v = value as Record<string, string>;
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {(q.campos ?? []).map(c => (
           <div key={c.nombre}>
             <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>{c.nombre}</Text>
@@ -140,7 +140,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
     const v = value as { option: string; comment: string };
     const canComment = commentableOptionTexts(q).includes(v.option);
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <Radio.Group value={v.option} onChange={e => onChange({ ...v, option: e.target.value })} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {optionTexts(q).map(opt => <Radio key={opt} value={opt} style={{ fontSize: 12 }}>{opt}</Radio>)}
         </Radio.Group>
@@ -152,7 +152,7 @@ function SyntheticQuestionInput({ q, value, onChange }: { q: Pregunta; value: un
     const v = value as { options: string[]; comment: string };
     const canComment = v.options.some(o => commentableOptionTexts(q).includes(o));
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <Checkbox.Group value={v.options} onChange={opts => onChange({ ...v, options: opts as string[] })} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {optionTexts(q).map(opt => <Checkbox key={opt} value={opt} style={{ fontSize: 12 }}>{opt}</Checkbox>)}
         </Checkbox.Group>
@@ -299,12 +299,12 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
                 { label: 'Usar respuesta existente', value: 'real' },
                 { label: 'Responder aquí', value: 'synthetic' },
               ]}
-              style={{ marginBottom: 14 }}
+              style={{ marginBottom: 16 }}
             />
 
             {dataMode === 'real' && (
               <div>
-                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>
+                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
                   Ingresa o busca un ID de respuesta:
                 </Text>
                 <AutoComplete
@@ -314,13 +314,13 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
                   style={{ width: '100%' }}
                   placeholder="Escribe o busca un ID (ej: 4821)"
                 />
-                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 3 }}>
+                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
                   El ID lo encuentras en el módulo de Descarga de Resultados.
                 </Text>
                 <Alert
                   type="warning" showIcon
                   message="Si la respuesta no cumple las condiciones de la regla, el resultado puede no tener sentido contextual."
-                  style={{ marginTop: 10, fontSize: 12 }}
+                  style={{ marginTop: 12, fontSize: 12 }}
                 />
               </div>
             )}
@@ -336,10 +336,10 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
                     key: tipo,
                     label: `${TIPO_LABEL[tipo] ?? tipo} (${qs.length})`,
                     children: (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         {qs.map(q => (
                           <div key={q.id}>
-                            <Text style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>{q.texto}</Text>
+                            <Text style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>{q.texto}</Text>
                             <SyntheticQuestionInput q={q} value={syntheticData[q.id]} onChange={v => setSyntheticData(p => ({ ...p, [q.id]: v }))} />
                           </div>
                         ))}

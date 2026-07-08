@@ -9,7 +9,7 @@ import {
   BiAlignMiddle, BiAlignRight, BiMinus, BiListUl,
   BiBoltCircle, BiMove, BiTable, BiImage, BiLink,
   BiExpandVertical, BiShareAlt, BiInfoCircle, BiErrorCircle, BiHelpCircle,
-  BiUpload, BiSearch,
+  BiUpload, BiSearch, BiChevronDown,
 } from 'react-icons/bi';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -56,7 +56,7 @@ function decisionIcon(tone: 'info' | 'warning') {
     </span>
   );
 }
-const ROUND_BTN = { shape: 'round' as const };
+const ROUND_BTN = { style: { borderRadius: 8 } };
 
 // Panel de propiedades — al menos 35% del ancho del editor, con un piso/techo en px
 // para que no se vuelva inusable en pantallas muy angostas ni excesivo en muy anchas.
@@ -263,11 +263,11 @@ function ActionOverlay({ dragHandleRef, onInsertAfter, onDuplicate, onRemove }: 
   return (
     <div className="blk-toolbar" style={{ transition: 'opacity .15s', position: 'absolute', top: -32, right: 0, zIndex: 5, display: 'flex', gap: 4, background: 'rgba(0,0,0,0.75)', borderRadius: 4, padding: '4px 8px' }}>
       <div ref={dragHandleRef} style={{ height: 22, width: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'grab' }}>
-        <BiMove style={{ color: 'white', fontSize: 10 }} />
+        <BiMove style={{ color: 'white', fontSize: 14 }} />
       </div>
-      <ToolbarBtn title="Insertar debajo" icon={<BiPlus style={{ color: 'white', fontSize: 10 }} />} onClick={onInsertAfter} />
-      <ToolbarBtn title="Duplicar" icon={<BiCopy style={{ color: 'white', fontSize: 10 }} />} onClick={onDuplicate} />
-      <ToolbarBtn title="Eliminar" icon={<BiX style={{ color: 'white', fontSize: 10 }} />} onClick={onRemove} />
+      <ToolbarBtn title="Insertar debajo" icon={<BiPlus style={{ color: 'white', fontSize: 14 }} />} onClick={onInsertAfter} />
+      <ToolbarBtn title="Duplicar" icon={<BiCopy style={{ color: 'white', fontSize: 14 }} />} onClick={onDuplicate} />
+      <ToolbarBtn title="Eliminar" icon={<BiX style={{ color: 'white', fontSize: 14 }} />} onClick={onRemove} />
     </div>
   );
 }
@@ -282,7 +282,7 @@ function renderComponentContent(component: Component): React.ReactNode {
   const align = component.design.textAlign;
   if (component.type === 'header') {
     return (
-      <div style={{ background: component.bgColor, padding: '20px 32px', textAlign: 'center' }}>
+      <div style={{ background: component.bgColor, padding: '24px 32px', textAlign: 'center' }}>
         <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 700, fontSize: 22, color: '#fff', letterSpacing: -0.5 }}>{component.name}</span>
       </div>
     );
@@ -299,21 +299,21 @@ function renderComponentContent(component: Component): React.ReactNode {
       ? `${component.cardBorderWidth}px ${component.cardBorderStyle} ${component.cardBorderColor}` : 'none';
     return (
       <div style={{ border: cardBorder, borderRadius: component.cardBorderRadius, background: component.textBgColor, margin: '0 32px', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px 0' }}>
           <Tag color="purple" icon={<BiBoltCircle />} style={{ fontWeight: 600 }}>IA</Tag>
           <Text style={{ fontSize: 12, color: component.textColor }}>
             {configured ? `Tono: ${TONO_LABELS[component.tone]?.label ?? component.tone} · ${component.generatedText ? 'Generado' : 'Pendiente'}` : 'Sin configurar — selecciona para configurar'}
           </Text>
         </div>
         {!configured ? (
-          <div style={{ textAlign: 'center', padding: '18px 15px' }}>
-            <p style={{ fontSize: 22, margin: '0 0 7px' }}>✦</p>
+          <div style={{ textAlign: 'center', padding: '16px 16px' }}>
+            <p style={{ fontSize: 22, margin: '0 0 8px' }}>✦</p>
             <Text strong style={{ display: 'block', color: component.textColor }}>Bloque IA sin objetivo</Text>
             <Text style={{ fontSize: 12, color: component.textColor, opacity: 0.7 }}>Define el objetivo en el panel de configuración.</Text>
           </div>
         ) : (
           <p style={{
-            fontFamily: "'Roboto', sans-serif", margin: 0, padding: '13px 15px',
+            fontFamily: "'Roboto', sans-serif", margin: 0, padding: '12px 16px',
             fontSize: component.fontSize, lineHeight: component.lineHeight,
             fontStyle: component.fontStyle, fontWeight: Number(component.fontWeight), color: component.textColor,
           }}>
@@ -332,7 +332,7 @@ function renderComponentContent(component: Component): React.ReactNode {
     );
     const questionStyle: React.CSSProperties = {
       fontSize: component.questionSize, fontWeight: Number(component.questionWeight), color: component.questionColor,
-      ...(component.questionBg !== 'transparent' ? { background: component.questionBg, padding: '8px 6px', borderRadius: 4 } : {}),
+      ...(component.questionBg !== 'transparent' ? { background: component.questionBg, padding: '8px 8px', borderRadius: 4 } : {}),
     };
     const sepStyle: React.CSSProperties = component.separatorStyle !== 'none'
       ? { borderBottom: `1px ${component.separatorStyle} ${component.separatorColor}`, paddingBottom: Math.floor(component.rowGap / 2) }
@@ -390,7 +390,7 @@ function renderComponentContent(component: Component): React.ReactNode {
       </div>
     );
   }
-  if (component.type === 'divider') return <Divider style={{ margin: '0 26px', minWidth: 'auto', width: 'auto' }} />;
+  if (component.type === 'divider') return <Divider style={{ margin: '0 24px', minWidth: 'auto', width: 'auto' }} />;
   if (component.type === 'image') {
     return component.src ? (
       <div style={{ padding: '0 32px', textAlign: 'center' }}>
@@ -406,7 +406,7 @@ function renderComponentContent(component: Component): React.ReactNode {
   if (component.type === 'button') {
     return (
       <div style={{ textAlign: 'center', padding: '12px 32px' }}>
-        <span style={{ display: 'inline-block', padding: '10px 32px', borderRadius: 8, background: component.bgColor, color: component.textColor, fontWeight: 600, fontSize: 14 }}>{component.text}</span>
+        <span style={{ display: 'inline-block', padding: '12px 32px', borderRadius: 8, background: component.bgColor, color: component.textColor, fontWeight: 600, fontSize: 14 }}>{component.text}</span>
       </div>
     );
   }
@@ -508,13 +508,13 @@ function EmptyColumnSlot({ onAdd }: { onAdd: (type: ComponentType) => void }) {
   }, [open]);
   return (
     <div ref={wrapRef} style={{ position: 'relative', margin: '8px 12px' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', border: '1px dashed #d9d9d9', borderRadius: 8, padding: '14px 0', background: '#fafafa', cursor: 'pointer', color: '#8c8c8c', fontSize: 12 }}>
+      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', border: '1px dashed #d9d9d9', borderRadius: 8, padding: '16px 0', background: '#fafafa', cursor: 'pointer', color: '#8c8c8c', fontSize: 12 }}>
         <BiPlus style={{ marginRight: 8 }} /> Agregar
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 25, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 6, width: 190, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 25, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 8, width: 190, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {COMPONENT_PALETTE.map(item => (
-            <button key={item.type} onClick={() => { onAdd(item.type); setOpen(false); }} style={{ textAlign: 'left', padding: '5px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 12, borderRadius: 4 }}>
+            <button key={item.type} onClick={() => { onAdd(item.type); setOpen(false); }} style={{ textAlign: 'left', padding: '4px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 12, borderRadius: 4 }}>
               {item.label}
             </button>
           ))}
@@ -686,8 +686,8 @@ function PaletteItem({ icon, label, sub, onClick, componentType }: {
       ref={componentType ? drag : undefined}
       onClick={onClick}
       style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-        padding: '14px 12px', cursor: componentType ? 'grab' : 'pointer', textAlign: 'center',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
+        padding: '16px 12px', cursor: componentType ? 'grab' : 'pointer', textAlign: 'center',
         border: '1px solid #d9d9d9',
         borderRadius: 8, opacity: isDragging ? 0.4 : 1,
         background: '#fff',
@@ -695,21 +695,21 @@ function PaletteItem({ icon, label, sub, onClick, componentType }: {
     >
       <span style={{ fontSize: 20, color: 'rgba(0,0,0,0.45)' }}>{icon}</span>
       <div style={{ fontWeight: 500, fontSize: 12, color: 'rgba(0,0,0,0.85)', lineHeight: 1.3 }}>{label}</div>
-      <div style={{ fontSize: 9, color: 'rgba(0,0,0,0.45)', lineHeight: 1.3 }}>{sub}</div>
+      <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)', lineHeight: 1.3 }}>{sub}</div>
     </button>
   );
 }
 
 function ColumnLayoutPicker({ onPick, onClose }: { onPick: (widths: number[]) => void; onClose: () => void }) {
   return (
-    <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 10, marginBottom: 10, background: '#fff' }}>
+    <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 12, marginBottom: 12, background: '#fff' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-        <Text type="secondary" style={{ fontSize: 11 }}>Elige un layout de columnas</Text>
+        <Text type="secondary" style={{ fontSize: 12 }}>Elige un layout de columnas</Text>
         <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.45)' }}>✕</button>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
         {COLUMN_LAYOUTS.map(l => (
-          <button key={l.label} onClick={() => onPick(l.widths)} title={l.label} style={{ display: 'flex', gap: 4, border: '1px solid #d9d9d9', borderRadius: 8, padding: 6, cursor: 'pointer', background: '#fff' }}>
+          <button key={l.label} onClick={() => onPick(l.widths)} title={l.label} style={{ display: 'flex', gap: 4, border: '1px solid #d9d9d9', borderRadius: 8, padding: 8, cursor: 'pointer', background: '#fff' }}>
             {l.widths.map((w, i) => <div key={i} style={{ flex: w, height: 24, background: '#e6f4ff', borderRadius: 2 }} />)}
           </button>
         ))}
@@ -723,10 +723,10 @@ function ColumnsAndSizesField({ row, onChange }: { row: Row; onChange: (widths: 
   const currentWidths = row.columns.map(c => c.widthPercent);
   const isActive = (widths: number[]) => widths.length === currentWidths.length && widths.every((w, i) => Math.abs(w - currentWidths[i]) < 0.5);
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
       {COLUMN_LAYOUTS.map(l => (
         <button key={l.label} onClick={() => onChange(l.widths)} title={l.label} style={{
-          display: 'flex', gap: 4, borderRadius: 8, padding: 6, cursor: 'pointer',
+          display: 'flex', gap: 4, borderRadius: 8, padding: 8, cursor: 'pointer',
           border: isActive(l.widths) ? '1.5px solid #1890ff' : '1px solid #d9d9d9',
           background: isActive(l.widths) ? '#e6f4ff' : '#fff',
         }}>
@@ -779,8 +779,8 @@ function ColorPickerField({ value, onChange, allowTransparent, full }: { value: 
         )}
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: 36, left: 0, zIndex: 30, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 10, width: 200 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 12 }}>
+        <div style={{ position: 'absolute', top: 36, left: 0, zIndex: 30, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 12, width: 200 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginBottom: 12 }}>
             {COLOR_PRESETS.map(c => (
               <button
                 key={c} type="button" onClick={() => { onChange(c); setOpen(false); }}
@@ -813,12 +813,12 @@ function CollapsibleSection({ title, children, defaultOpen = true, compact }: { 
       <div style={{ border: '1px solid #f0f0f0', borderRadius: 8 }}>
         <div
           onClick={() => setOpen(o => !o)}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '9px 16px' }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '8px 16px' }}
         >
           <Text style={{ fontSize: 12.5, fontWeight: 500 }}>{title}</Text>
-          <span style={{ color: 'rgba(0,0,0,0.35)', fontSize: 10 }}>{open ? '▲' : '▼'}</span>
+          <BiChevronDown style={{ color: 'rgba(0,0,0,0.35)', fontSize: 16, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }} />
         </div>
-        {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '0 16px 14px' }}>{children}</div>}
+        {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '0 16px 16px' }}>{children}</div>}
       </div>
     );
   }
@@ -826,7 +826,7 @@ function CollapsibleSection({ title, children, defaultOpen = true, compact }: { 
     <div style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 24, marginBottom: 24 }}>
       <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: open ? 14 : 0 }}>
         <Text style={{ fontSize: 14, fontWeight: 500 }}>{title}</Text>
-        <span style={{ color: 'rgba(0,0,0,0.35)', fontSize: 11 }}>{open ? '▲' : '▼'}</span>
+        <BiChevronDown style={{ color: 'rgba(0,0,0,0.35)', fontSize: 16, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }} />
       </div>
       {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>{children}</div>}
     </div>
@@ -841,7 +841,7 @@ function FieldLabel({ children, inline, tooltip }: { children: React.ReactNode; 
       {children}
       {tooltip && (
         <Tooltip title={tooltip}>
-          <BiHelpCircle style={{ marginLeft: 5, fontSize: 12, color: 'rgba(0,0,0,0.35)', cursor: 'help' }} />
+          <BiHelpCircle style={{ marginLeft: 4, fontSize: 12, color: 'rgba(0,0,0,0.35)', cursor: 'help' }} />
         </Tooltip>
       )}
     </Text>
@@ -860,7 +860,7 @@ function BorderFields({ borderColor, borderWidth, borderStyle, onUpdate }: {
   onUpdate: (p: { borderColor?: string; borderWidth?: number; borderStyle?: 'solid' | 'dotted' | 'none' }) => void;
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <FieldLabel>Borde</FieldLabel>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <ColorPickerField value={borderColor} onChange={c => onUpdate({ borderColor: c })} />
@@ -878,7 +878,7 @@ function PaddingGrid({ design, onUpdate }: { design: { paddingTop: number; paddi
   return (
     <div>
       <FieldLabel>Relleno</FieldLabel>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <PaddingField label="Arriba" value={design.paddingTop} onChange={v => onUpdate({ paddingTop: v })} />
         <PaddingField label="Abajo" value={design.paddingBottom} onChange={v => onUpdate({ paddingBottom: v })} />
         <PaddingField label="Izquierda" value={design.paddingLeft ?? 0} onChange={v => onUpdate({ paddingLeft: v })} />
@@ -958,7 +958,7 @@ function TextContentFields({ block, onUpdate }: { block: TextBlock; onUpdate: (b
         <FieldLabel>Insertar variable</FieldLabel>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {VARIABLES.map(v => (
-            <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 10 }} color="blue" onClick={() => {
+            <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }} color="blue" onClick={() => {
               const ta = taRef.current;
               const tag = `{{${v}}}`;
               if (!ta) { onUpdate({ ...block, content: block.content + tag }); return; }
@@ -979,11 +979,11 @@ function TextContentFields({ block, onUpdate }: { block: TextBlock; onUpdate: (b
 function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Component) => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ padding: '7px 10px', borderRadius: 8, background: 'var(--ds-violet-bg)', border: '1px solid var(--ds-violet-mid)' }}>
+      <div style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--ds-violet-bg)', border: '1px solid var(--ds-violet-mid)' }}>
         <Text style={{ fontSize: 12, color: 'var(--ds-violet-dark)' }}>
           ✦ <strong>{SETUP.empresa}</strong> · {SETUP.industria}
         </Text>
-        <Text style={{ fontSize: 12, color: 'var(--ds-violet-dark)', display: 'block', marginTop: 3, opacity: 0.85 }}>
+        <Text style={{ fontSize: 12, color: 'var(--ds-violet-dark)', display: 'block', marginTop: 4, opacity: 0.85 }}>
           La IA recibe: datos de contacto, variables de la interacción (incluyendo ticket/caso si se generó) y todas las respuestas del encuestado. Solo usa variables cuyo significado entiende con certeza.
         </Text>
       </div>
@@ -999,14 +999,14 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
             <Card
               key={k} size="small" hoverable onClick={() => onUpdate({ ...block, tone: k as Tone })}
               style={{ cursor: 'pointer', borderColor: block.tone === k ? 'var(--ds-violet)' : '#d9d9d9', background: block.tone === k ? 'var(--ds-violet-bg)' : '#fff' }}
-              styles={{ body: { padding: '6px 12px' } }}
+              styles={{ body: { padding: '8px 12px' } }}
             >
               <Text style={{ fontSize: 12, fontWeight: 500, color: block.tone === k ? 'var(--ds-violet-dark)' : undefined, display: 'block' }}>{v.label}</Text>
-              <Text type="secondary" style={{ fontSize: 10 }}>{v.sub}</Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>{v.sub}</Text>
             </Card>
           ))}
         </div>
-        {block.tone === 'custom' && <Input style={{ marginTop: 6 }} value={block.customTone} onChange={e => onUpdate({ ...block, customTone: e.target.value })} placeholder="Describe el tono…" />}
+        {block.tone === 'custom' && <Input style={{ marginTop: 8 }} value={block.customTone} onChange={e => onUpdate({ ...block, customTone: e.target.value })} placeholder="Describe el tono…" />}
       </div>
       <div>
         <FieldLabel tooltip="Solo aplica al texto que genera este bloque IA. El resto del correo mantiene su propio idioma.">Idioma del texto generado</FieldLabel>
@@ -1104,7 +1104,7 @@ function HeaderContentFields({ block, onUpdate }: { block: HeaderBlock; onUpdate
       </div>
       <div>
         <FieldLabel>Color de fondo</FieldLabel>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {HEADER_COLORS.map(c => (
             <div key={c} onClick={() => onUpdate({ ...block, bgColor: c })} style={{ width: 24, height: 24, borderRadius: '50%', background: c, border: block.bgColor === c ? '3px solid #1890ff' : '3px solid transparent', cursor: 'pointer', outline: block.bgColor === c ? '2px solid white' : 'none', outlineOffset: -4 }} />
           ))}
@@ -1179,7 +1179,7 @@ function QuestionPickerRow({ q, index, included, onToggle, moveItem }: {
     <div
       ref={ref}
       onClick={() => onToggle(!included)}
-      style={{ display: 'flex', alignItems: 'center', gap: 12, border: '1px solid #f0f0f0', borderRadius: 8, padding: '6px 12px', background: included ? '#e6f7ff' : '#fff', opacity: isDragging ? 0.4 : 1, cursor: 'pointer' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 12, border: '1px solid #f0f0f0', borderRadius: 8, padding: '8px 12px', background: included ? '#e6f7ff' : '#fff', opacity: isDragging ? 0.4 : 1, cursor: 'pointer' }}
     >
       {included ? (
         <div ref={handleRef} onClick={e => e.stopPropagation()} style={{ cursor: 'grab', color: 'rgba(0,0,0,0.35)', display: 'flex', flexShrink: 0 }}>
@@ -1224,7 +1224,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ padding: '7px 10px', borderRadius: 8, background: '#fafafa', border: '1px solid #f0f0f0', fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>
+      <div style={{ padding: '8px 12px', borderRadius: 8, background: '#fafafa', border: '1px solid #f0f0f0', fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>
         Cada encuestado verá sus propias respuestas exactas. El contenido es dinámico y único por persona.
       </div>
 
@@ -1235,7 +1235,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
             allowClear value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por texto o tipo…" prefix={<BiSearch style={{ color: 'rgba(0,0,0,0.25)' }} />}
           />
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
             {term ? (
               <>
                 <Button onClick={() => setIncludedFor([...includedFiltered, ...excludedFiltered].map(x => x.q.id), true)}>
@@ -1446,7 +1446,7 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
           <FieldLabel>Insertar variable</FieldLabel>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {VARIABLES.map(v => (
-              <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 10 }} color="blue" onClick={() => {
+              <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }} color="blue" onClick={() => {
                 const input = urlRef.current?.input;
                 const tag = `{{${v}}}`;
                 if (!input) { onUpdate({ ...block, src: block.src + tag }); return; }
@@ -1486,7 +1486,7 @@ function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUp
         <FieldLabel>Insertar variable</FieldLabel>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {VARIABLES.map(v => (
-            <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 10 }} color="blue" onClick={() => {
+            <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }} color="blue" onClick={() => {
               const input = urlRef.current?.input;
               const tag = `{{${v}}}`;
               if (!input) { onUpdate({ ...block, url: block.url + tag }); return; }
@@ -1552,7 +1552,7 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
           <Radio.Button value="circle" style={{ flex: 1, textAlign: 'center' }}><ShapeSwatch shape="circle" /></Radio.Button>
         </Radio.Group>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {block.networks.map(entry => (
           <div key={entry.network}>
             <Checkbox checked={entry.included} onChange={e => setEntry(entry.network, { included: e.target.checked })}>
@@ -1788,7 +1788,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     : { width: '100%', background: '#fff', overflow: 'hidden', minHeight: 180 };
 
   const subjectBar = (
-    <div style={{ maxWidth: cardMaxWidth, margin: '0 auto 10px', display: 'flex', alignItems: 'center', gap: 10, padding: '5px 16px', background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+    <div style={{ maxWidth: cardMaxWidth, margin: '0 auto 12px', display: 'flex', alignItems: 'center', gap: 12, padding: '4px 16px', background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0' }}>
       <Text type="secondary" style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', flexShrink: 0 }}>ASUNTO</Text>
       {editingSubject ? (
         <Input
@@ -1831,7 +1831,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     <ConfigProvider theme={EDITOR_THEME}>
     <div ref={rootRef} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f5f5f5', overflow: 'hidden', fontFamily: "'Roboto', sans-serif", position: 'relative' }}>
       {/* Header fila 1 — título + acciones */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '9px 32px', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '8px 32px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
         <button
           onClick={handleExit}
           style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 8 }}
@@ -1871,7 +1871,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
       {mode === 'html' ? (
         <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
           {/* Vista previa en vivo */}
-          <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 20px 24px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
+          <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 24px 24px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
             {subjectBar}
             <div style={cardStyle}
               dangerouslySetInnerHTML={{ __html: htmlValue }}
@@ -1898,7 +1898,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
         <DndProvider backend={HTML5Backend}>
           <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
             {/* Canvas */}
-            <div ref={canvasRef} className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 20px 24px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
+            <div ref={canvasRef} className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 24px 24px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
               {subjectBar}
               <div style={cardStyle}>
                 {rows.length === 0 ? (
@@ -1931,7 +1931,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                     <AddElementDropZone onDropComponent={addComponentRow}>
                       <div
                         onClick={() => { setActiveTab('elementos'); requestAnimationFrame(() => document.getElementById('palette-section')?.scrollIntoView({ behavior: 'smooth' })); }}
-                        style={{ padding: 14, textAlign: 'center', cursor: 'pointer', borderTop: '1px dashed #d9d9d9' }}
+                        style={{ padding: 16, textAlign: 'center', cursor: 'pointer', borderTop: '1px dashed #d9d9d9' }}
                       >
                         <Text type="secondary" style={{ fontSize: 12 }}><BiPlus style={{ marginRight: 8 }} />Agregar elemento, o arrastra uno aquí</Text>
                       </div>
@@ -1943,7 +1943,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
 
             {/* Sidebar */}
             <div style={{ ...SIDEBAR_WIDTH, background: '#fff', borderLeft: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-              <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 16px' }}>
+              <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 16px' }}>
                 {activeTab === 'elementos' && (
                   <div id="palette-section">
                     <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 12 }}>Estructura</Text>
@@ -1951,7 +1951,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                       <PaletteItem icon={<BiTable />} label="Columnas" sub="Elige un layout" onClick={() => setColumnPickerOpen(o => !o)} />
                     </div>
                     {columnPickerOpen && <ColumnLayoutPicker onPick={addRow} onClose={() => setColumnPickerOpen(false)} />}
-                    <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '10px 0 12px' }}>Componentes</Text>
+                    <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '12px 0 12px' }}>Componentes</Text>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                       {COMPONENT_PALETTE.map(item => (
                         <PaletteItem key={item.type} icon={item.icon} label={item.label} sub={item.sub} componentType={item.type} onClick={() => addComponentRow(item.type)} />

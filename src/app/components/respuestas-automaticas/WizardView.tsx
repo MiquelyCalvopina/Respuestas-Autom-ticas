@@ -452,7 +452,7 @@ function RankingOrderBuilder({ options, value, onChange }: { options: string[]; 
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
       {order.map((text, i) => (
         <RankRow key={text} index={i} text={text} moveItem={moveItem} />
       ))}
@@ -618,8 +618,8 @@ function DeleteConfirm({ what, onConfirm, children }: { what: string; onConfirm:
       okText="Sí, seguro"
       cancelText="Cancelar"
       onConfirm={onConfirm}
-      okButtonProps={{ shape: 'round', size: 'middle' }}
-      cancelButtonProps={{ shape: 'round', size: 'middle' }}
+      okButtonProps={{ size: 'middle' }}
+      cancelButtonProps={{ size: 'middle' }}
       overlayStyle={{ maxWidth: 320 }}
       icon={
         <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: '#fff1f0', flexShrink: 0 }}>
@@ -761,13 +761,13 @@ function CondRowUI({ row, onUpdate, onDelete, canDelete }: {
 
       {/* Condición lista / rango inválido */}
       {complete && (
-        <div style={{ paddingLeft: 20, paddingBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ paddingLeft: 24, paddingBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
           <BiCheckCircle style={{ color: '#52c41a', fontSize: 12 }} />
           <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: '#52c41a' }}>Condición lista</span>
         </div>
       )}
       {rangeError && (
-        <div style={{ paddingLeft: 20, paddingBottom: 16 }}>
+        <div style={{ paddingLeft: 24, paddingBottom: 16 }}>
           <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: '#ff4d4f' }}>
             El primer valor debe ser menor o igual al segundo.
           </span>
@@ -1114,7 +1114,7 @@ function Step2({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
               width: '100%', borderRadius: 8, background: '#fff',
               border: '1px dashed #69c0ff',
               boxShadow: '0px 2px 0px 0px rgba(0,0,0,0.02)',
-              padding: '12px 9px', cursor: 'pointer',
+              padding: '12px 8px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
             }}
           >
@@ -1186,7 +1186,7 @@ function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () =>
         <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: 0 }}>
           Correo configurado
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <InfoRow label="Asunto" value={rule.subject.trim() || 'Sin asunto configurado'} />
           <InfoRow label="Enviar a" value={<VariablePill value={rule.recipientVariable} />} />
           <InfoRow label="Remitente" value={rule.sender} />
@@ -1209,7 +1209,7 @@ function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () =>
       </div>
 
       {aiBlockSinObjetivo && (
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 8, padding: '10px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 8, padding: '12px 16px' }}>
           <BiErrorCircle style={{ color: '#faad14', fontSize: 14, marginTop: 4 }} />
           <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.65)', margin: 0, lineHeight: 1.6 }}>
             Tienes un bloque IA sin objetivo configurado. Ábrelo en el editor de correo y completa "¿Qué debe lograr este bloque?" antes de activar la regla.
@@ -1290,7 +1290,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
             <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.65)', margin: 0 }}>
               Puedes descartar el avance o guardarlo como borrador para continuar después.
             </p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24 }}>
               <Button danger style={{ borderRadius: 8 }} onClick={onBack}>Descartar y salir</Button>
               <Button type="primary" style={{ borderRadius: 8 }} onClick={onSaveDraft}>Guardar como borrador y salir</Button>
             </div>

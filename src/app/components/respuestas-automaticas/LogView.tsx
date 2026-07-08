@@ -30,7 +30,7 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
         Volver
       </Button>
 
-      <div style={{ marginBottom: 20 }}>
+      <div style={{ marginBottom: 24 }}>
         <Title level={4} style={{ margin: 0 }}>Historial — {rule.name}</Title>
         <Text type="secondary" style={{ fontSize: 13 }}>{MOCK.length} ejecuciones · última hace 3 min</Text>
       </div>
@@ -57,7 +57,7 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
         {visible.length === 0 ? (
           <Empty description="Sin ejecuciones" />
         ) : visible.map((exec, i) => (
-          <div key={exec.id} style={{ padding: '10px 0', borderBottom: i < visible.length - 1 ? '1px solid #f0f0f0' : 'none', display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div key={exec.id} style={{ padding: '12px 0', borderBottom: i < visible.length - 1 ? '1px solid #f0f0f0' : 'none', display: 'flex', alignItems: 'center', gap: 16 }}>
             <code style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(0,0,0,0.85)', minWidth: 52 }}>
               #{exec.responseId}
             </code>
@@ -66,7 +66,7 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
             </Tag>
             <div style={{ flex: 1 }}>
               <Text style={{ fontSize: 12, display: 'block' }}>{exec.detail}</Text>
-              <Text type="secondary" style={{ fontSize: 11 }}>{exec.timestamp}</Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>{exec.timestamp}</Text>
             </div>
           </div>
         ))}

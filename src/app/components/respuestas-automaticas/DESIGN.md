@@ -92,6 +92,9 @@ components:
     textColor: "#ffffff"
     rounded: "{rounded.control}"
     height: 32px
+    padding: "7px 8px"            # inspector de Figma: py 7px, px 8px — NO el default de AntD (4px/15px)
+    gap: 4px                      # separación ícono-texto
+    boxShadow: "0 2px 0 rgba(0,0,0,0.04)"
   button-primary-active:
     backgroundColor: "{colors.primary}"
     transform: "scale(0.97)"
@@ -102,6 +105,8 @@ components:
     borderColor: "{colors.border-control}"
     rounded: "{rounded.control}"
     height: 32px
+    padding: "7px 8px"            # inspector de Figma (py 7px, px 8px)
+    gap: 4px
     boxShadow: "0 2px 0 rgba(0,0,0,0.02)"
   button-default-active:
     transform: "scale(0.97)"
@@ -112,6 +117,7 @@ components:
     borderColor: "{colors.border-control}"
     rounded: "{rounded.control}"
     height: 32px
+    padding: "7px 8px"
   button-text:
     backgroundColor: transparent
     textColor: "{colors.text-primary}"
@@ -444,13 +450,19 @@ Cinco **tipos**, cada uno con variante **Danger** (semántica destructiva, en ro
 | Text | sin fondo ni borde — acción de bajo énfasis dentro de una fila o toolbar |
 | Link | sin fondo ni borde, texto `{colors.primary}` — se comporta como un hipervínculo, no como un botón con chrome |
 
-Tres **tamaños**, consistentes entre tipos y con los botones de solo-ícono:
+Tres **tamaños**, consistentes entre tipos y con los botones de solo-ícono (valores verificados en
+el componente Button de Figma, nodo `34701:197`):
 
-| Tamaño | Alto |
-|---|---|
-| Small | 24px |
-| Medium (default, sin prop `size`) | 32px |
-| Large | 38px |
+| Tamaño | Alto | Radio | Padding (py / px) |
+|---|---|---|---|
+| Small | 24px | `{rounded.chico}` (4px) | — |
+| Medium (default, sin prop `size`) | 32px | `{rounded.control}` (8px) | 7px / 8px |
+| Large | 38px | `{rounded.control}` (8px) | — |
+
+**Ojo con el padding**: el valor real (inspector de Figma) es 7px vertical / 8px horizontal, no lo
+que da AntD por defecto (`4px 15px`). Se aplica a nivel de módulo con un token `Button:
+{ paddingBlock: 7, paddingInline: 8 }` en un `ConfigProvider`, para que todos los botones lo hereden
+sin repetirlo. El gap entre ícono y texto dentro del botón es 4px.
 
 Cada combinación tipo×tamaño×danger tiene 4 **estados**: Normal, Hover/Press, Active, Disabled.
 - Estado presionado (Primary/Secondary/Dashed): `{component.button-primary-active}` /
@@ -584,12 +596,10 @@ artefacto real, como un documento o correo).
 en vez del ícono grande por defecto de AntD. Aplica a eliminar elementos estructurados/anidados
 (ej. una condición dentro de un grupo). Acciones de bajo riesgo y fácilmente reversibles
 (duplicar, reordenar) no necesitan este patrón — ver "Interaction Principles".
-- **Botones de acción de un confirm/diálogo**: los botones de confirmar/cancelar (tanto en
-  `Popconfirm` como en `Modal.confirm`) usan forma píldora (`shape: 'round'`, `{rounded.pill}`) y
-  altura estándar 32px (`size: 'middle'` — AntD pone los botones de `Popconfirm` en `small`/24px
-  por defecto, hay que forzar `middle`). El confirmar es primario sólido (o `danger` si la acción
-  es destructiva) y el cancelar es default outline. Esto distingue el botón de un confirm (píldora)
-  del botón de acción persistente de una vista (radio de control 8px, ej. Guardar/Siguiente).
+- **Botones de acción de un confirm/diálogo**: siguen el estándar de botón normal —
+  `{rounded.control}` (8px, **no** píldora) y altura 32px. En `Popconfirm` hay que forzar
+  `size: 'middle'` porque AntD lo pone en `small`/24px por defecto. El confirmar es primario sólido
+  (o `danger` si la acción es destructiva) y el cancelar es default outline.
 
 **`toast`** — feedback global de operaciones (guardar, activar, error). **Decisión: componente
 100% custom, no `message` ni `notification` de AntD** — ninguno de los dos ofrece nativamente la

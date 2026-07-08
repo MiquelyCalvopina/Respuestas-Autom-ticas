@@ -252,8 +252,8 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSche
             description="Dejará de enviar correos hasta que la vuelvas a activar."
             okText="Sí, desactivar" cancelText="Cancelar"
             onConfirm={onToggle}
-            okButtonProps={{ shape: 'round', size: 'middle' }}
-            cancelButtonProps={{ shape: 'round', size: 'middle' }}
+            okButtonProps={{ size: 'middle' }}
+            cancelButtonProps={{ size: 'middle' }}
           >
             <Switch checked={rule.active} size="small" />
           </Popconfirm>
@@ -275,28 +275,28 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSche
       <div className="flex gap-[12px] pt-[8px]">
         <button
           onClick={onEdit}
-          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center px-[9px] py-[12px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
+          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center px-[8px] py-[12px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
           style={{ fontVariationSettings: '"wdth" 100' }}
         >
           <BiEdit style={{ fontSize: 12 }} /> Editar
         </button>
         <button
           onClick={onLog}
-          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center px-[9px] py-[12px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
+          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center px-[8px] py-[12px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
           style={{ fontVariationSettings: '"wdth" 100' }}
         >
           <LogsIcon /> Ver ejecuciones
         </button>
         <button
           onClick={onDuplicate}
-          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center px-[9px] py-[12px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
+          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center px-[8px] py-[12px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
           style={{ fontVariationSettings: '"wdth" 100' }}
         >
           <BiCopy style={{ fontSize: 12 }} /> Duplicar
         </button>
         <button
           onClick={onDelete}
-          className="bg-white border border-[#ffccc7] border-solid cursor-pointer flex items-center justify-center px-[9px] py-[12px] rounded-[8px] text-[#ff4d4f]"
+          className="bg-white border border-[#ffccc7] border-solid cursor-pointer flex items-center justify-center px-[8px] py-[12px] rounded-[8px] text-[#ff4d4f]"
           aria-label="Eliminar"
         >
           <BiTrash style={{ fontSize: 14 }} />
@@ -363,7 +363,7 @@ export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onTogg
             {/* Ver logs */}
             <button
               onClick={goToFirstRuleLog}
-              className="bg-white border border-[#d9d9d9] border-solid content-stretch cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center justify-center px-[9px] py-[12px] relative rounded-[8px] shrink-0"
+              className="bg-white border border-[#d9d9d9] border-solid content-stretch cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center justify-center px-[8px] py-[12px] relative rounded-[8px] shrink-0"
             >
               <LogsIcon />
               <span

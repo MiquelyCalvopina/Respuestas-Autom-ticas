@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { App } from 'antd';
+import type { ReactNode } from 'react';
+import { App, ConfigProvider } from 'antd';
 import { toast } from 'sonner';
 import { AutoResponse, ModuleView } from './types';
 import { cuid } from './cuid';
@@ -12,6 +13,15 @@ import LogView from './LogView';
 interface Props {
   onBack: () => void;
 }
+
+// Tokens de botón del sistema de diseño, tomados del inspector de Figma (componente Button,
+// medium/normal): radio 8px, padding 8px horizontal / 7px vertical, gap ícono-texto 4px, alto 32px.
+// AntD por defecto usa 15px horizontal — se sobreescribe a nivel módulo para que TODOS los botones
+// (wizard, lista, log, prueba) hereden el estándar sin repetirlo botón por botón.
+const MODULE_THEME = {
+  token: { borderRadius: 8 },
+  components: { Button: { paddingInline: 8, paddingBlock: 7 } },
+};
 
 function emptyRule(): AutoResponse {
   return {
@@ -160,23 +170,20 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
     setView('list');
   }
 
+  let content: ReactNode;
   if (view === 'log') {
     const ruleForLog = logRule ?? rules[0] ?? emptyRule();
-    return <LogView rule={ruleForLog} onBack={backToList} />;
-  }
-
-  if (view === 'editor') {
-    return (
+    content = <LogView rule={ruleForLog} onBack={backToList} />;
+  } else if (view === 'editor') {
+    content = (
       <EditorView
         rule={currentRule}
         onChange={setCurrentRule}
         onBack={() => setView('wizard')}
       />
     );
-  }
-
-  if (view === 'wizard') {
-    return (
+  } else if (view === 'wizard') {
+    content = (
       <WizardView
         rule={currentRule}
         onChange={setCurrentRule}
@@ -186,20 +193,22 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
         onOpenEditor={() => setView('editor')}
       />
     );
+  } else {
+    content = (
+      <ListPage
+        rules={rules}
+        onNew={openNew}
+        onEdit={openEdit}
+        onLog={openLog}
+        onDelete={deleteRule}
+        onToggle={toggleRule}
+        onDuplicate={duplicateRule}
+        onSchedule={scheduleRule}
+        onCancelSchedule={cancelSchedule}
+        onBack={onBack}
+      />
+    );
   }
 
-  return (
-    <ListPage
-      rules={rules}
-      onNew={openNew}
-      onEdit={openEdit}
-      onLog={openLog}
-      onDelete={deleteRule}
-      onToggle={toggleRule}
-      onDuplicate={duplicateRule}
-      onSchedule={scheduleRule}
-      onCancelSchedule={cancelSchedule}
-      onBack={onBack}
-    />
-  );
+  return <ConfigProvider theme={MODULE_THEME}>{content}</ConfigProvider>;
 }
