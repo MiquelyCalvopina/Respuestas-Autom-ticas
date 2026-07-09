@@ -267,7 +267,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSche
         {statusBadge(rule)}
         {triggerBadge(rule.trigger)}
         <Badge tone="neutral">{condCount > 0 ? `${condCount} condici${condCount !== 1 ? 'ones' : 'ón'}` : 'Todas las respuestas'}</Badge>
-        {hasAi && <Badge tone="ai"><BiBolt style={{ marginRight: 8 }} />Bloque IA</Badge>}
+        {hasAi && <Badge tone="ai"><BiBoltCircle style={{ marginRight: 8 }} />Texto adaptativo</Badge>}
         {rule.scheduledAt && <Badge tone="info"><BiTime style={{ marginRight: 8 }} />Se activa {dayjs(rule.scheduledAt).format('DD MMM, HH:mm')}</Badge>}
       </div>
 

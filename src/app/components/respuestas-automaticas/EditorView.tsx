@@ -5,7 +5,7 @@ import {
 } from 'antd';
 import type { InputRef } from 'antd';
 import {
-  BiSend, BiCopy, BiX, BiPlus, BiBold, BiAlignLeft,
+  BiSend, BiCopy, BiX, BiPlus, BiAlignLeft,
   BiAlignMiddle, BiAlignRight, BiMinus, BiListUl,
   BiBoltCircle, BiMove, BiTable, BiImage, BiLink,
   BiExpandVertical, BiShareAlt, BiInfoCircle, BiErrorCircle, BiHelpCircle,
@@ -130,16 +130,14 @@ const COLUMN_LAYOUTS: { label: string; widths: number[] }[] = [
 ];
 
 const COMPONENT_PALETTE: { type: ComponentType; label: string; sub: string; icon: React.ReactNode }[] = [
-  { type: 'header', label: 'Header de marca', sub: 'Logo y color corporativo', icon: <BiBold /> },
-  { type: 'title', label: 'Título', sub: 'Texto grande destacado', icon: 'T' },
   { type: 'text', label: 'Texto', sub: 'Con variables del encuestado', icon: <BiAlignLeft /> },
   { type: 'image', label: 'Imagen', sub: 'Estática o dinámica', icon: <BiImage /> },
-  { type: 'button', label: 'Botón', sub: 'Llamado a la acción', icon: <BiLink /> },
   { type: 'divider', label: 'Divisor', sub: 'Línea separadora', icon: <BiMinus /> },
   { type: 'spacer', label: 'Espaciador', sub: 'Espacio en blanco', icon: <BiExpandVertical /> },
   { type: 'social', label: 'Redes Sociales', sub: 'Íconos con enlaces', icon: <BiShareAlt /> },
-  { type: 'ai', label: 'Bloque IA', sub: 'Texto único por encuestado', icon: '✦' },
-  { type: 'responses', label: 'Bloque de respuestas', sub: 'Las respuestas del encuestado', icon: <BiListUl /> },
+  { type: 'responses', label: 'Respuesta', sub: 'Las respuestas del encuestado', icon: <BiListUl /> },
+  { type: 'ai', label: 'Texto adaptativo', sub: 'Texto único por encuestado', icon: '✦' },
+  { type: 'button', label: 'Botón', sub: 'Llamado a la acción', icon: <BiLink /> },
 ];
 
 const SOCIAL_ICONS: Record<SocialNetworkKey, string> = { facebook: '📘', instagram: '📷', linkedin: '💼', youtube: '▶️', x: '✖️', pinterest: '📌' };
@@ -308,7 +306,7 @@ function renderComponentContent(component: Component): React.ReactNode {
         {!configured ? (
           <div style={{ textAlign: 'center', padding: '16px 16px' }}>
             <p style={{ fontSize: 22, margin: '0 0 8px' }}>✦</p>
-            <Text strong style={{ display: 'block', color: component.textColor }}>Bloque IA sin objetivo</Text>
+            <Text strong style={{ display: 'block', color: component.textColor }}>Texto adaptativo sin objetivo</Text>
             <Text style={{ fontSize: 12, color: component.textColor, opacity: 0.7 }}>Define el objetivo en el panel de configuración.</Text>
           </div>
         ) : (
@@ -672,8 +670,8 @@ function ColumnBox({ column, onAddComponentToColumn, selectedComponentId, onSele
 
 // ─── Paleta ────────────────────────────────────────────────────────────────────
 
-function PaletteItem({ icon, label, sub, onClick, componentType }: {
-  icon: React.ReactNode; label: string; sub: string; onClick: () => void; componentType?: ComponentType;
+function PaletteItem({ icon, label, onClick, componentType }: {
+  icon: React.ReactNode; label: string; onClick: () => void; componentType?: ComponentType;
 }) {
   const [{ isDragging }, drag] = useDrag({
     type: PALETTE_ITEM,
@@ -695,7 +693,6 @@ function PaletteItem({ icon, label, sub, onClick, componentType }: {
     >
       <span style={{ fontSize: 20, color: 'rgba(0,0,0,0.45)' }}>{icon}</span>
       <div style={{ fontWeight: 500, fontSize: 12, color: 'rgba(0,0,0,0.85)', lineHeight: 1.3 }}>{label}</div>
-      <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)', lineHeight: 1.3 }}>{sub}</div>
     </button>
   );
 }
@@ -1572,7 +1569,7 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
 }
 
 const TYPE_SECTION_TITLE: Partial<Record<ComponentType, string>> = {
-  header: 'Encabezado', title: 'Título', text: 'Texto', ai: 'Bloque IA', responses: 'Bloque de respuestas',
+  header: 'Encabezado', title: 'Título', text: 'Texto', ai: 'Texto adaptativo', responses: 'Respuesta',
   image: 'Imagen', button: 'Botón', spacer: 'Espaciador', social: 'Redes Sociales',
 };
 
@@ -1603,7 +1600,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
   const [testValidated, setTestValidated] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   const [mode, setMode] = useState<'visual' | 'html'>(rule.customHtml ? 'html' : 'visual');
-  const [activeTab, setActiveTab] = useState<'elementos' | 'configuracion' | 'diseno'>('elementos');
+  const [activeTab, setActiveTab] = useState<'elementos' | 'configuracion'>('elementos');
   const [selection, setSelection] = useState<Selection>(null);
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState(false);
@@ -1625,7 +1622,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     const row = makeRow(widths);
     updateRows([...rows, row]);
     setSelection({ kind: 'row', rowId: row.id });
-    setActiveTab('diseno');
+    setActiveTab('configuracion');
     setColumnPickerOpen(false);
     scrollToBottom();
   }
@@ -1634,27 +1631,27 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     const i = rows.findIndex(r => r.id === rowId);
     updateRows(i < 0 ? [...rows, row] : [...rows.slice(0, i + 1), row, ...rows.slice(i + 1)]);
     setSelection({ kind: 'row', rowId: row.id });
-    setActiveTab('diseno');
+    setActiveTab('configuracion');
   }
   function addComponentRow(type: ComponentType) {
     const row = makeSingleComponentRow(type);
     updateRows([...rows, row]);
     const comp = row.columns[0].components[0];
     setSelection({ kind: 'component', rowId: row.id, columnId: row.columns[0].id, componentId: comp.id });
-    setActiveTab('diseno');
+    setActiveTab('configuracion');
     scrollToBottom();
   }
   function addComponentToColumn(type: ComponentType, rowId: string, columnId: string) {
     const comp = makeComponent(type);
     updateRows(rows.map(r => r.id !== rowId ? r : { ...r, columns: r.columns.map(c => c.id !== columnId ? c : { ...c, components: [...c.components, comp] }) }));
     setSelection({ kind: 'component', rowId, columnId, componentId: comp.id });
-    setActiveTab('diseno');
+    setActiveTab('configuracion');
   }
   function insertComponentAfter(rowId: string, columnId: string, atIndex: number) {
     const comp = makeComponent('text');
     updateRows(rows.map(r => r.id !== rowId ? r : { ...r, columns: r.columns.map(c => c.id !== columnId ? c : { ...c, components: [...c.components.slice(0, atIndex + 1), comp, ...c.components.slice(atIndex + 1)] }) }));
     setSelection({ kind: 'component', rowId, columnId, componentId: comp.id });
-    setActiveTab('diseno');
+    setActiveTab('configuracion');
   }
   function updateComponent(rowId: string, columnId: string, comp: Component) {
     updateRows(rows.map(r => r.id !== rowId ? r : { ...r, columns: r.columns.map(c => c.id !== columnId ? c : { ...c, components: c.components.map(x => x.id === comp.id ? comp : x) }) }));
@@ -1810,7 +1807,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
 
   const tabStrip = (
     <div style={{ ...SIDEBAR_WIDTH, display: 'flex', borderLeft: '1px solid #f0f0f0' }}>
-      {(['elementos', 'configuracion', 'diseno'] as const).map(tab => (
+      {(['elementos', 'configuracion'] as const).map(tab => (
         <button
           key={tab}
           onClick={() => setActiveTab(tab)}
@@ -1821,7 +1818,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
             fontSize: 12, fontWeight: activeTab === tab ? 600 : 400,
           }}
         >
-          {tab === 'elementos' ? 'Elementos' : tab === 'configuracion' ? 'Configuración' : 'Diseño'}
+          {tab === 'elementos' ? 'Elementos' : 'Configuración'}
         </button>
       ))}
     </div>
@@ -1914,9 +1911,9 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                       <RowBox
                         key={row.id} row={row} index={i}
                         selected={selection?.kind === 'row' && selection.rowId === row.id}
-                        onSelectRow={() => { setSelection({ kind: 'row', rowId: row.id }); setActiveTab('diseno'); }}
+                        onSelectRow={() => { setSelection({ kind: 'row', rowId: row.id }); setActiveTab('configuracion'); }}
                         selectedComponentId={selection?.kind === 'component' && selection.rowId === row.id ? selection.componentId : null}
-                        onSelectComponent={(columnId, componentId) => { setSelection({ kind: 'component', rowId: row.id, columnId, componentId }); setActiveTab('diseno'); }}
+                        onSelectComponent={(columnId, componentId) => { setSelection({ kind: 'component', rowId: row.id, columnId, componentId }); setActiveTab('configuracion'); }}
                         onRemoveRow={() => removeRow(row.id)}
                         onDuplicateRow={() => duplicateRow(row.id)}
                         onInsertRowAfter={() => addRowAfter(row.id, [100])}
@@ -1948,21 +1945,18 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                   <div id="palette-section">
                     <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 12 }}>Estructura</Text>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                      <PaletteItem icon={<BiTable />} label="Columnas" sub="Elige un layout" onClick={() => setColumnPickerOpen(o => !o)} />
+                      <PaletteItem icon={<BiTable />} label="Columnas" onClick={() => setColumnPickerOpen(o => !o)} />
                     </div>
                     {columnPickerOpen && <ColumnLayoutPicker onPick={addRow} onClose={() => setColumnPickerOpen(false)} />}
                     <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '12px 0 12px' }}>Componentes</Text>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                       {COMPONENT_PALETTE.map(item => (
-                        <PaletteItem key={item.type} icon={item.icon} label={item.label} sub={item.sub} componentType={item.type} onClick={() => addComponentRow(item.type)} />
+                        <PaletteItem key={item.type} icon={item.icon} label={item.label} componentType={item.type} onClick={() => addComponentRow(item.type)} />
                       ))}
                     </div>
                   </div>
                 )}
                 {activeTab === 'configuracion' && (
-                  <LayoutConfigFields layout={draft.layout} onUpdate={p => updateDraft({ layout: { ...draft.layout, ...p } })} />
-                )}
-                {activeTab === 'diseno' && (
                   selection?.kind === 'row' && selectedRow ? (
                     <>
                       <CollapsibleSection title="Bloque">
@@ -1987,7 +1981,9 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                         </CollapsibleSection>
                       )}
                     </>
-                  ) : <Text type="secondary" style={{ fontSize: 12 }}>Selecciona una fila o un componente del canvas para configurar su diseño aquí.</Text>
+                  ) : (
+                    <LayoutConfigFields layout={draft.layout} onUpdate={p => updateDraft({ layout: { ...draft.layout, ...p } })} />
+                  )
                 )}
               </div>
             </div>
