@@ -190,7 +190,7 @@ function BottomItems() {
 function PagesVerticalMenu() {
   return (
     <div
-      className="bg-[#fafafa] content-stretch flex flex-col items-start justify-between h-full py-[10px] relative shrink-0 w-[72px] overflow-y-auto"
+      className="bg-[#fafafa] content-stretch flex flex-col items-start justify-between h-full py-[10px] relative shrink-0 w-[72px] overflow-y-auto overflow-x-hidden"
       data-name="Pages Vertical Menu"
     >
       <PrincipalItems />
@@ -1144,7 +1144,7 @@ function TabContent() {
   const { activeContent, setActiveContent } = useContext(BoostersCtx);
   if (activeContent === 'respuestas-automaticas') {
     return (
-      <div className="bg-white flex-1 min-h-0 overflow-y-auto relative w-full z-[1]" data-name="Tab Content">
+      <div className="bg-white flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative w-full z-[1]" data-name="Tab Content">
         <RespuestasAutomaticas onBack={() => setActiveContent('boosters-list')} />
       </div>
     );
