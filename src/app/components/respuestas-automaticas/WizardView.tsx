@@ -110,6 +110,20 @@ const RECIPIENT_EMAIL_QUESTIONS = PREGUNTAS_EJEMPLO.flatMap(q => {
   return [];
 });
 
+// Campos de texto libre: pueden usarse como destinatario, pero su valor no está validado
+// como correo — el usuario debe asegurarse de que contenga uno (ver mensaje de apoyo).
+const RECIPIENT_TEXT_QUESTIONS = PREGUNTAS_EJEMPLO.flatMap(q => {
+  if (q.tipo === 'respuesta_abierta' && q.validacion !== 'correo') {
+    return [{ value: `pregunta:${q.id}`, label: q.texto }];
+  }
+  if (q.tipo === 'formulario') {
+    return (q.campos ?? [])
+      .filter(c => c.tipo === 'texto')
+      .map(c => ({ value: `pregunta:${q.id}:campo:${c.nombre}`, label: `${q.texto} → ${c.nombre}` }));
+  }
+  return [];
+});
+
 function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoResponse) => void }) {
   return (
     <div style={{ maxWidth: 760, margin: '0 auto', width: '100%', boxSizing: 'border-box', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
@@ -135,11 +149,12 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
           style={{ width: '100%', borderRadius: 8, fontFamily: "'Roboto', sans-serif" }}
           options={[
             { label: 'Datos de contacto', options: [{ value: 'correo_electronico', label: 'correo_electronico' }] },
-            ...(RECIPIENT_EMAIL_QUESTIONS.length ? [{ label: 'Preguntas del estudio', options: RECIPIENT_EMAIL_QUESTIONS }] : []),
+            ...(RECIPIENT_EMAIL_QUESTIONS.length ? [{ label: 'Campos de correo', options: RECIPIENT_EMAIL_QUESTIONS }] : []),
+            ...(RECIPIENT_TEXT_QUESTIONS.length ? [{ label: 'Campos de texto', options: RECIPIENT_TEXT_QUESTIONS }] : []),
           ]}
         />
         <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '8px 0 0 0', lineHeight: 'normal' }}>
-          El sistema enviará el correo al valor de este dato para cada encuestado. Si está vacío, ese envío se omite y queda registrado en el historial como <strong style={{ color: 'rgba(0,0,0,0.65)' }}>No enviado</strong>.
+          El sistema enviará el correo al valor de este dato para cada encuestado. El valor debe ser un correo válido; si eliges un campo de texto, asegúrate de que contenga uno. Si está vacío o no es un correo válido, ese envío se omite y queda registrado en el historial como <strong style={{ color: 'rgba(0,0,0,0.65)' }}>No enviado</strong>.
         </p>
       </div>
 
