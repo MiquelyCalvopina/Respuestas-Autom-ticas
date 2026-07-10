@@ -1308,7 +1308,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
       {/* Footer */}
       <div style={{
         background: '#fff', borderTop: '1px solid #f0f0f0',
-        padding: '24px 32px', display: 'flex', alignItems: 'center',
+        padding: '12px 24px', display: 'flex', alignItems: 'center',
         justifyContent: 'flex-end', gap: 12, flexShrink: 0,
       }}>
         {current > 0 && (

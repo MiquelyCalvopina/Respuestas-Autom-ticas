@@ -685,7 +685,7 @@ function PaletteItem({ icon, label, onClick, componentType }: {
       onClick={onClick}
       style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
-        padding: '16px 12px', cursor: componentType ? 'grab' : 'pointer', textAlign: 'center',
+        padding: '12px 12px', cursor: componentType ? 'grab' : 'pointer', textAlign: 'center',
         border: '1px solid #d9d9d9',
         borderRadius: 8, opacity: isDragging ? 0.4 : 1,
         background: '#fff',
