@@ -386,11 +386,13 @@ elementos mismos.
 ### Contenedores
 Tres tipos de contenedor reutilizables, con sus valores de referencia ya auditados:
 
-- **Columna centrada de formulario**: contenido centrado con padding lateral grande en desktop
-  (referencia: `padding: 24px 250px`), que en una pantalla estándar deja el contenido en
-  ~580-600px de ancho — suficiente para lectura cómoda sin que el ojo tenga que viajar de borde a
-  borde. En viewports angostos, ese padding lateral colapsa a un valor fijo chico (ver
-  "Responsive Behavior") en vez de mantenerse proporcional.
+- **Columna centrada de formulario**: contenido en una columna centrada con `max-width` fijo
+  (referencia: `maxWidth: 760px; margin: 0 auto; padding: 32px 24px`) — se centra en pantallas
+  anchas sin dejar franjas laterales enormes, y ocupa todo el ancho disponible en viewports
+  angostos. **No** usar padding lateral fijo grande (ej. `250px`): desperdicia espacio horizontal
+  en pantallas anchas y puede forzar scroll horizontal cuando el contenedor es más angosto que
+  ese padding + el contenido. El contenedor de scroll lleva `overflow-x: hidden` para que ningún
+  hijo dispare una barra horizontal a nivel de página.
 - **Canvas de ancho fijo para un artefacto**: cuando la superficie representa un artefacto real
   con un ancho "correcto" propio (un documento, un correo, una tarjeta imprimible), el canvas se
   fija a ese ancho de referencia (ej. 600px, el estándar de un cuerpo de email HTML) en vez de

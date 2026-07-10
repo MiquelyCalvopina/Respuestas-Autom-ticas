@@ -58,13 +58,12 @@ function StepChevron() {
 
 function NavigationSteps({ current }: { current: number }) {
   return (
-    <div style={{ background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 32px', flexShrink: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <StepNode num={1} label="Detalles"    active={current === 0} done={current > 0} />
-        <StepChevron />
-        <StepNode num={2} label="Condiciones" active={current === 1} done={current > 1} />
-        <StepNode num={3} label="Mensaje"     active={current === 2} />
-      </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+      <StepNode num={1} label="Detalles"    active={current === 0} done={current > 0} />
+      <StepChevron />
+      <StepNode num={2} label="Condiciones" active={current === 1} done={current > 1} />
+      <StepChevron />
+      <StepNode num={3} label="Mensaje"     active={current === 2} />
     </div>
   );
 }
@@ -113,7 +112,7 @@ const RECIPIENT_EMAIL_QUESTIONS = PREGUNTAS_EJEMPLO.flatMap(q => {
 
 function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoResponse) => void }) {
   return (
-    <div style={{ padding: '32px 250px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
+    <div style={{ maxWidth: 760, margin: '0 auto', width: '100%', boxSizing: 'border-box', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
 
       {/* Section title */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1069,7 +1068,7 @@ function Step2({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div style={{ padding: '32px 250px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
+      <div style={{ maxWidth: 760, margin: '0 auto', width: '100%', boxSizing: 'border-box', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
 
         {/* Section title */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1171,7 +1170,7 @@ function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () =>
     .some((comp): comp is AiBlock => comp.type === 'ai' && comp.objetivo.trim() === '');
 
   return (
-    <div style={{ padding: '32px 250px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
+    <div style={{ maxWidth: 760, margin: '0 auto', width: '100%', boxSizing: 'border-box', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 20, color: 'rgba(0,0,0,0.45)', margin: 0, lineHeight: 'normal' }}>
@@ -1246,18 +1245,18 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
   const isLast  = current === 2;
 
   return (
-    <div ref={rootRef} style={{ display: 'flex', flexDirection: 'column', background: '#fff', width: '100%', height: '100%', position: 'relative' }}>
+    <div ref={rootRef} style={{ display: 'flex', flexDirection: 'column', background: '#fff', width: '100%', height: '100%', position: 'relative', overflowX: 'hidden' }}>
 
-      {/* Topbar */}
+      {/* Topbar — breadcrumb + stepper en una sola fila */}
       <div style={{
         background: '#fff', borderBottom: '1px solid #f0f0f0',
-        padding: '16px 24px', display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between', flexShrink: 0,
+        padding: '12px 24px', display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between', gap: 24, flexShrink: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           <button
             onClick={() => setShowExitDialog(true)}
-            style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' }}
           >
             Respuestas Automáticas
           </button>
@@ -1265,9 +1264,10 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
           <Input
             value={rule.name}
             onChange={e => onChange({ ...rule, name: e.target.value })}
-            style={{ width: 250, borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
+            style={{ width: 240, borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
           />
         </div>
+        <NavigationSteps current={current} />
       </div>
 
       <Modal
@@ -1298,11 +1298,8 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
         </div>
       </Modal>
 
-      {/* Step indicator */}
-      <NavigationSteps current={current} />
-
       {/* Step content — scrolls within the fixed-height layout */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: '#fff' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', background: '#fff' }}>
         {current === 0 && <Step1 rule={rule} onChange={onChange} />}
         {current === 1 && <Step2 rule={rule} onChange={onChange} />}
         {current === 2 && <Step3 rule={rule} onOpenEditor={onOpenEditor} />}
