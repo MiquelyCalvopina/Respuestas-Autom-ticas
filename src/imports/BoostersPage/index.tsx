@@ -72,7 +72,7 @@ function Studies() {
 
 function PrincipalItems() {
   return (
-    <div className="content-stretch flex flex-col gap-[4px] h-[400px] items-center px-[16px] relative shrink-0 w-[72px]" data-name="Principal Items">
+    <div className="content-stretch flex flex-col gap-[4px] items-center px-[16px] relative shrink-0 w-[72px]" data-name="Principal Items">
       <Container />
       <Home />
       <Studies />
