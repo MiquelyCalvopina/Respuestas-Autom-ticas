@@ -120,26 +120,8 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
           Configura los detalles de la regla
         </p>
         <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.45)', margin: 0, lineHeight: 'normal' }}>
-          Define el nombre, a quién va dirigido el correo y cuándo se dispara la regla.
+          Define a quién va dirigido el correo y cuándo se dispara la regla. El nombre lo editas arriba, junto al título.
         </p>
-      </div>
-
-      {/* Nombre de la regla */}
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 12px 0' }}>
-          Nombre de la regla <span style={{ color: '#ff4d4f' }}>*</span>
-        </p>
-        <Input
-          value={rule.name}
-          onChange={e => onChange({ ...rule, name: e.target.value.slice(0, 70) })}
-          placeholder="Ej: Recuperación de detractores"
-          style={{ borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
-        />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
-          <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.25)' }}>
-            {rule.name.length} / 70
-          </span>
-        </div>
       </div>
 
       {/* Variable destinatario */}
@@ -1263,7 +1245,9 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
           <BreadcrumbChevron />
           <Input
             value={rule.name}
-            onChange={e => onChange({ ...rule, name: e.target.value })}
+            onChange={e => onChange({ ...rule, name: e.target.value.slice(0, 70) })}
+            placeholder="Nombre de la regla"
+            maxLength={70}
             style={{ width: 240, borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
           />
         </div>
