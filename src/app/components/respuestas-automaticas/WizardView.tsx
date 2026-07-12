@@ -244,12 +244,20 @@ const Q_VARIABLE = [
   { value: 'identificador',      label: 'Identificador' },
   { value: 'fecha_respuesta',    label: 'Fecha de respuesta' },
   { value: 'edad',               label: 'Edad' },
+  // Variables especiales del estudio
+  { value: 'canal_respuesta',    label: 'Canal de respuesta' },
+  { value: 'dispositivo',        label: 'Dispositivo' },
+  { value: 'plataforma',         label: 'Plataforma' },
+  { value: 'alerta_enviada',     label: 'Alerta enviada' },
 ];
 
 // ── Variable type map ─────────────────────────────────────────────────────────
 const VAR_TYPE: Record<string, string> = {
   nombre_completo: 'text', nombre_preferencia: 'text', identificador: 'text',
   correo_electronico: 'email', telefono: 'number', edad: 'number', fecha_respuesta: 'date',
+  // Especiales: lista cerrada (=/≠ contra valores fijos) y Sí/No
+  canal_respuesta: 'closedlist', dispositivo: 'closedlist', plataforma: 'closedlist',
+  alerta_enviada: 'boolyn',
 };
 
 // ── Tipos de pregunta con selección única / múltiple (spec los agrupa así) ────
@@ -276,36 +284,42 @@ const ETIQUETA_OPTIONS = ETIQUETAS_CATEGORIZACION.map(e => ({ value: e.id, label
 
 // ── Operator sets ─────────────────────────────────────────────────────────────
 const ops = {
-  // Variables — incluyen 'Está vacía'
-  varText:   ['Contiene','No contiene','Está en la lista','No está en la lista','Es igual a','No es igual a','Está vacía','No está vacía'],
-  varNumber: ['Es igual a','No es igual a','Es mayor que','Es mayor o igual a','Es menor que','Es menor o igual a','Esta entre','Está vacía','No está vacía'],
+  // Variables — exponen ambos operadores de presencia: 'Está vacía' + 'No está vacía'
+  varText:   ['Contiene','No contiene','Es igual a','No es igual a','Tiene longitud igual a','Tiene longitud mayor a','Tiene longitud menor a','Tiene longitud entre','No cumple el patrón','Está en la lista','No está en la lista','Está vacía','No está vacía'],
+  varNumber: ['Es igual a','No es igual a','Es mayor que','Es mayor o igual a','Es menor que','Es menor o igual a','Está entre','Está vacía','No está vacía'],
   varDate:   ['Es igual a','No es igual a','Es después de','Es antes de','Está entre','Está vacía','No está vacía'],
   varEmail:  ['Contiene','No contiene','Pertenece a los dominios','No pertenece a los dominios','Es igual a','No es igual a','Está vacía','No está vacía'],
-  // Formulario — solo 'No está vacía'
-  formText:   ['Contiene','No contiene','Está en la lista','No está en la lista','Es igual a','No es igual a','No está vacía'],
-  formNumber: ['Es igual a','No es igual a','Es mayor que','Es mayor o igual a','Es menor que','Es menor o igual a','Esta entre','No está vacía'],
-  formEmail:  ['Contiene','No contiene','Pertenece a los dominios','No pertenece a los dominios','Es igual a','No es igual a','No está vacía'],
-  formDate:   ['Es igual a','No es igual a','Es después de','Es antes de','Está entre','No está vacía'],
-  formUrl:    ['Contiene','No contiene','Es igual a','No es igual a','No está vacía'],
-  // Preguntas
-  scaleNum: ['Es igual a','No es igual a','Es mayor que','Es mayor o igual a','Es menor que','Es menor o igual a','Esta entre','No está vacía'],
-  scaleTxt: ['Es igual a','No es igual a','Es mayor que','Es mayor o igual a','Es menor que','Es menor o igual a','No está vacía'],
-  group:    ['Es igual a','No es igual a'],
-  open:     ['Contiene','No contiene','Está en la lista','No está en la lista','Es igual a','No es igual a','Habla de','No habla de','No está vacía'],
-  simpleOpt:     ['Es igual a','No es igual a','No está vacía'],
-  simpleComment: ['Contiene','No contiene','Está en la lista','No está en la lista','Es igual a','No es igual a','Habla de','No habla de','No está vacía'],
-  multiOpt:      ['Contiene','No contiene','Es igual a','No es igual a','No está vacía'],
-  multiComment:  ['Contiene','No contiene','Es igual a','No es igual a','Habla de','No habla de','No está vacía'],
+  // Variables especiales
+  closedList: ['Es igual a','No es igual a','Está vacía','No está vacía'],   // canal, dispositivo, plataforma (lista cerrada)
+  boolYesNo:  ['Es igual a'],                                                 // alerta enviada (Sí / No)
+  // Formulario — la presencia ('No está vacío') vive a nivel de pregunta, no por campo
+  formText:   ['Contiene','No contiene','Es igual a','No es igual a'],
+  formNumber: ['Es igual a','No es igual a','Es mayor que','Es mayor o igual a','Es menor que','Es menor o igual a','Está entre'],
+  formEmail:  ['Contiene','No contiene','Es igual a','No es igual a'],
+  formDate:   ['Es igual a','No es igual a','Es después de','Es antes de','Está entre'],
+  formUrl:    ['Contiene','No contiene','Es igual a','No es igual a'],
+  // Preguntas — presencia positiva uniforme: 'No está vacío' (lectura estándar para todos los tipos)
+  scaleNum: ['Es igual a','No es igual a','Es mayor que','Es mayor o igual a','Es menor que','Es menor o igual a','Está entre','No está vacío'],
+  scaleTxt: ['Es igual a','No es igual a','Es mayor que','Es mayor o igual a','Es menor que','Es menor o igual a','No está vacío'],
+  group:    ['Es igual a','No es igual a','No está vacío'],
+  open:     ['Contiene','No contiene','Es igual a','No es igual a','Habla de','No habla de','No está vacío'],
+  simpleOpt:     ['Es igual a','No es igual a','No está vacío'],
+  simpleComment: ['Contiene','No contiene','Es igual a','No es igual a','Habla de','No habla de','No está vacío'],
+  multiOpt:      ['Contiene','No contiene','Es igual a','No es igual a','No está vacío'],
+  multiComment:  ['Contiene','No contiene','Es igual a','No es igual a','Habla de','No habla de','No está vacío'],
   check:    ['Es igual a','No es igual a'],
-  maxdiff:  ['Es igual a','No es igual a','No está vacía'],
-  ranking:  ['Es igual a','No es igual a','No está vacía'],
-  upload:   ['No está vacía'],
+  maxdiff:  ['Es igual a','No es igual a','No está vacío'],
+  ranking:  ['Es igual a','No es igual a','No está vacío'],
+  upload:   ['No está vacío'],
 };
 
 function getOperators(row: ConditionRule): string[] {
   if (row.subject === 'variable') {
     const t = VAR_TYPE[row.variable] || 'text';
-    return ({ text: ops.varText, number: ops.varNumber, date: ops.varDate, email: ops.varEmail } as Record<string, string[]>)[t] ?? ops.varText;
+    return ({
+      text: ops.varText, number: ops.varNumber, date: ops.varDate, email: ops.varEmail,
+      closedlist: ops.closedList, boolyn: ops.boolYesNo,
+    } as Record<string, string[]>)[t] ?? ops.varText;
   }
   const q = pById[row.variable];
   if (!q) return [];
@@ -326,12 +340,15 @@ function getOperators(row: ConditionRule): string[] {
   }
   if (q.tipo === 'respuesta_abierta') return gate(ops.open, q.categorizable);
   if (q.tipo === 'formulario') {
+    // 'No está vacío' aplica a nivel de la pregunta completa, sin requerir elegir un campo
     const campo = q.campos?.find(c => c.nombre === row.subType);
-    if (!campo) return [];
-    return ({ texto: ops.formText, numero: ops.formNumber, correo: ops.formEmail, fecha: ops.formDate, url: ops.formUrl } as Record<string, string[]>)[campo.tipo];
+    const fieldOps = campo
+      ? (({ texto: ops.formText, numero: ops.formNumber, correo: ops.formEmail, fecha: ops.formDate, url: ops.formUrl } as Record<string, string[]>)[campo.tipo] ?? [])
+      : [];
+    return ['No está vacío', ...fieldOps];
   }
   if (q.tipo === 'casilla_verificacion') return ops.check;
-  if (q.tipo === 'maxdiff') return row.subType ? ops.maxdiff : [];
+  if (q.tipo === 'maxdiff') return row.subType ? ops.maxdiff : ['No está vacío'];
   if (q.tipo === 'ranking') return ops.ranking;
   if (q.tipo === 'cargar_archivo') return ops.upload;
   if (SINGLE_CHOICE.has(q.tipo) || MULTI_CHOICE.has(q.tipo)) {
@@ -341,14 +358,21 @@ function getOperators(row: ConditionRule): string[] {
     if (commentable.length === 0) return optSet;
     if (row.subType === 'opcion') return optSet;
     if (row.subType === 'comentario') return row.attribute ? gate(commentSet, q.comentarioCategorizable) : [];
-    return [];
+    return ['No está vacío'];   // presencia disponible sin pasar por el sub-selector Opción/Comentario
   }
   return [];
 }
 
-const NO_VALUE_OPS = new Set(['Está vacía','No está vacía']);
-const RANGE_OPS    = new Set(['Esta entre','Está entre']);
+const NO_VALUE_OPS = new Set(['Está vacía','No está vacía','No está vacío']);
+const RANGE_OPS    = new Set(['Está entre','Tiene longitud entre']);
 const LIST_OPS     = new Set(['Está en la lista','No está en la lista','Pertenece a los dominios','No pertenece a los dominios']);
+const LENGTH_OPS   = new Set(['Tiene longitud igual a','Tiene longitud mayor a','Tiene longitud menor a','Tiene longitud entre']);
+const PATTERN_OP   = 'No cumple el patrón';
+const CLOSED_LIST_VARS: Record<string, string[]> = {
+  canal_respuesta: ['Correo', 'WhatsApp', 'Enlace personalizado', 'Enlace genérico', 'QR'],
+  dispositivo:     ['Escritorio', 'Móvil', 'Tablet'],
+  plataforma:      ['Web', 'iOS', 'Android'],
+};
 
 function rangeValid(r: ConditionRule, q: Pregunta | undefined): boolean {
   const a = firstOf(r.value), b = firstOf(r.valueB);
@@ -363,6 +387,11 @@ function rangeValid(r: ConditionRule, q: Pregunta | undefined): boolean {
 function isRowComplete(r: ConditionRule): boolean {
   if (!r.variable || !r.operator) return false;
   if (NO_VALUE_OPS.has(r.operator)) return true;
+  if (r.operator === PATTERN_OP) {
+    const v = String(firstOf(r.value) ?? '').trim();
+    if (v === '') return false;
+    try { new RegExp(v); return true; } catch { return false; }
+  }
   const nonEmpty = (v: string | string[]) => Array.isArray(v) ? v.length > 0 : String(v ?? '').trim() !== '';
   if (RANGE_OPS.has(r.operator)) {
     if (!nonEmpty(r.value) || !nonEmpty(r.valueB)) return false;
@@ -497,19 +526,69 @@ function renderValueInput(
       <Select
         mode="tags" tokenSeparators={[',', ';']}
         value={Array.isArray(row.value) ? row.value : []}
-        onChange={v => onUpdate({ value: v })}
+        onChange={v => onUpdate({ value: (v as string[]).slice(0, 50).map(x => x.slice(0, 255)) })}
         placeholder="Escribe y presiona Enter, o separa con comas/punto y coma..."
+        maxTagCount="responsive"
         style={{ ...inputStyle, minWidth: 220 }}
       />
     );
   }
 
-  if (q && SCALE_TIPOS.has(q.tipo) && row.subType === 'nota') {
+  // Variables especiales de lista cerrada (canal, dispositivo, plataforma): =/≠ contra valores fijos
+  if (row.subject === 'variable' && VAR_TYPE[row.variable] === 'closedlist') {
+    const vals = CLOSED_LIST_VARS[row.variable] ?? [];
+    return (
+      <Select value={firstOf(row.value) || undefined} onChange={v => onUpdate({ value: v })}
+        placeholder="Selecciona..." style={{ ...selStyle, flex: 1 }} options={vals.map(o => ({ value: o, label: o }))} />
+    );
+  }
+  // Alerta enviada: Sí / No
+  if (row.subject === 'variable' && VAR_TYPE[row.variable] === 'boolyn') {
+    return (
+      <Select value={firstOf(row.value) || undefined} onChange={v => onUpdate({ value: v })}
+        placeholder="Selecciona..." style={selStyle} options={[{ value: 'Sí', label: 'Sí' }, { value: 'No', label: 'No' }]} />
+    );
+  }
+  // Longitud (variable Texto): number input entero 0–10000; "entre" son dos
+  if (LENGTH_OPS.has(op)) {
+    const numProps = { min: 0, max: 10000, precision: 0 as const, style: { width: 140 } };
+    if (RANGE_OPS.has(op)) {
+      return (
+        <>
+          <InputNumber {...numProps} value={firstOf(row.value) === '' ? undefined : Number(firstOf(row.value))}
+            onChange={v => onUpdate({ value: v == null ? '' : String(v) })} placeholder="Desde" status={rangeError ? 'error' : undefined} />
+          <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>y</span>
+          <InputNumber {...numProps} value={firstOf(row.valueB) === '' ? undefined : Number(firstOf(row.valueB))}
+            onChange={v => onUpdate({ valueB: v == null ? '' : String(v) })} placeholder="Hasta" status={rangeError ? 'error' : undefined} />
+        </>
+      );
+    }
+    return (
+      <InputNumber {...numProps} value={firstOf(row.value) === '' ? undefined : Number(firstOf(row.value))}
+        onChange={v => onUpdate({ value: v == null ? '' : String(v) })} placeholder="0" />
+    );
+  }
+  // No cumple el patrón (variable Texto): regex con validación de sintaxis
+  if (op === PATTERN_OP) {
+    const v = firstOf(row.value);
+    let invalid = false;
+    if (v) { try { new RegExp(v); } catch { invalid = true; } }
+    return (
+      <div style={{ flex: 1, minWidth: 200 }}>
+        <Input value={v} maxLength={255} onChange={e => onUpdate({ value: e.target.value })}
+          placeholder="Expresión regular…" status={invalid ? 'error' : undefined} style={inputStyle} />
+        {invalid && <p style={{ color: '#ff4d4f', fontSize: 12, margin: '4px 0 0', fontFamily: "'Roboto', sans-serif" }}>Expresión regular inválida.</p>}
+      </div>
+    );
+  }
+
+  if (q && SCALE_TIPOS.has(q.tipo) && (row.subType === 'nota' || q.tipo === 'rating')) {
     if (op === 'Es igual a' || op === 'No es igual a') {
+      // =/≠ es selección múltiple (OR) e incluye "No aplica"
       return (
         <Select mode="multiple" value={Array.isArray(row.value) ? row.value : []}
           onChange={v => onUpdate({ value: v })} placeholder="Selecciona uno o más..."
-          style={{ ...selStyle, flex: 1 }} options={scaleOptions(q)} />
+          style={{ ...selStyle, flex: 1 }} options={[...scaleOptions(q), { value: 'No aplica', label: 'No aplica' }]} />
       );
     }
     if (RANGE_OPS.has(op)) {
@@ -600,7 +679,7 @@ function renderValueInput(
   }
 
   return (
-    <Input value={firstOf(row.value)} onChange={e => onUpdate({ value: e.target.value })}
+    <Input value={firstOf(row.value)} maxLength={255} onChange={e => onUpdate({ value: e.target.value })}
       placeholder="Escribe un valor..." style={inputStyle} />
   );
 }
