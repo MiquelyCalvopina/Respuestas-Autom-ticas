@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Dropdown, Button, Switch, Popconfirm, Popover, DatePicker } from 'antd';
-import { BiPlus, BiChevronDown, BiEditAlt, BiImport, BiEnvelope, BiEdit, BiTrash, BiBoltCircle, BiCopy, BiTime } from 'react-icons/bi';
+import { BiPlus, BiChevronDown, BiEditAlt, BiImport, BiEnvelope, BiEdit, BiTrash, BiBoltCircle, BiCopy, BiTime, BiDownload } from 'react-icons/bi';
 import type { MenuProps } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import svgPaths from "@/imports/BoostersPage-1/svg-hnea2jkxqi";
@@ -18,7 +18,8 @@ interface Props {
   onSchedule: (id: string, iso: string) => void;
   onCancelSchedule: (id: string) => void;
   onBack: () => void;
-  onCopyFromStudy?: () => void;
+  onImportJson?: () => void;
+  onExportJson?: () => void;
 }
 
 // ─── Illustration ─────────────────────────────────────────────────────────────
@@ -79,7 +80,7 @@ function IdeasFlowIllustration() {
 
 // ─── Agregar regla dropdown button ───────────────────────────────────────────
 
-function AgregarReglaButton({ onNew, onCopyFromStudy }: { onNew: () => void; onCopyFromStudy?: () => void }) {
+function AgregarReglaButton({ onNew, onImportJson }: { onNew: () => void; onImportJson?: () => void }) {
   const items: MenuProps['items'] = [
     {
       key: 'new',
@@ -88,10 +89,10 @@ function AgregarReglaButton({ onNew, onCopyFromStudy }: { onNew: () => void; onC
       onClick: onNew,
     },
     {
-      key: 'copy',
+      key: 'import',
       icon: <BiImport />,
-      label: 'Copiar una regla existente',
-      onClick: onCopyFromStudy,
+      label: 'Importar desde JSON',
+      onClick: onImportJson,
     },
   ];
 
@@ -308,7 +309,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSche
 
 // ─── ListPage ─────────────────────────────────────────────────────────────────
 
-export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onToggle, onDuplicate, onSchedule, onCancelSchedule, onBack, onCopyFromStudy }: Props) {
+export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onToggle, onDuplicate, onSchedule, onCancelSchedule, onBack, onImportJson, onExportJson }: Props) {
   const goToFirstRuleLog = () => { if (rules[0]) onLog(rules[0].id); };
 
   return (
@@ -358,7 +359,21 @@ export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onTogg
           {/* Action buttons */}
           <div className="content-stretch flex gap-[12px] items-center relative shrink-0">
             {rules.length > 0 && (
-              <AgregarReglaButton onNew={onNew} onCopyFromStudy={onCopyFromStudy} />
+              <AgregarReglaButton onNew={onNew} onImportJson={onImportJson} />
+            )}
+            {rules.length > 0 && onExportJson && (
+              <button
+                onClick={onExportJson}
+                className="bg-white border border-[#d9d9d9] border-solid content-stretch cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center justify-center px-[8px] py-[12px] relative rounded-[8px] shrink-0"
+              >
+                <BiDownload style={{ fontSize: 14 }} />
+                <span
+                  className="[word-break:break-word] font-['Roboto:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.85)] text-center whitespace-nowrap"
+                  style={{ fontVariationSettings: '"wdth" 100' }}
+                >
+                  Descargar reglas
+                </span>
+              </button>
             )}
             {/* Ver logs */}
             <button
@@ -402,7 +417,7 @@ export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onTogg
                 </div>
 
                 {/* CTA */}
-                <AgregarReglaButton onNew={onNew} onCopyFromStudy={onCopyFromStudy} />
+                <AgregarReglaButton onNew={onNew} onImportJson={onImportJson} />
             </div>
           </div>
         ) : (

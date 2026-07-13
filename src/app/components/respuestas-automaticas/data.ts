@@ -1,4 +1,4 @@
-import { Pregunta, OpcionConComentario, Etiqueta, AiBlock, AiLanguage, Row, Component, TextBlock, ConditionGroup, AutoResponse } from './types';
+import { Pregunta, OpcionConComentario, Etiqueta, AiBlock, AiLanguage, Row } from './types';
 
 export const countComponents = (rows: Row[]): number =>
   rows.flatMap(r => r.columns).flatMap(c => c.components).length;
@@ -633,81 +633,4 @@ export const ETIQUETAS_CATEGORIZACION: Etiqueta[] = [
   { id: 'e27', n1: 'Sucursales', n2: 'Cobertura geográfica',                    n3: 'No hay sucursal cerca del domicilio del cliente' },
   { id: 'e28', n1: 'Sucursales', n2: 'Cobertura geográfica',                    n3: 'Tiempo de traslado excesivo para trámites presenciales' },
 
-];
-
-// ─── Estudios de ejemplo para "Copiar una regla existente" ───────────────────
-// Permite crear una regla nueva a partir de una ya diseñada, en este mismo estudio
-// o en otro estudio del ambiente. 100% mock en memoria — no hay backend real; sirve
-// para que el analista no tenga que rearmar desde cero una regla parecida a una que ya existe.
-
-export interface EmailStudy {
-  id: string;
-  name: string;
-  rules: AutoResponse[];
-}
-
-const mockDesign = () => ({ paddingTop: 16, paddingBottom: 16, textAlign: 'left' as const, bgColor: 'transparent' });
-
-function mockText(id: string, content: string): TextBlock {
-  return { id, type: 'text', content, design: mockDesign() };
-}
-function mockAi(id: string, objetivo: string): AiBlock {
-  return {
-    id, type: 'ai', objetivo, tone: 'empatico', customTone: '', restricciones: [], idioma: 'es',
-    generatedText: '', textBgColor: 'var(--ds-violet-bg)', textColor: 'var(--ds-violet-dark)', fontSize: 15,
-    lineHeight: 1.6, fontStyle: 'normal', fontWeight: '400', cardBorderColor: 'var(--ds-violet-mid)',
-    cardBorderWidth: 1, cardBorderStyle: 'solid', cardBorderRadius: 8, design: mockDesign(),
-  };
-}
-function mockRow(id: string, ...components: Component[]): Row {
-  return { id, columns: [{ id: `${id}-c`, widthPercent: 100, components }], design: { bgColor: 'transparent', paddingTop: 0, paddingBottom: 0 } };
-}
-function mockCondGroup(id: string, variable: string, subType: string, operator: string, value: string): ConditionGroup {
-  return { id, connector: 'Y', rows: [{ id: `${id}-r`, subject: 'response', variable, subType, operator, value, valueB: '' }] };
-}
-function mockRule(o: Partial<AutoResponse> & { id: string; name: string }): AutoResponse {
-  return {
-    trigger: 'response', active: false, published: false, condGroups: [], sender: 'noreply@hircasa.com',
-    recipientVariable: 'correo_electronico', replyTo: '', subject: '', rows: [],
-    layout: { widthPercent: 100, boxed: true, bgColor: '#f5f5f5' },
-    blocksUpdatedAt: '2026-05-20T15:00:00.000Z', customHtml: null, scheduledAt: null,
-    ...o,
-  };
-}
-
-export const OTHER_STUDIES: EmailStudy[] = [
-  {
-    id: 'est-nps-anual',
-    name: 'NPS Anual — Clientes Crédito',
-    rules: [
-      mockRule({
-        id: 'r-nps-detractor', name: 'Seguimiento a detractores', subject: 'Queremos escucharte, {{nombre_preferido}}',
-        condGroups: [mockCondGroup('g1', 'p_nps', 'nota', 'Es menor a', '7')],
-        rows: [
-          mockRow('row1', mockText('t1', 'Hola {{nombre_preferido}}, gracias por tu tiempo.')),
-          mockRow('row2', mockAi('ai1', 'Reconocer la molestia del cliente y transmitir que su caso será revisado por el equipo de CX.')),
-        ],
-      }),
-      mockRule({
-        id: 'r-nps-promotor', name: 'Agradecimiento a promotores', subject: '¡Gracias, {{nombre_preferido}}!',
-        condGroups: [mockCondGroup('g2', 'p_nps', 'nota', 'Es mayor a', '8')],
-        rows: [mockRow('row3', mockText('t2', 'Nos alegra mucho tu respuesta. ¡Gracias por confiar en HIR Casa!'))],
-      }),
-    ],
-  },
-  {
-    id: 'est-postventa',
-    name: 'Encuesta Postventa — Sucursales',
-    rules: [
-      mockRule({
-        id: 'r-pv-espera', name: 'Disculpa por tiempos de espera', subject: 'Lamentamos la espera',
-        trigger: 'farewell',
-        condGroups: [mockCondGroup('g3', 'p_ces', 'nota', 'Es mayor a', '5')],
-        rows: [
-          mockRow('row4', mockText('t3', 'Hola {{nombre_preferido}},')),
-          mockRow('row5', mockAi('ai2', 'Disculparse por la demora en la atención en sucursal sin prometer tiempos de resolución.')),
-        ],
-      }),
-    ],
-  },
 ];

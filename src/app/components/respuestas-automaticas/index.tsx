@@ -9,7 +9,7 @@ import ListPage from './ListPage';
 import WizardView from './WizardView';
 import EditorView from './EditorView';
 import LogView from './LogView';
-import CopyRuleModal from './CopyRuleModal';
+import { ImportRulesModal, ExportRulesModal } from './RuleJsonModals';
 
 interface Props {
   onBack: () => void;
@@ -35,19 +35,19 @@ function cloneRule(r: AutoResponse, name: string): AutoResponse {
     active: false,
     published: false,
     scheduledAt: null,
-    rows: r.rows.map(row => ({
+    rows: (r.rows ?? []).map(row => ({
       ...row,
       id: cuid(),
-      columns: row.columns.map(col => ({
+      columns: (row.columns ?? []).map(col => ({
         ...col,
         id: cuid(),
-        components: col.components.map(c => ({ ...c, id: cuid() })),
+        components: (col.components ?? []).map(c => ({ ...c, id: cuid() })),
       })),
     })),
-    condGroups: r.condGroups.map(g => ({
+    condGroups: (r.condGroups ?? []).map(g => ({
       ...g,
       id: cuid(),
-      rows: g.rows.map(row => ({ ...row, id: cuid() })),
+      rows: (g.rows ?? []).map(row => ({ ...row, id: cuid() })),
       subConditions: (g.subConditions ?? []).map(sc => ({ ...sc, id: cuid(), row: { ...sc.row, id: cuid() } })),
     })),
   };
@@ -79,7 +79,8 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
   const [rules, setRules] = useState<AutoResponse[]>([]);
   const [currentRule, setCurrentRule] = useState<AutoResponse>(emptyRule());
   const [logRule, setLogRule] = useState<AutoResponse | null>(null);
-  const [showCopyModal, setShowCopyModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   function openNew() {
     setCurrentRule(emptyRule());
@@ -108,10 +109,13 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
     message.success('Regla duplicada como borrador');
   }
 
-  function copyRuleFromStudy(rule: AutoResponse) {
-    setCurrentRule(cloneRule(rule, `${rule.name} (copia)`));
-    setShowCopyModal(false);
-    setView('wizard');
+  function importRules(imported: AutoResponse[]) {
+    // Normaliza cada regla contra los defaults (por si el JSON viene de una versión
+    // anterior sin algún campo) y le asigna IDs nuevos como borrador de este estudio.
+    const drafts = imported.map(r => cloneRule({ ...emptyRule(), ...r }, r.name));
+    setRules(prev => [...prev, ...drafts]);
+    setShowImportModal(false);
+    message.success(`${drafts.length} ${drafts.length === 1 ? 'regla importada' : 'reglas importadas'} como borrador`);
   }
 
   function toggleRule(id: string) {
@@ -220,7 +224,8 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
         onSchedule={scheduleRule}
         onCancelSchedule={cancelSchedule}
         onBack={onBack}
-        onCopyFromStudy={() => setShowCopyModal(true)}
+        onImportJson={() => setShowImportModal(true)}
+        onExportJson={() => setShowExportModal(true)}
       />
     );
   }
@@ -228,11 +233,16 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
   return (
     <ConfigProvider theme={MODULE_THEME}>
       {content}
-      {showCopyModal && (
-        <CopyRuleModal
-          currentRules={rules}
-          onCancel={() => setShowCopyModal(false)}
-          onCopy={copyRuleFromStudy}
+      {showImportModal && (
+        <ImportRulesModal
+          onCancel={() => setShowImportModal(false)}
+          onImport={importRules}
+        />
+      )}
+      {showExportModal && (
+        <ExportRulesModal
+          rules={rules}
+          onClose={() => setShowExportModal(false)}
         />
       )}
     </ConfigProvider>
