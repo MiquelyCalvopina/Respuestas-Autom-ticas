@@ -1,11 +1,17 @@
-import { useState } from 'react';
-import { Dropdown, Button, Switch, Popconfirm, Popover, DatePicker } from 'antd';
-import { BiPlus, BiChevronDown, BiEditAlt, BiImport, BiEnvelope, BiEdit, BiTrash, BiBoltCircle, BiCopy, BiTime, BiDownload, BiHistory } from 'react-icons/bi';
+import type { ReactNode } from 'react';
+import { Dropdown, Button, Switch, Popconfirm, ConfigProvider } from 'antd';
+import { BiPlus, BiChevronDown, BiEditAlt, BiImport, BiEdit, BiTrash, BiCopy, BiDownload, BiHistory, BiConversation } from 'react-icons/bi';
 import type { MenuProps } from 'antd';
-import dayjs, { Dayjs } from 'dayjs';
 import svgPaths from "@/imports/BoostersPage-1/svg-hnea2jkxqi";
 import { AutoResponse } from './types';
-import { countComponents, hasAiComponent, describeRecipientSource } from './data';
+
+// Autor de la regla — mock para el prototipo; el producto real usa el creador real.
+const RULE_AUTHOR = 'Ana Torres';
+// Etiqueta de "última ejecución" simulada, estable por regla (sin backend en el prototipo).
+function lastRunLabel(rule: AutoResponse): string {
+  const n = ((rule.id.charCodeAt(0) || 5) + rule.id.length) % 8 + 1;
+  return `hace ${n} h`;
+}
 
 interface Props {
   rules: AutoResponse[];
@@ -107,7 +113,7 @@ function AgregarReglaButton({ onNew, onImportJson }: { onNew: () => void; onImpo
 
 // ─── Rule card badges ─────────────────────────────────────────────────────────
 
-function Badge({ tone, children }: { tone: 'warning' | 'success' | 'neutral' | 'ai' | 'info'; children: React.ReactNode }) {
+function Badge({ tone, children }: { tone: 'warning' | 'success' | 'neutral' | 'ai' | 'info'; children: ReactNode }) {
   const map = {
     warning: { bg: '#fffbe6', bd: '#ffe58f', fg: '#d48806' },
     success: { bg: '#f6ffed', bd: '#b7eb8f', fg: '#389e0d' },
@@ -129,143 +135,74 @@ function Badge({ tone, children }: { tone: 'warning' | 'success' | 'neutral' | '
   );
 }
 
-function statusBadge(rule: AutoResponse) {
-  if (!rule.published) return <Badge tone="warning">Borrador</Badge>;
-  if (rule.active) return <Badge tone="success">Activa</Badge>;
-  return <Badge tone="neutral">Inactiva</Badge>;
-}
-
-function triggerBadge(t: AutoResponse['trigger']) {
-  if (t === 'response') return <Badge tone="neutral">Por respuesta nueva</Badge>;
-  if (t === 'farewell') return <Badge tone="neutral">Al llegar despedida</Badge>;
-  return null;
-}
-
-// ─── Programar activación ───────────────────────────────────────────────────
-
-function SchedulePopover({ rule, onSchedule, onCancelSchedule }: {
-  rule: AutoResponse; onSchedule: (iso: string) => void; onCancelSchedule: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [picked, setPicked] = useState<Dayjs | null>(null);
-  const scheduled = !!rule.scheduledAt;
-
-  return (
-    <Popover
-      trigger="click"
-      open={open}
-      onOpenChange={setOpen}
-      placement="bottomRight"
-      content={
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 240 }}>
-          {scheduled ? (
-            <>
-              <span style={{ fontSize: 12, fontFamily: "'Roboto', sans-serif", color: 'rgba(0,0,0,0.65)' }}>
-                Programada para <strong>{dayjs(rule.scheduledAt).format('DD MMM, HH:mm')}</strong>.
-              </span>
-              <Button danger onClick={() => { onCancelSchedule(); setOpen(false); }}>
-                Cancelar programación
-              </Button>
-            </>
-          ) : (
-            <>
-              <span style={{ fontSize: 12, fontFamily: "'Roboto', sans-serif", fontWeight: 500, color: 'rgba(0,0,0,0.85)' }}>
-                Programar activación
-              </span>
-              <DatePicker
-                showTime style={{ width: '100%' }}
-                value={picked} onChange={setPicked}
-                disabledDate={d => !!d && d.isBefore(dayjs(), 'day')}
-                placeholder="Fecha y hora"
-              />
-              <Button
-                type="primary" disabled={!picked}
-                onClick={() => { if (picked) { onSchedule(picked.toISOString()); setOpen(false); setPicked(null); } }}
-              >
-                Programar
-              </Button>
-            </>
-          )}
-        </div>
-      }
-    >
-      <button
-        className="bg-white border border-solid cursor-pointer flex items-center justify-center shrink-0 rounded-full"
-        style={{ width: 24, height: 24, borderColor: scheduled ? '#91d5ff' : '#d9d9d9', color: scheduled ? '#1890ff' : 'rgba(0,0,0,0.45)' }}
-        aria-label="Programar activación"
-      >
-        <BiTime style={{ fontSize: 12 }} />
-      </button>
-    </Popover>
-  );
-}
-
 // ─── Rule card ────────────────────────────────────────────────────────────────
 
-function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSchedule, onCancelSchedule }: {
-  rule: AutoResponse; onEdit: () => void; onLog: () => void; onDelete: () => void; onToggle: () => void;
-  onDuplicate: () => void; onSchedule: (iso: string) => void; onCancelSchedule: () => void;
+function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate }: {
+  rule: AutoResponse; onEdit: () => void; onLog: () => void; onDelete: () => void; onToggle: () => void; onDuplicate: () => void;
 }) {
-  const hasAi = hasAiComponent(rule.rows);
-  const condCount = rule.condGroups.flatMap(g => g.rows).length;
-
-  const condLabel = condCount > 0 ? `${condCount} condici${condCount !== 1 ? 'ones' : 'ón'}` : 'Todas las respuestas';
+  const iconBtn = (
+    icon: ReactNode, label: string, onClick: () => void, danger = false,
+  ) => (
+    <Button icon={icon} onClick={onClick} danger={danger} aria-label={label} title={label} />
+  );
 
   return (
-    <div className="bg-white border border-[#f0f0f0] border-solid rounded-[12px] overflow-hidden w-full transition-shadow duration-150 hover:shadow-[0px_4px_12px_0px_rgba(0,0,0,0.07)]">
-      {/* Head: avatar + nombre/meta + programar + switch */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '16px 20px 12px' }}>
-        <div
-          className="flex items-center justify-center shrink-0 size-[40px] rounded-[10px] border border-solid"
-          style={hasAi
-            ? { background: 'var(--ds-violet-bg)', borderColor: 'var(--ds-violet-mid)', color: 'var(--ds-violet)' }
-            : { background: '#e6f7ff', borderColor: '#91d5ff', color: '#1890ff' }}
-        >
-          {hasAi ? <BiBoltCircle style={{ fontSize: 20 }} /> : <BiEnvelope style={{ fontSize: 18 }} />}
+    <div
+      className="bg-white border border-[#f0f0f0] border-solid rounded-[12px] w-full transition-shadow duration-150 hover:shadow-[0px_4px_12px_0px_rgba(0,0,0,0.07)]"
+      style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px' }}
+    >
+      {/* Avatar del potenciador */}
+      <div
+        className="flex items-center justify-center shrink-0 size-[44px] rounded-[12px]"
+        style={{ background: '#FEF3C7', border: '1px solid #FDE68A', color: '#D97706' }}
+      >
+        <BiConversation style={{ fontSize: 22 }} />
+      </div>
+
+      {/* Nombre + meta */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 15, color: 'rgba(0,0,0,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {rule.name}
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {rule.name}
-          </div>
-          <div style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', marginTop: 2 }}>
-            Enviar a: {describeRecipientSource(rule.recipientVariable)} · {countComponents(rule.rows)} bloque{countComponents(rule.rows) !== 1 ? 's' : ''}
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <SchedulePopover rule={rule} onSchedule={onSchedule} onCancelSchedule={onCancelSchedule} />
-          {rule.active ? (
-            <Popconfirm
-              title="¿Desactivar esta regla?"
-              description="Dejará de enviar correos hasta que la vuelvas a activar."
-              okText="Sí, desactivar" cancelText="Cancelar"
-              onConfirm={onToggle}
-              okButtonProps={{ size: 'middle' }}
-              cancelButtonProps={{ size: 'middle' }}
-            >
-              <Switch checked size="small" />
-            </Popconfirm>
-          ) : (
-            <Switch checked={false} onChange={onToggle} size="small" />
+        <div style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, color: 'rgba(0,0,0,0.45)', marginTop: 3 }}>
+          Creado por: {RULE_AUTHOR}
+          {rule.published && (
+            <>
+              {' · '}Últ. ejecución: {lastRunLabel(rule)}
+              {' · '}
+              <span onClick={onLog} style={{ color: '#1890ff', cursor: 'pointer', fontWeight: 500 }}>Ver ejecuciones</span>
+            </>
           )}
         </div>
       </div>
 
-      {/* Chips de estado */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 20px 14px' }}>
-        {statusBadge(rule)}
-        {triggerBadge(rule.trigger)}
-        <Badge tone="neutral">{condLabel}</Badge>
-        {hasAi && <Badge tone="ai"><BiBoltCircle style={{ fontSize: 12 }} />Texto adaptativo</Badge>}
-        {rule.scheduledAt && <Badge tone="info"><BiTime style={{ fontSize: 12 }} />Se activa {dayjs(rule.scheduledAt).format('DD MMM, HH:mm')}</Badge>}
-      </div>
+      {/* Estado + acciones */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        {!rule.published ? (
+          <Badge tone="neutral">
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#8c8c8c', display: 'inline-block' }} />
+            Borrador
+          </Badge>
+        ) : (
+          <ConfigProvider theme={{ components: { Switch: { colorPrimary: '#52c41a', colorPrimaryHover: '#73d13d' } } }}>
+            {rule.active ? (
+              <Popconfirm
+                title="¿Desactivar esta regla?"
+                description="Dejará de enviar correos hasta que la vuelvas a activar."
+                okText="Sí, desactivar" cancelText="Cancelar"
+                onConfirm={onToggle}
+                okButtonProps={{ size: 'middle' }} cancelButtonProps={{ size: 'middle' }}
+              >
+                <Switch checked checkedChildren="ACTIVO" unCheckedChildren="INACTIVO" />
+              </Popconfirm>
+            ) : (
+              <Switch checked={false} checkedChildren="ACTIVO" unCheckedChildren="INACTIVO" onChange={onToggle} />
+            )}
+          </ConfigProvider>
+        )}
 
-      {/* Footer de acciones */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderTop: '1px solid #f0f0f0', background: '#fafafa' }}>
-        <Button type="link" size="small" icon={<BiHistory />} onClick={onLog} style={{ marginRight: 'auto', paddingInline: 4 }}>
-          Ver ejecuciones
-        </Button>
-        <Button size="small" icon={<BiEdit />} onClick={onEdit}>Editar</Button>
-        <Button size="small" icon={<BiCopy />} onClick={onDuplicate}>Duplicar</Button>
+        {rule.published && iconBtn(<BiCopy />, 'Duplicar', onDuplicate)}
+        {iconBtn(<BiEdit />, 'Editar', onEdit)}
         <Popconfirm
           title="¿Eliminar esta regla?"
           description="Se perderá su configuración y su plantilla de correo."
@@ -273,7 +210,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSche
           okButtonProps={{ danger: true, size: 'middle' }} cancelButtonProps={{ size: 'middle' }}
           onConfirm={onDelete}
         >
-          <Button size="small" danger icon={<BiTrash />} aria-label="Eliminar" />
+          <Button danger icon={<BiTrash />} aria-label="Eliminar" title="Eliminar" />
         </Popconfirm>
       </div>
     </div>
@@ -282,7 +219,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSche
 
 // ─── ListPage ─────────────────────────────────────────────────────────────────
 
-export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onToggle, onDuplicate, onSchedule, onCancelSchedule, onBack, onImportJson, onExportJson }: Props) {
+export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onToggle, onDuplicate, onBack, onImportJson, onExportJson }: Props) {
   const goToFirstRuleLog = () => { if (rules[0]) onLog(rules[0].id); };
 
   return (
@@ -405,8 +342,6 @@ export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onTogg
                 onDelete={() => onDelete(rule.id)}
                 onToggle={() => onToggle(rule.id)}
                 onDuplicate={() => onDuplicate(rule.id)}
-                onSchedule={iso => onSchedule(rule.id, iso)}
-                onCancelSchedule={() => onCancelSchedule(rule.id)}
               />
             ))}
           </div>
