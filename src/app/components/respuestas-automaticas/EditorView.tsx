@@ -259,7 +259,7 @@ function ActionOverlay({ dragHandleRef, onInsertAfter, onDuplicate, onRemove }: 
   onInsertAfter: () => void; onDuplicate: () => void; onRemove: () => void;
 }) {
   return (
-    <div className="blk-toolbar" style={{ transition: 'opacity .15s', position: 'absolute', top: -32, right: 0, zIndex: 5, display: 'flex', gap: 4, background: 'rgba(0,0,0,0.75)', borderRadius: 4, padding: '4px 8px' }}>
+    <div className="blk-toolbar" style={{ transition: 'opacity .15s', position: 'absolute', top: 4, right: 4, zIndex: 5, display: 'flex', gap: 4, background: 'rgba(0,0,0,0.75)', borderRadius: 4, padding: '4px 8px' }}>
       <div ref={dragHandleRef} style={{ height: 22, width: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'grab' }}>
         <BiMove style={{ color: 'white', fontSize: 14 }} />
       </div>
