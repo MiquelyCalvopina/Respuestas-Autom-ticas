@@ -403,6 +403,26 @@ Tres tipos de contenedor reutilizables, con sus valores de referencia ya auditad
   mínimo ni crece más allá del máximo sin importar el viewport, para que el contenido del panel
   no quede ilegible ni desproporcionadamente ancho.
 
+## Bloque de propiedades del editor de correo
+
+El panel derecho del editor de correo (`EditorView`) es el **bloque de propiedades**. Se organiza
+en **tres pestañas**, alineadas exactamente sobre el ancho del sidebar y separadas del canvas por
+la misma línea vertical que baja desde el header. La regla que define qué va en cada pestaña es
+**el alcance de lo que se edita**, no el tipo de control:
+
+| Pestaña | Alcance | Depende de la selección | Contenido |
+|---|---|---|---|
+| **Elementos** | Agregar contenido | No | Paleta: *Estructura* (Columnas) + *Componentes* (Texto, Imagen, Divisor, Espaciador, Redes Sociales, Respuesta, Texto adaptativo, Botón) |
+| **Configuración** | **El correo completo** | **No — panel fijo** | Layout global: Ancho del contenido (%), Estilo del contenedor (con margen / ancho completo), Color de fondo del lienzo |
+| **Diseño** | La **fila o el componente** seleccionado | Sí | Sección *Bloque* (estilo genérico: fondo, alineación, borde, relleno de 4 lados, ocultar en móvil) + una sección específica del tipo (p.ej. *Columnas y tamaños* para una fila, *Redes Sociales* para ese componente) |
+
+Principio rector: **"Configuración" nunca cambia según lo que esté seleccionado** — es la
+configuración del lienzo del correo (qué porcentaje del contenedor del proveedor ocupa y su fondo),
+siempre igual. Todo lo que es *por elemento* vive en **"Diseño"**. Seleccionar una fila o un
+componente en el canvas lleva automáticamente a "Diseño"; sin nada seleccionado, "Diseño" muestra
+la ayuda "Selecciona una fila o un componente…". Esta separación evita el error de mezclar el
+layout del correo con el estilo de un bloque en un mismo panel ambiguo.
+
 ## Elevation
 
 No hay un token de sombra "de fábrica" declarado aparte — el sistema usa tres niveles reales,

@@ -1600,7 +1600,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
   const [testValidated, setTestValidated] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   const [mode, setMode] = useState<'visual' | 'html'>(rule.customHtml ? 'html' : 'visual');
-  const [activeTab, setActiveTab] = useState<'elementos' | 'configuracion'>('elementos');
+  const [activeTab, setActiveTab] = useState<'elementos' | 'configuracion' | 'diseno'>('elementos');
   const [selection, setSelection] = useState<Selection>(null);
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState(false);
@@ -1622,7 +1622,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     const row = makeRow(widths);
     updateRows([...rows, row]);
     setSelection({ kind: 'row', rowId: row.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
     setColumnPickerOpen(false);
     scrollToBottom();
   }
@@ -1631,27 +1631,27 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     const i = rows.findIndex(r => r.id === rowId);
     updateRows(i < 0 ? [...rows, row] : [...rows.slice(0, i + 1), row, ...rows.slice(i + 1)]);
     setSelection({ kind: 'row', rowId: row.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
   }
   function addComponentRow(type: ComponentType) {
     const row = makeSingleComponentRow(type);
     updateRows([...rows, row]);
     const comp = row.columns[0].components[0];
     setSelection({ kind: 'component', rowId: row.id, columnId: row.columns[0].id, componentId: comp.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
     scrollToBottom();
   }
   function addComponentToColumn(type: ComponentType, rowId: string, columnId: string) {
     const comp = makeComponent(type);
     updateRows(rows.map(r => r.id !== rowId ? r : { ...r, columns: r.columns.map(c => c.id !== columnId ? c : { ...c, components: [...c.components, comp] }) }));
     setSelection({ kind: 'component', rowId, columnId, componentId: comp.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
   }
   function insertComponentAfter(rowId: string, columnId: string, atIndex: number) {
     const comp = makeComponent('text');
     updateRows(rows.map(r => r.id !== rowId ? r : { ...r, columns: r.columns.map(c => c.id !== columnId ? c : { ...c, components: [...c.components.slice(0, atIndex + 1), comp, ...c.components.slice(atIndex + 1)] }) }));
     setSelection({ kind: 'component', rowId, columnId, componentId: comp.id });
-    setActiveTab('configuracion');
+    setActiveTab('diseno');
   }
   function updateComponent(rowId: string, columnId: string, comp: Component) {
     updateRows(rows.map(r => r.id !== rowId ? r : { ...r, columns: r.columns.map(c => c.id !== columnId ? c : { ...c, components: c.components.map(x => x.id === comp.id ? comp : x) }) }));
@@ -1805,9 +1805,12 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     </div>
   );
 
+  const TAB_LABEL: Record<'elementos' | 'configuracion' | 'diseno', string> = {
+    elementos: 'Elementos', configuracion: 'Configuración', diseno: 'Diseño',
+  };
   const tabStrip = (
     <div style={{ ...SIDEBAR_WIDTH, display: 'flex', borderLeft: '1px solid #f0f0f0' }}>
-      {(['elementos', 'configuracion'] as const).map(tab => (
+      {(['elementos', 'configuracion', 'diseno'] as const).map(tab => (
         <button
           key={tab}
           onClick={() => setActiveTab(tab)}
@@ -1818,7 +1821,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
             fontSize: 12, fontWeight: activeTab === tab ? 600 : 400,
           }}
         >
-          {tab === 'elementos' ? 'Elementos' : 'Configuración'}
+          {TAB_LABEL[tab]}
         </button>
       ))}
     </div>
@@ -1911,9 +1914,9 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                       <RowBox
                         key={row.id} row={row} index={i}
                         selected={selection?.kind === 'row' && selection.rowId === row.id}
-                        onSelectRow={() => { setSelection({ kind: 'row', rowId: row.id }); setActiveTab('configuracion'); }}
+                        onSelectRow={() => { setSelection({ kind: 'row', rowId: row.id }); setActiveTab('diseno'); }}
                         selectedComponentId={selection?.kind === 'component' && selection.rowId === row.id ? selection.componentId : null}
-                        onSelectComponent={(columnId, componentId) => { setSelection({ kind: 'component', rowId: row.id, columnId, componentId }); setActiveTab('configuracion'); }}
+                        onSelectComponent={(columnId, componentId) => { setSelection({ kind: 'component', rowId: row.id, columnId, componentId }); setActiveTab('diseno'); }}
                         onRemoveRow={() => removeRow(row.id)}
                         onDuplicateRow={() => duplicateRow(row.id)}
                         onInsertRowAfter={() => addRowAfter(row.id, [100])}
@@ -1957,6 +1960,9 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                   </div>
                 )}
                 {activeTab === 'configuracion' && (
+                  <LayoutConfigFields layout={draft.layout} onUpdate={p => updateDraft({ layout: { ...draft.layout, ...p } })} />
+                )}
+                {activeTab === 'diseno' && (
                   selection?.kind === 'row' && selectedRow ? (
                     <>
                       <CollapsibleSection title="Bloque">
@@ -1982,7 +1988,9 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                       )}
                     </>
                   ) : (
-                    <LayoutConfigFields layout={draft.layout} onUpdate={p => updateDraft({ layout: { ...draft.layout, ...p } })} />
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      Selecciona una fila o un componente del canvas para editar su diseño.
+                    </Text>
                   )
                 )}
               </div>
