@@ -108,17 +108,21 @@ function AgregarReglaButton({ onNew, onImportJson }: { onNew: () => void; onImpo
 // ─── Rule card badges ─────────────────────────────────────────────────────────
 
 function Badge({ tone, children }: { tone: 'warning' | 'success' | 'neutral' | 'ai' | 'info'; children: React.ReactNode }) {
-  const toneClass = {
-    warning: 'bg-[#fffbe6] border-[#ffe58f] text-[#d48806]',
-    success: 'bg-[#f6ffed] border-[#b7eb8f] text-[#389e0d]',
-    neutral: 'bg-[#fafafa] border-[#d9d9d9] text-[rgba(0,0,0,0.65)]',
-    ai:      'bg-[var(--ds-violet-bg)] border-[var(--ds-violet-mid)] text-[var(--ds-violet)]',
-    info:    'bg-[#e6f7ff] border-[#91d5ff] text-[#1890ff]',
+  const map = {
+    warning: { bg: '#fffbe6', bd: '#ffe58f', fg: '#d48806' },
+    success: { bg: '#f6ffed', bd: '#b7eb8f', fg: '#389e0d' },
+    neutral: { bg: '#fafafa', bd: '#d9d9d9', fg: 'rgba(0,0,0,0.65)' },
+    ai:      { bg: 'var(--ds-violet-bg)', bd: 'var(--ds-violet-mid)', fg: 'var(--ds-violet)' },
+    info:    { bg: '#e6f7ff', bd: '#91d5ff', fg: '#1890ff' },
   }[tone];
   return (
     <span
-      className={`inline-flex items-center border border-solid rounded-[4px] px-[12px] leading-[20px] text-[12px] font-['Roboto:Regular',sans-serif] ${toneClass}`}
-      style={{ fontVariationSettings: '"wdth" 100' }}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 4,
+        fontFamily: "'Roboto', sans-serif", fontSize: 11, fontWeight: 600, lineHeight: '18px',
+        padding: '1px 9px', borderRadius: 1000,
+        background: map.bg, border: `1px solid ${map.bd}`, color: map.fg,
+      }}
     >
       {children}
     </span>
@@ -205,10 +209,12 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSche
   const hasAi = hasAiComponent(rule.rows);
   const condCount = rule.condGroups.flatMap(g => g.rows).length;
 
+  const condLabel = condCount > 0 ? `${condCount} condici${condCount !== 1 ? 'ones' : 'ón'}` : 'Todas las respuestas';
+
   return (
-    <div className="bg-white border border-[#f0f0f0] border-solid rounded-[12px] p-[24px] flex flex-col gap-[16px] w-full transition-shadow duration-150 hover:shadow-[0px_2px_8px_0px_rgba(0,0,0,0.06)]">
-      {/* Title row */}
-      <div className="flex items-center gap-[16px]">
+    <div className="bg-white border border-[#f0f0f0] border-solid rounded-[12px] overflow-hidden w-full transition-shadow duration-150 hover:shadow-[0px_4px_12px_0px_rgba(0,0,0,0.07)]">
+      {/* Head: avatar + nombre/meta + programar + switch */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '16px 20px 12px' }}>
         <div
           className="flex items-center justify-center shrink-0 size-[40px] rounded-[10px] border border-solid"
           style={hasAi
@@ -217,76 +223,58 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSche
         >
           {hasAi ? <BiBoltCircle style={{ fontSize: 20 }} /> : <BiEnvelope style={{ fontSize: 18 }} />}
         </div>
-        <div className="flex-[1_0_0] min-w-px flex flex-col gap-[4px]">
-          <span
-            className="font-['Roboto:Medium',sans-serif] font-medium text-[14px] text-[rgba(0,0,0,0.85)] truncate block"
-            style={{ fontVariationSettings: '"wdth" 100' }}
-          >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {rule.name}
-          </span>
-          <span
-            className="font-['Roboto:Regular',sans-serif] font-normal text-[12px] text-[rgba(0,0,0,0.45)]"
-            style={{ fontVariationSettings: '"wdth" 100' }}
-          >
+          </div>
+          <div style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', marginTop: 2 }}>
             Enviar a: {describeRecipientSource(rule.recipientVariable)} · {countComponents(rule.rows)} bloque{countComponents(rule.rows) !== 1 ? 's' : ''}
-          </span>
+          </div>
         </div>
-        <SchedulePopover rule={rule} onSchedule={onSchedule} onCancelSchedule={onCancelSchedule} />
-        {rule.active ? (
-          <Popconfirm
-            title="¿Desactivar esta regla?"
-            description="Dejará de enviar correos hasta que la vuelvas a activar."
-            okText="Sí, desactivar" cancelText="Cancelar"
-            onConfirm={onToggle}
-            okButtonProps={{ size: 'middle' }}
-            cancelButtonProps={{ size: 'middle' }}
-          >
-            <Switch checked={rule.active} size="small" />
-          </Popconfirm>
-        ) : (
-          <Switch checked={rule.active} onChange={onToggle} size="small" />
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <SchedulePopover rule={rule} onSchedule={onSchedule} onCancelSchedule={onCancelSchedule} />
+          {rule.active ? (
+            <Popconfirm
+              title="¿Desactivar esta regla?"
+              description="Dejará de enviar correos hasta que la vuelvas a activar."
+              okText="Sí, desactivar" cancelText="Cancelar"
+              onConfirm={onToggle}
+              okButtonProps={{ size: 'middle' }}
+              cancelButtonProps={{ size: 'middle' }}
+            >
+              <Switch checked size="small" />
+            </Popconfirm>
+          ) : (
+            <Switch checked={false} onChange={onToggle} size="small" />
+          )}
+        </div>
       </div>
 
-      {/* Badges */}
-      <div className="flex flex-wrap gap-[12px]">
+      {/* Chips de estado */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 20px 14px' }}>
         {statusBadge(rule)}
         {triggerBadge(rule.trigger)}
-        <Badge tone="neutral">{condCount > 0 ? `${condCount} condici${condCount !== 1 ? 'ones' : 'ón'}` : 'Todas las respuestas'}</Badge>
-        {hasAi && <Badge tone="ai"><BiBoltCircle style={{ marginRight: 8 }} />Texto adaptativo</Badge>}
-        {rule.scheduledAt && <Badge tone="info"><BiTime style={{ marginRight: 8 }} />Se activa {dayjs(rule.scheduledAt).format('DD MMM, HH:mm')}</Badge>}
+        <Badge tone="neutral">{condLabel}</Badge>
+        {hasAi && <Badge tone="ai"><BiBoltCircle style={{ fontSize: 12 }} />Texto adaptativo</Badge>}
+        {rule.scheduledAt && <Badge tone="info"><BiTime style={{ fontSize: 12 }} />Se activa {dayjs(rule.scheduledAt).format('DD MMM, HH:mm')}</Badge>}
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-[12px] pt-[8px]">
-        <button
-          onClick={onEdit}
-          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center px-[8px] py-[12px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
-          style={{ fontVariationSettings: '"wdth" 100' }}
+      {/* Footer de acciones */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderTop: '1px solid #f0f0f0', background: '#fafafa' }}>
+        <Button type="link" size="small" icon={<BiHistory />} onClick={onLog} style={{ marginRight: 'auto', paddingInline: 4 }}>
+          Ver ejecuciones
+        </Button>
+        <Button size="small" icon={<BiEdit />} onClick={onEdit}>Editar</Button>
+        <Button size="small" icon={<BiCopy />} onClick={onDuplicate}>Duplicar</Button>
+        <Popconfirm
+          title="¿Eliminar esta regla?"
+          description="Se perderá su configuración y su plantilla de correo."
+          okText="Sí, eliminar" cancelText="Cancelar"
+          okButtonProps={{ danger: true, size: 'middle' }} cancelButtonProps={{ size: 'middle' }}
+          onConfirm={onDelete}
         >
-          <BiEdit style={{ fontSize: 12 }} /> Editar
-        </button>
-        <button
-          onClick={onLog}
-          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center px-[8px] py-[12px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
-          style={{ fontVariationSettings: '"wdth" 100' }}
-        >
-          <BiHistory style={{ fontSize: 14 }} /> Ver ejecuciones
-        </button>
-        <button
-          onClick={onDuplicate}
-          className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center px-[8px] py-[12px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
-          style={{ fontVariationSettings: '"wdth" 100' }}
-        >
-          <BiCopy style={{ fontSize: 12 }} /> Duplicar
-        </button>
-        <button
-          onClick={onDelete}
-          className="bg-white border border-[#ffccc7] border-solid cursor-pointer flex items-center justify-center px-[8px] py-[12px] rounded-[8px] text-[#ff4d4f]"
-          aria-label="Eliminar"
-        >
-          <BiTrash style={{ fontSize: 14 }} />
-        </button>
+          <Button size="small" danger icon={<BiTrash />} aria-label="Eliminar" />
+        </Popconfirm>
       </div>
     </div>
   );
