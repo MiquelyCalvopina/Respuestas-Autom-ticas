@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Dropdown, Button, Switch, Popconfirm, Popover, DatePicker } from 'antd';
-import { BiPlus, BiChevronDown, BiEditAlt, BiImport, BiEnvelope, BiEdit, BiTrash, BiBoltCircle, BiCopy, BiTime, BiDownload } from 'react-icons/bi';
+import { BiPlus, BiChevronDown, BiEditAlt, BiImport, BiEnvelope, BiEdit, BiTrash, BiBoltCircle, BiCopy, BiTime, BiDownload, BiHistory } from 'react-icons/bi';
 import type { MenuProps } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import svgPaths from "@/imports/BoostersPage-1/svg-hnea2jkxqi";
@@ -105,21 +105,6 @@ function AgregarReglaButton({ onNew, onImportJson }: { onNew: () => void; onImpo
   );
 }
 
-// ─── Logs icon ────────────────────────────────────────────────────────────────
-
-function LogsIcon() {
-  return (
-    <div className="overflow-clip relative shrink-0 size-[14px]">
-      <div className="absolute inset-[12.5%_8.33%]">
-        <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 11.6667 10.4998">
-          <path d={svgPaths.p26abb800} fill="rgba(0,0,0,0.85)" />
-          <path d={svgPaths.p2e705900} fill="rgba(0,0,0,0.85)" />
-        </svg>
-      </div>
-    </div>
-  );
-}
-
 // ─── Rule card badges ─────────────────────────────────────────────────────────
 
 function Badge({ tone, children }: { tone: 'warning' | 'success' | 'neutral' | 'ai' | 'info'; children: React.ReactNode }) {
@@ -221,16 +206,16 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSche
   const condCount = rule.condGroups.flatMap(g => g.rows).length;
 
   return (
-    <div className="bg-white border border-[#f0f0f0] border-solid rounded-[8px] p-[24px] flex flex-col gap-[16px] w-full">
+    <div className="bg-white border border-[#f0f0f0] border-solid rounded-[12px] p-[24px] flex flex-col gap-[16px] w-full transition-shadow duration-150 hover:shadow-[0px_2px_8px_0px_rgba(0,0,0,0.06)]">
       {/* Title row */}
       <div className="flex items-center gap-[16px]">
         <div
-          className="rounded-full flex items-center justify-center shrink-0 size-[32px] border border-solid text-[15px]"
+          className="flex items-center justify-center shrink-0 size-[40px] rounded-[10px] border border-solid"
           style={hasAi
             ? { background: 'var(--ds-violet-bg)', borderColor: 'var(--ds-violet-mid)', color: 'var(--ds-violet)' }
             : { background: '#e6f7ff', borderColor: '#91d5ff', color: '#1890ff' }}
         >
-          {hasAi ? '✦' : <BiEnvelope />}
+          {hasAi ? <BiBoltCircle style={{ fontSize: 20 }} /> : <BiEnvelope style={{ fontSize: 18 }} />}
         </div>
         <div className="flex-[1_0_0] min-w-px flex flex-col gap-[4px]">
           <span
@@ -286,7 +271,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate, onSche
           className="bg-white border border-[#d9d9d9] border-solid cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center px-[8px] py-[12px] rounded-[8px] text-[14px] text-[rgba(0,0,0,0.85)] font-['Roboto:Regular',sans-serif]"
           style={{ fontVariationSettings: '"wdth" 100' }}
         >
-          <LogsIcon /> Ver ejecuciones
+          <BiHistory style={{ fontSize: 14 }} /> Ver ejecuciones
         </button>
         <button
           onClick={onDuplicate}
@@ -380,7 +365,7 @@ export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onTogg
               onClick={goToFirstRuleLog}
               className="bg-white border border-[#d9d9d9] border-solid content-stretch cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center justify-center px-[8px] py-[12px] relative rounded-[8px] shrink-0"
             >
-              <LogsIcon />
+              <BiHistory style={{ fontSize: 14 }} />
               <span
                 className="[word-break:break-word] font-['Roboto:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.85)] text-center whitespace-nowrap"
                 style={{ fontVariationSettings: '"wdth" 100' }}
