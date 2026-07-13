@@ -1,5 +1,5 @@
 import { Dropdown, Button, Switch, Popconfirm, ConfigProvider } from 'antd';
-import { BiPlus, BiChevronDown, BiEditAlt, BiImport, BiTrash, BiCopy, BiDownload, BiHistory, BiBrain } from 'react-icons/bi';
+import { BiPlus, BiEditAlt, BiImport, BiTrash, BiCopy, BiDownload, BiHistory, BiBrain } from 'react-icons/bi';
 import type { MenuProps } from 'antd';
 import svgPaths from "@/imports/BoostersPage-1/svg-hnea2jkxqi";
 import { AutoResponse } from './types';
@@ -102,9 +102,9 @@ function AgregarReglaButton({ onNew, onImportJson }: { onNew: () => void; onImpo
   ];
 
   return (
-    <Dropdown menu={{ items }} trigger={['click']} placement="bottom">
+    <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
       <Button type="primary" icon={<BiPlus />}>
-        Agregar regla <BiChevronDown style={{ fontSize: 12, marginLeft: 4 }} />
+        Nueva regla
       </Button>
     </Dropdown>
   );
