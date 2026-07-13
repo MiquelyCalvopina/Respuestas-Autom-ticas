@@ -90,7 +90,7 @@ function AgregarReglaButton({ onNew, onCopyFromStudy }: { onNew: () => void; onC
     {
       key: 'copy',
       icon: <BiImport />,
-      label: 'Copiar de otro estudio',
+      label: 'Copiar una regla existente',
       onClick: onCopyFromStudy,
     },
   ];

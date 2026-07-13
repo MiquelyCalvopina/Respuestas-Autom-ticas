@@ -9,6 +9,7 @@ import ListPage from './ListPage';
 import WizardView from './WizardView';
 import EditorView from './EditorView';
 import LogView from './LogView';
+import CopyRuleModal from './CopyRuleModal';
 
 interface Props {
   onBack: () => void;
@@ -22,6 +23,35 @@ const MODULE_THEME = {
   token: { borderRadius: 8 },
   components: { Button: { paddingInline: 8, paddingBlock: 7 } },
 };
+
+// Copia profunda de una regla con IDs nuevos en todos los niveles (regla, filas, columnas,
+// componentes, grupos y subcondiciones). Queda como borrador inactivo. Reutilizada por
+// "Duplicar" (misma lista) y por "Copiar una regla existente" (este u otro estudio).
+function cloneRule(r: AutoResponse, name: string): AutoResponse {
+  return {
+    ...r,
+    id: cuid(),
+    name,
+    active: false,
+    published: false,
+    scheduledAt: null,
+    rows: r.rows.map(row => ({
+      ...row,
+      id: cuid(),
+      columns: row.columns.map(col => ({
+        ...col,
+        id: cuid(),
+        components: col.components.map(c => ({ ...c, id: cuid() })),
+      })),
+    })),
+    condGroups: r.condGroups.map(g => ({
+      ...g,
+      id: cuid(),
+      rows: g.rows.map(row => ({ ...row, id: cuid() })),
+      subConditions: (g.subConditions ?? []).map(sc => ({ ...sc, id: cuid(), row: { ...sc.row, id: cuid() } })),
+    })),
+  };
+}
 
 function emptyRule(): AutoResponse {
   return {
@@ -49,6 +79,7 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
   const [rules, setRules] = useState<AutoResponse[]>([]);
   const [currentRule, setCurrentRule] = useState<AutoResponse>(emptyRule());
   const [logRule, setLogRule] = useState<AutoResponse | null>(null);
+  const [showCopyModal, setShowCopyModal] = useState(false);
 
   function openNew() {
     setCurrentRule(emptyRule());
@@ -73,31 +104,14 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
   function duplicateRule(id: string) {
     const r = rules.find(r => r.id === id);
     if (!r) return;
-    const cloned: AutoResponse = {
-      ...r,
-      id: cuid(),
-      name: `${r.name} (copia)`,
-      active: false,
-      published: false,
-      scheduledAt: null,
-      rows: r.rows.map(row => ({
-        ...row,
-        id: cuid(),
-        columns: row.columns.map(col => ({
-          ...col,
-          id: cuid(),
-          components: col.components.map(c => ({ ...c, id: cuid() })),
-        })),
-      })),
-      condGroups: r.condGroups.map(g => ({
-        ...g,
-        id: cuid(),
-        rows: g.rows.map(row => ({ ...row, id: cuid() })),
-        subConditions: (g.subConditions ?? []).map(sc => ({ ...sc, id: cuid(), row: { ...sc.row, id: cuid() } })),
-      })),
-    };
-    setRules(prev => [...prev, cloned]);
+    setRules(prev => [...prev, cloneRule(r, `${r.name} (copia)`)]);
     message.success('Regla duplicada como borrador');
+  }
+
+  function copyRuleFromStudy(rule: AutoResponse) {
+    setCurrentRule(cloneRule(rule, `${rule.name} (copia)`));
+    setShowCopyModal(false);
+    setView('wizard');
   }
 
   function toggleRule(id: string) {
@@ -206,9 +220,21 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
         onSchedule={scheduleRule}
         onCancelSchedule={cancelSchedule}
         onBack={onBack}
+        onCopyFromStudy={() => setShowCopyModal(true)}
       />
     );
   }
 
-  return <ConfigProvider theme={MODULE_THEME}>{content}</ConfigProvider>;
+  return (
+    <ConfigProvider theme={MODULE_THEME}>
+      {content}
+      {showCopyModal && (
+        <CopyRuleModal
+          currentRules={rules}
+          onCancel={() => setShowCopyModal(false)}
+          onCopy={copyRuleFromStudy}
+        />
+      )}
+    </ConfigProvider>
+  );
 }
