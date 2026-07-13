@@ -1,6 +1,5 @@
-import type { ReactNode } from 'react';
 import { Dropdown, Button, Switch, Popconfirm, ConfigProvider } from 'antd';
-import { BiPlus, BiChevronDown, BiEditAlt, BiImport, BiEdit, BiTrash, BiCopy, BiDownload, BiHistory, BiConversation } from 'react-icons/bi';
+import { BiPlus, BiChevronDown, BiEditAlt, BiImport, BiTrash, BiCopy, BiDownload, BiHistory, BiBrain } from 'react-icons/bi';
 import type { MenuProps } from 'antd';
 import svgPaths from "@/imports/BoostersPage-1/svg-hnea2jkxqi";
 import { AutoResponse } from './types';
@@ -111,98 +110,73 @@ function AgregarReglaButton({ onNew, onImportJson }: { onNew: () => void; onImpo
   );
 }
 
-// ─── Rule card badges ─────────────────────────────────────────────────────────
-
-function Badge({ tone, children }: { tone: 'warning' | 'success' | 'neutral' | 'ai' | 'info'; children: ReactNode }) {
-  const map = {
-    warning: { bg: '#fffbe6', bd: '#ffe58f', fg: '#d48806' },
-    success: { bg: '#f6ffed', bd: '#b7eb8f', fg: '#389e0d' },
-    neutral: { bg: '#fafafa', bd: '#d9d9d9', fg: 'rgba(0,0,0,0.65)' },
-    ai:      { bg: 'var(--ds-violet-bg)', bd: 'var(--ds-violet-mid)', fg: 'var(--ds-violet)' },
-    info:    { bg: '#e6f7ff', bd: '#91d5ff', fg: '#1890ff' },
-  }[tone];
-  return (
-    <span
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: 4,
-        fontFamily: "'Roboto', sans-serif", fontSize: 11, fontWeight: 600, lineHeight: '18px',
-        padding: '1px 9px', borderRadius: 1000,
-        background: map.bg, border: `1px solid ${map.bd}`, color: map.fg,
-      }}
-    >
-      {children}
-    </span>
-  );
-}
-
 // ─── Rule card ────────────────────────────────────────────────────────────────
+
+// Separador de 4px entre datos del subtítulo (como en el diseño).
+const MetaDot = () => <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(0,0,0,0.25)', display: 'inline-block', flexShrink: 0 }} />;
 
 function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate }: {
   rule: AutoResponse; onEdit: () => void; onLog: () => void; onDelete: () => void; onToggle: () => void; onDuplicate: () => void;
 }) {
-  const iconBtn = (
-    icon: ReactNode, label: string, onClick: () => void, danger = false,
-  ) => (
-    <Button icon={icon} onClick={onClick} danger={danger} aria-label={label} title={label} />
-  );
-
   return (
     <div
-      className="bg-white border border-[#f0f0f0] border-solid rounded-[12px] w-full transition-shadow duration-150 hover:shadow-[0px_4px_12px_0px_rgba(0,0,0,0.07)]"
-      style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px' }}
+      className="bg-white border border-[#f0f0f0] border-solid rounded-[8px] w-full transition-shadow duration-150 hover:shadow-[0px_2px_8px_0px_rgba(0,0,0,0.06)]"
+      style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16 }}
     >
-      {/* Avatar del potenciador */}
+      {/* Avatar dorado con ícono de cerebro (bx-brain) */}
       <div
-        className="flex items-center justify-center shrink-0 size-[44px] rounded-[12px]"
-        style={{ background: '#FEF3C7', border: '1px solid #FDE68A', color: '#D97706' }}
+        className="flex items-center justify-center shrink-0 size-[36px] rounded-[8px]"
+        style={{ background: '#fffbe6', border: '1px solid #d4b106', color: '#d4b106' }}
       >
-        <BiConversation style={{ fontSize: 22 }} />
+        <BiBrain style={{ fontSize: 22 }} />
       </div>
 
       {/* Nombre + meta */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 15, color: 'rgba(0,0,0,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {rule.name}
         </div>
-        <div style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, color: 'rgba(0,0,0,0.45)', marginTop: 3 }}>
-          Creado por: {RULE_AUTHOR}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap', fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>
+          <span><span style={{ fontWeight: 500 }}>Creado por: </span>{RULE_AUTHOR}</span>
           {rule.published && (
             <>
-              {' · '}Últ. ejecución: {lastRunLabel(rule)}
-              {' · '}
-              <span onClick={onLog} style={{ color: '#1890ff', cursor: 'pointer', fontWeight: 500 }}>Ver ejecuciones</span>
+              <MetaDot />
+              <span><span style={{ fontWeight: 500 }}>Últ. ejecución:</span> {lastRunLabel(rule)}</span>
+              <MetaDot />
+              <span onClick={onLog} style={{ color: '#1890ff', cursor: 'pointer' }}>Ver ejecuciones</span>
             </>
           )}
         </div>
       </div>
 
-      {/* Estado + acciones */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        {!rule.published ? (
-          <Badge tone="neutral">
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#8c8c8c', display: 'inline-block' }} />
-            Borrador
-          </Badge>
-        ) : (
-          <ConfigProvider theme={{ components: { Switch: { colorPrimary: '#52c41a', colorPrimaryHover: '#73d13d' } } }}>
-            {rule.active ? (
-              <Popconfirm
-                title="¿Desactivar esta regla?"
-                description="Dejará de enviar correos hasta que la vuelvas a activar."
-                okText="Sí, desactivar" cancelText="Cancelar"
-                onConfirm={onToggle}
-                okButtonProps={{ size: 'middle' }} cancelButtonProps={{ size: 'middle' }}
-              >
-                <Switch checked checkedChildren="ACTIVO" unCheckedChildren="INACTIVO" />
-              </Popconfirm>
-            ) : (
-              <Switch checked={false} checkedChildren="ACTIVO" unCheckedChildren="INACTIVO" onChange={onToggle} />
-            )}
-          </ConfigProvider>
-        )}
+      {/* Estado: Borrador (pill gris) o toggle verde ACTIVO */}
+      {!rule.published ? (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#f5f5f5', borderRadius: 16, padding: '4px 8px', flexShrink: 0 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', display: 'inline-block' }} />
+          <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>Borrador</span>
+        </span>
+      ) : (
+        <ConfigProvider theme={{ components: { Switch: { colorPrimary: '#52c41a', colorPrimaryHover: '#73d13d' } } }}>
+          {rule.active ? (
+            <Popconfirm
+              title="¿Desactivar esta regla?"
+              description="Dejará de enviar correos hasta que la vuelvas a activar."
+              okText="Sí, desactivar" cancelText="Cancelar"
+              onConfirm={onToggle}
+              okButtonProps={{ size: 'middle' }} cancelButtonProps={{ size: 'middle' }}
+            >
+              <Switch checked checkedChildren="ACTIVO" unCheckedChildren="INACTIVO" style={{ flexShrink: 0 }} />
+            </Popconfirm>
+          ) : (
+            <Switch checked={false} checkedChildren="ACTIVO" unCheckedChildren="INACTIVO" onChange={onToggle} style={{ flexShrink: 0 }} />
+          )}
+        </ConfigProvider>
+      )}
 
-        {rule.published && iconBtn(<BiCopy />, 'Duplicar', onDuplicate)}
-        {iconBtn(<BiEdit />, 'Editar', onEdit)}
+      {/* Acciones: Duplicar (publicadas) · Editar · Eliminar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        {rule.published && <Button icon={<BiCopy />} onClick={onDuplicate} aria-label="Duplicar" title="Duplicar" />}
+        <Button icon={<BiEditAlt />} onClick={onEdit} aria-label="Editar" title="Editar" />
         <Popconfirm
           title="¿Eliminar esta regla?"
           description="Se perderá su configuración y su plantilla de correo."
