@@ -124,7 +124,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate }: {
 }) {
   return (
     <div
-      className="bg-white border border-[#f0f0f0] border-solid rounded-[8px] w-full transition-shadow duration-150 hover:shadow-[0px_2px_8px_0px_rgba(0,0,0,0.06)]"
+      className="bg-white border border-[#f0f0f0] border-solid rounded-[16px] w-full transition-shadow duration-150 hover:shadow-[0px_2px_8px_0px_rgba(0,0,0,0.06)]"
       style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16 }}
     >
       {/* Avatar dorado con ícono de cerebro (bx-brain) */}
@@ -140,7 +140,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate }: {
         <div style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {rule.name}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap', fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>
           <span><span style={{ fontWeight: 500 }}>Creado por: </span>{RULE_AUTHOR}</span>
           {rule.published && (
             <>
