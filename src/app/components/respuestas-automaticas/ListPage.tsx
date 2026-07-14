@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { Dropdown, Button, Switch, Popconfirm, ConfigProvider } from 'antd';
 import { BiPlus, BiEditAlt, BiImport, BiTrash, BiCopy, BiDownload, BiHistory, BiBrain } from 'react-icons/bi';
 import type { MenuProps } from 'antd';
@@ -115,6 +116,9 @@ function AgregarReglaButton({ onNew, onImportJson }: { onNew: () => void; onImpo
 // Separador de 4px entre datos del subtítulo (como en el diseño).
 const MetaDot = () => <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(0,0,0,0.25)', display: 'inline-block', flexShrink: 0 }} />;
 
+// Botón de acción cuadrado uniforme (32×32) — los tres se ven idénticos.
+const ACTION_BTN: CSSProperties = { width: 32, height: 32, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 };
+
 function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate }: {
   rule: AutoResponse; onEdit: () => void; onLog: () => void; onDelete: () => void; onToggle: () => void; onDuplicate: () => void;
 }) {
@@ -173,10 +177,10 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate }: {
         </ConfigProvider>
       )}
 
-      {/* Acciones: Duplicar (publicadas) · Editar · Eliminar */}
+      {/* Acciones: Duplicar (publicadas) · Editar · Eliminar — botones cuadrados 32×32 iguales */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        {rule.published && <Button icon={<BiCopy />} onClick={onDuplicate} aria-label="Duplicar" title="Duplicar" />}
-        <Button icon={<BiEditAlt />} onClick={onEdit} aria-label="Editar" title="Editar" />
+        {rule.published && <Button icon={<BiCopy style={{ fontSize: 16 }} />} onClick={onDuplicate} aria-label="Duplicar" title="Duplicar" style={ACTION_BTN} />}
+        <Button icon={<BiEditAlt style={{ fontSize: 16 }} />} onClick={onEdit} aria-label="Editar" title="Editar" style={ACTION_BTN} />
         <Popconfirm
           title="¿Eliminar esta regla?"
           description="Se perderá su configuración y su plantilla de correo."
@@ -184,7 +188,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate }: {
           okButtonProps={{ danger: true, size: 'middle' }} cancelButtonProps={{ size: 'middle' }}
           onConfirm={onDelete}
         >
-          <Button danger icon={<BiTrash />} aria-label="Eliminar" title="Eliminar" />
+          <Button danger icon={<BiTrash style={{ fontSize: 16 }} />} aria-label="Eliminar" title="Eliminar" style={ACTION_BTN} />
         </Popconfirm>
       </div>
     </div>
@@ -246,33 +250,9 @@ export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onTogg
               <AgregarReglaButton onNew={onNew} onImportJson={onImportJson} />
             )}
             {rules.length > 0 && onExportJson && (
-              <button
-                onClick={onExportJson}
-                className="bg-white border border-[#d9d9d9] border-solid content-stretch cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center justify-center px-[8px] py-[12px] relative rounded-[8px] shrink-0"
-              >
-                <BiDownload style={{ fontSize: 14 }} />
-                <span
-                  className="[word-break:break-word] font-['Roboto:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.85)] text-center whitespace-nowrap"
-                  style={{ fontVariationSettings: '"wdth" 100' }}
-                >
-                  Descargar reglas
-                </span>
-              </button>
+              <Button icon={<BiDownload />} onClick={onExportJson}>Descargar reglas</Button>
             )}
-            {/* Ver logs */}
-            <button
-              onClick={goToFirstRuleLog}
-              className="bg-white border border-[#d9d9d9] border-solid content-stretch cursor-pointer drop-shadow-[0px_2px_0px_rgba(0,0,0,0.02)] flex gap-[8px] items-center justify-center px-[8px] py-[12px] relative rounded-[8px] shrink-0"
-            >
-              <BiHistory style={{ fontSize: 14 }} />
-              <span
-                className="[word-break:break-word] font-['Roboto:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.85)] text-center whitespace-nowrap"
-                style={{ fontVariationSettings: '"wdth" 100' }}
-              >
-                Ver logs
-              </span>
-            </button>
-
+            <Button icon={<BiHistory />} onClick={goToFirstRuleLog}>Ver logs</Button>
           </div>
         </div>
 
