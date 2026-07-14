@@ -242,7 +242,7 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
       <div style={{ display: 'flex', gap: 12 }}>
         {step === 1 && <Button icon={<BiArrowBack />} onClick={() => setStep(0)}>Anterior</Button>}
         {step < totalSteps - 1 ? (
-          <Button type="primary" disabled={!validEmail} onClick={() => setStep(1)}>Siguiente →</Button>
+          <Button type="primary" disabled={!validEmail} onClick={() => setStep(1)}>Siguiente</Button>
         ) : (
           <Button type="primary" icon={<BiSend />} disabled={!canSend} loading={sending} onClick={handleSend}>
             Enviar prueba

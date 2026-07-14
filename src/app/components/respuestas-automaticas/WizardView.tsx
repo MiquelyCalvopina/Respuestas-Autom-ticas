@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button, Input, Select, Segmented, Radio, DatePicker, InputNumber, Popconfirm, Modal } from 'antd';
-import { BiChevronRight, BiPlus, BiCheck, BiTrash, BiCheckCircle, BiGitBranch, BiMove, BiInfoCircle, BiErrorCircle } from 'react-icons/bi';
+import { BiChevronRight, BiChevronLeft, BiPlus, BiCheck, BiTrash, BiCheckCircle, BiGitBranch, BiMove, BiInfoCircle, BiErrorCircle } from 'react-icons/bi';
 import dayjs from 'dayjs';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -1390,7 +1390,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
         justifyContent: 'flex-end', gap: 12, flexShrink: 0,
       }}>
         {current > 0 && (
-          <Button onClick={() => setCurrent(c => c - 1)}>← Anterior</Button>
+          <Button icon={<BiChevronLeft />} onClick={() => setCurrent(c => c - 1)}>Anterior</Button>
         )}
         <Button
           type="primary"
