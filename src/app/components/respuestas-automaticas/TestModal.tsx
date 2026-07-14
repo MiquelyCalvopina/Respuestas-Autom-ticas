@@ -288,7 +288,7 @@ export default function TestModal({ rule, onClose, onSend }: Props) {
           <div style={{ paddingTop: 24 }}>
             <Paragraph strong style={{ marginBottom: 8 }}>¿Qué respuesta simulamos?</Paragraph>
             <Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 16 }}>
-              Los bloques ✦ IA y 📋 Respuestas necesitan datos para generar el correo de prueba.
+              Los bloques de IA y de Respuestas necesitan datos para generar el correo de prueba.
             </Paragraph>
 
             <Segmented

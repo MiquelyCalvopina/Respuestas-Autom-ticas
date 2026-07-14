@@ -136,7 +136,7 @@ const COMPONENT_PALETTE: { type: ComponentType; label: string; sub: string; icon
   { type: 'spacer', label: 'Espaciador', sub: 'Espacio en blanco', icon: <BiExpandVertical /> },
   { type: 'social', label: 'Redes Sociales', sub: 'Íconos con enlaces', icon: <BiShareAlt /> },
   { type: 'responses', label: 'Respuesta', sub: 'Las respuestas del encuestado', icon: <BiListUl /> },
-  { type: 'ai', label: 'Texto adaptativo', sub: 'Texto único por encuestado', icon: '✦' },
+  { type: 'ai', label: 'Texto adaptativo', sub: 'Texto único por encuestado', icon: <BiBoltCircle /> },
   { type: 'button', label: 'Botón', sub: 'Llamado a la acción', icon: <BiLink /> },
 ];
 
@@ -305,7 +305,7 @@ function renderComponentContent(component: Component): React.ReactNode {
         </div>
         {!configured ? (
           <div style={{ textAlign: 'center', padding: '16px 16px' }}>
-            <p style={{ fontSize: 22, margin: '0 0 8px' }}>✦</p>
+            <p style={{ fontSize: 22, margin: '0 0 8px' }}><BiBoltCircle /></p>
             <Text strong style={{ display: 'block', color: component.textColor }}>Texto adaptativo sin objetivo</Text>
             <Text style={{ fontSize: 12, color: component.textColor, opacity: 0.7 }}>Define el objetivo en el panel de configuración.</Text>
           </div>
@@ -702,7 +702,7 @@ function ColumnLayoutPicker({ onPick, onClose }: { onPick: (widths: number[]) =>
     <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 12, marginBottom: 12, background: '#fff' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
         <Text type="secondary" style={{ fontSize: 12 }}>Elige un layout de columnas</Text>
-        <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.45)' }}>✕</button>
+        <button onClick={onClose} aria-label="Cerrar" style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.45)', display: 'inline-flex', alignItems: 'center', fontSize: 16 }}><BiX /></button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
         {COLUMN_LAYOUTS.map(l => (
@@ -978,7 +978,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--ds-violet-bg)', border: '1px solid var(--ds-violet-mid)' }}>
         <Text style={{ fontSize: 12, color: 'var(--ds-violet-dark)' }}>
-          ✦ <strong>{SETUP.empresa}</strong> · {SETUP.industria}
+          <BiBoltCircle style={{ verticalAlign: '-2px' }} /> <strong>{SETUP.empresa}</strong> · {SETUP.industria}
         </Text>
         <Text style={{ fontSize: 12, color: 'var(--ds-violet-dark)', display: 'block', marginTop: 4, opacity: 0.85 }}>
           La IA recibe: datos de contacto, variables de la interacción (incluyendo ticket/caso si se generó) y todas las respuestas del encuestado. Solo usa variables cuyo significado entiende con certeza.
