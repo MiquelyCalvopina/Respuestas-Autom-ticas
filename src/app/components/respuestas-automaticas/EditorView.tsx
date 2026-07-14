@@ -9,7 +9,7 @@ import {
   BiAlignMiddle, BiAlignRight, BiMinus, BiListUl,
   BiBoltCircle, BiMove, BiTable, BiImage, BiLink,
   BiExpandVertical, BiShareAlt, BiInfoCircle, BiErrorCircle, BiHelpCircle,
-  BiUpload, BiSearch, BiChevronDown,
+  BiUpload, BiSearch, BiChevronDown, BiChevronLeft,
 } from 'react-icons/bi';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -1808,17 +1808,18 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
   const TAB_LABEL: Record<'elementos' | 'configuracion' | 'diseno', string> = {
     elementos: 'Elementos', configuracion: 'Configuración', diseno: 'Diseño',
   };
+  // Barra de pestañas arriba del panel lateral (como el Tabs-Top del Figma).
   const tabStrip = (
-    <div style={{ ...SIDEBAR_WIDTH, display: 'flex', borderLeft: '1px solid #f0f0f0' }}>
+    <div style={{ display: 'flex', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
       {(['elementos', 'configuracion', 'diseno'] as const).map(tab => (
         <button
           key={tab}
           onClick={() => setActiveTab(tab)}
           style={{
-            flex: 1, border: 'none', background: 'none', cursor: 'pointer',
+            flex: 1, border: 'none', background: 'none', cursor: 'pointer', padding: '13px 0', marginBottom: -1,
             borderBottom: activeTab === tab ? '2px solid #1890ff' : '2px solid transparent',
             color: activeTab === tab ? '#1890ff' : 'rgba(0,0,0,0.45)',
-            fontSize: 12, fontWeight: activeTab === tab ? 600 : 400,
+            fontFamily: "'Roboto', sans-serif", fontSize: 14, fontWeight: activeTab === tab ? 500 : 400,
           }}
         >
           {TAB_LABEL[tab]}
@@ -1830,42 +1831,31 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
   return (
     <ConfigProvider theme={EDITOR_THEME}>
     <div ref={rootRef} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f5f5f5', overflow: 'hidden', fontFamily: "'Roboto', sans-serif", position: 'relative' }}>
-      {/* Header fila 1 — título + acciones */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '8px 32px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        <button
-          onClick={handleExit}
-          style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13, color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 8 }}
-        >
-          ← Volver al asistente
-        </button>
-        <div style={{ width: 1, height: 16, background: '#d9d9d9' }} />
-        <Text style={{ fontSize: 15, fontWeight: 500, whiteSpace: 'nowrap' }}>Diseño del correo de respuesta</Text>
-        <div style={{ flex: 1 }} />
-        <Button icon={<BiSend />} onClick={() => setShowTestModal(true)} style={{ borderColor: '#13c2c2', color: '#13c2c2', background: '#e6fffb' }}>
-          Enviar prueba
-        </Button>
-        <Tooltip title={!testValidated ? 'Envía una prueba con el diseño actual antes de guardar' : ''}>
-          <Button type="primary" disabled={!testValidated} onClick={handleSaveDesign}>
-            Guardar diseño
-          </Button>
-        </Tooltip>
-      </div>
-
-      {/* Header fila 2 — últ. actualización + toggle de modo + pestañas alineadas con el sidebar */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'stretch', flexShrink: 0, height: 44 }}>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 24, padding: '0 32px', minWidth: 0 }}>
+      {/* Header — una sola fila (Figma): volver + últ. actualización · toggle de modo · CTAs */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+          <button
+            onClick={handleExit}
+            style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}
+          >
+            <BiChevronLeft style={{ fontSize: 16 }} /> Volver al wizard
+          </button>
+          <div style={{ width: 1, height: 20, background: '#f0f0f0' }} />
           <Text type="secondary" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
             Últ. actualización: {formatDate(draft.blocksUpdatedAt)}
           </Text>
-          <div style={{ flex: 1 }} />
-          <Segmented
-            value={mode}
-            onChange={v => handleModeChange(v as 'visual' | 'html')}
-            options={[{ label: 'Editor visual', value: 'visual' }, { label: 'Editor HTML', value: 'html' }]}
-          />
-          <div style={{ flex: 1 }} />
         </div>
-        {mode === 'visual' && tabStrip}
+        <Segmented
+          value={mode}
+          onChange={v => handleModeChange(v as 'visual' | 'html')}
+          options={[{ label: 'Editor visual', value: 'visual' }, { label: 'Editor HTML', value: 'html' }]}
+        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <Button icon={<BiSend />} onClick={() => setShowTestModal(true)}>Enviar prueba</Button>
+          <Tooltip title={!testValidated ? 'Envía una prueba con el diseño actual antes de guardar' : ''}>
+            <Button type="primary" disabled={!testValidated} onClick={handleSaveDesign}>Guardar diseño</Button>
+          </Tooltip>
+        </div>
       </div>
 
       {mode === 'html' ? (
@@ -1941,8 +1931,9 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
               </div>
             </div>
 
-            {/* Sidebar */}
+            {/* Sidebar — pestañas arriba (Elementos/Configuración/Diseño) + contenido */}
             <div style={{ ...SIDEBAR_WIDTH, background: '#fff', borderLeft: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+              {tabStrip}
               <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 16px' }}>
                 {activeTab === 'elementos' && (
                   <div id="palette-section">
