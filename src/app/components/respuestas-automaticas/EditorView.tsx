@@ -9,7 +9,7 @@ import {
   BiAlignMiddle, BiAlignRight, BiMinus, BiListUl,
   BiBoltCircle, BiMove, BiTable, BiImage, BiLink,
   BiExpandVertical, BiShareAlt, BiInfoCircle, BiErrorCircle, BiHelpCircle,
-  BiUpload, BiSearch, BiChevronDown, BiChevronLeft,
+  BiUpload, BiSearch, BiChevronDown, BiChevronLeft, BiTrash,
 } from 'react-icons/bi';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -244,28 +244,32 @@ function renderRowsToHtml(rows: Row[]): string {
 
 // ─── Overlay de acciones (drag + insertar + duplicar + eliminar) ─────────────
 
-function ToolbarBtn({ icon, onClick, title }: { icon: React.ReactNode; onClick: (e: React.MouseEvent) => void; title: string }) {
-  return (
-    <Tooltip title={title}>
-      <Button type="text" size="small" onClick={e => { e.stopPropagation(); onClick(e); }} style={{ height: 22, width: 22, padding: 0, minWidth: 0 }}>
-        {icon}
-      </Button>
-    </Tooltip>
-  );
-}
 
 function ActionOverlay({ dragHandleRef, onInsertAfter, onDuplicate, onRemove }: {
   dragHandleRef: React.Ref<HTMLDivElement>;
   onInsertAfter: () => void; onDuplicate: () => void; onRemove: () => void;
 }) {
+  const ctl: React.CSSProperties = {
+    background: '#1890ff', border: 'none', color: '#fff', cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    width: 26, height: 26, borderRadius: 6, pointerEvents: 'auto',
+    boxShadow: '0 2px 6px rgba(24,144,255,0.35)',
+  };
   return (
-    <div className="blk-toolbar" style={{ transition: 'opacity .15s', position: 'absolute', top: 4, right: 4, zIndex: 5, display: 'flex', gap: 4, background: 'rgba(0,0,0,0.75)', borderRadius: 4, padding: '4px 8px' }}>
-      <div ref={dragHandleRef} style={{ height: 22, width: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'grab' }}>
-        <BiMove style={{ color: 'white', fontSize: 14 }} />
+    <div className="blk-toolbar" style={{ transition: 'opacity .15s', position: 'absolute', inset: 0, zIndex: 6, pointerEvents: 'none' }}>
+      {/* Mover (drag) — borde izquierdo, centrado vertical */}
+      <div ref={dragHandleRef} title="Mover" style={{ ...ctl, position: 'absolute', left: -13, top: '50%', transform: 'translateY(-50%)', cursor: 'grab' }}>
+        <BiMove style={{ fontSize: 15 }} />
       </div>
-      <ToolbarBtn title="Insertar debajo" icon={<BiPlus style={{ color: 'white', fontSize: 14 }} />} onClick={onInsertAfter} />
-      <ToolbarBtn title="Duplicar" icon={<BiCopy style={{ color: 'white', fontSize: 14 }} />} onClick={onDuplicate} />
-      <ToolbarBtn title="Eliminar" icon={<BiX style={{ color: 'white', fontSize: 14 }} />} onClick={onRemove} />
+      {/* Insertar debajo — arriba centro (círculo) */}
+      <button onClick={onInsertAfter} title="Insertar" style={{ ...ctl, position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)', borderRadius: '50%' }}>
+        <BiPlus style={{ fontSize: 16 }} />
+      </button>
+      {/* Duplicar + Eliminar — esquina superior derecha */}
+      <div style={{ position: 'absolute', top: -13, right: 0, display: 'flex', gap: 4 }}>
+        <button onClick={onDuplicate} title="Duplicar" style={ctl}><BiCopy style={{ fontSize: 14 }} /></button>
+        <button onClick={onRemove} title="Eliminar" style={ctl}><BiTrash style={{ fontSize: 14 }} /></button>
+      </div>
     </div>
   );
 }
@@ -1781,8 +1785,8 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
 
   const cardMaxWidth = 6 * draft.layout.widthPercent;
   const cardStyle: React.CSSProperties = draft.layout.boxed
-    ? { maxWidth: cardMaxWidth, margin: '0 auto', background: '#fff', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', overflow: 'hidden', minHeight: 180 }
-    : { width: '100%', background: '#fff', overflow: 'hidden', minHeight: 180 };
+    ? { maxWidth: cardMaxWidth, margin: '0 auto', background: '#fff', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', overflow: 'visible', minHeight: 180 }
+    : { width: '100%', background: '#fff', overflow: 'visible', minHeight: 180 };
 
   const subjectBar = (
     <div style={{ maxWidth: cardMaxWidth, margin: '0 auto 12px', display: 'flex', alignItems: 'center', gap: 12, padding: '4px 16px', background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0' }}>
