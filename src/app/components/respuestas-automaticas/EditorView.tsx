@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   App, Button, Input, Card, Typography, Divider, Switch, Tag,
-  InputNumber, Radio, Checkbox, Tooltip, Segmented, Modal, ConfigProvider, Select, Slider,
+  InputNumber, Radio, Checkbox, Tooltip, Segmented, Modal, ConfigProvider, Select, Slider, ColorPicker, Popover,
 } from 'antd';
 import type { InputRef } from 'antd';
 import {
@@ -10,6 +10,7 @@ import {
   BiBoltCircle, BiMove, BiTable, BiImage, BiLink,
   BiExpandVertical, BiShareAlt, BiInfoCircle, BiErrorCircle, BiHelpCircle,
   BiUpload, BiSearch, BiChevronDown, BiChevronLeft, BiTrash,
+  BiBold, BiItalic, BiSmile, BiCodeCurly,
 } from 'react-icons/bi';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -274,6 +275,191 @@ function ActionOverlay({ dragHandleRef, onInsertAfter, onDuplicate, onRemove }: 
   );
 }
 
+// ─── Editor de texto inline flotante (bloques Texto/Título) ──────────────────
+
+const FONT_OPTIONS = ['Roboto', 'Arial', 'Georgia', 'Times New Roman', 'Verdana', 'Courier New'];
+const TEXT_SIZE_OPTIONS = [11, 12, 13, 14, 16, 18, 20, 24, 28, 32];
+const EMOJI_LIST = ['😀', '😊', '😍', '🙌', '👍', '🎉', '❤️', '🔥', '✅', '⭐', '😅', '🤔', '👏', '💡', '📌', '🚀', '🙏', '😉', '💬', '📧'];
+
+function wrapSelectionWithStyle(cssText: string) {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+  const range = sel.getRangeAt(0);
+  const text = range.toString();
+  if (!text) return;
+  const span = document.createElement('span');
+  span.style.cssText = cssText;
+  span.textContent = text;
+  range.deleteContents();
+  range.insertNode(span);
+  range.setStartAfter(span);
+  range.setEndAfter(span);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function EmojiGrid({ onPick }: { onPick: (e: string) => void }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 2, width: 184 }}>
+      {EMOJI_LIST.map(e => (
+        <button
+          key={e} onMouseDown={ev => ev.preventDefault()} onClick={() => onPick(e)}
+          style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 18, padding: 4, borderRadius: 4, lineHeight: 1 }}
+        >
+          {e}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function VariableList({ onPick }: { onPick: (v: string) => void }) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, width: 220 }}>
+      {VARIABLES.map(v => (
+        <Tag
+          key={v} onMouseDown={ev => ev.preventDefault()} onClick={() => onPick(v)}
+          style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 12, margin: 0 }} color="blue"
+        >
+          {`{{${v}}}`}
+        </Tag>
+      ))}
+    </div>
+  );
+}
+
+function FloatingTextToolbar({ onBold, onItalic, color, onColor, fontSize, onFontSize, fontFamily, onFontFamily, onEmoji, onVariable }: {
+  onBold: () => void; onItalic: () => void;
+  color: string; onColor: (c: string) => void;
+  fontSize: number; onFontSize: (n: number) => void;
+  fontFamily: string; onFontFamily: (f: string) => void;
+  onEmoji: (e: string) => void; onVariable: (v: string) => void;
+}) {
+  const btn: React.CSSProperties = {
+    background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    width: 28, height: 28, borderRadius: 6, flexShrink: 0,
+  };
+  const prevent = (e: React.MouseEvent) => e.preventDefault();
+  const sep = <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />;
+
+  return (
+    <div style={{
+      position: 'absolute', bottom: '100%', left: 0, marginBottom: 8, zIndex: 20,
+      background: '#1890ff', borderRadius: 8, padding: '4px 6px', display: 'flex', alignItems: 'center', gap: 4,
+      boxShadow: '0 4px 14px rgba(24,144,255,0.4)', pointerEvents: 'auto', whiteSpace: 'nowrap',
+    }}>
+      <button title="Negrita" style={btn} onMouseDown={prevent} onClick={onBold}><BiBold style={{ fontSize: 16 }} /></button>
+      <button title="Itálica" style={btn} onMouseDown={prevent} onClick={onItalic}><BiItalic style={{ fontSize: 16 }} /></button>
+      {sep}
+      <ColorPicker value={color} disabledAlpha onChange={c => onColor(c.toHexString())}>
+        <button title="Color de texto" style={{ ...btn, width: 24 }} onMouseDown={prevent}>
+          <span style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.7)', background: color, display: 'block' }} />
+        </button>
+      </ColorPicker>
+      {sep}
+      <Select
+        size="small" value={fontSize} onChange={onFontSize} style={{ width: 68 }}
+        options={TEXT_SIZE_OPTIONS.map(n => ({ value: n, label: `${n}px` }))}
+      />
+      <Select
+        size="small" value={fontFamily} onChange={onFontFamily} style={{ width: 116 }}
+        options={FONT_OPTIONS.map(f => ({ value: f, label: f }))}
+      />
+      {sep}
+      <Popover trigger="click" placement="top" content={<EmojiGrid onPick={onEmoji} />}>
+        <button title="Emoji" style={btn} onMouseDown={prevent}><BiSmile style={{ fontSize: 17 }} /></button>
+      </Popover>
+      <Popover trigger="click" placement="top" content={<VariableList onPick={onVariable} />}>
+        <button title="Insertar variable" style={btn} onMouseDown={prevent}><BiCodeCurly style={{ fontSize: 16 }} /></button>
+      </Popover>
+    </div>
+  );
+}
+
+function TextInlineEditor({ component, align, onUpdate }: { component: TextBlock | TitleBlock; align: TextAlign; onUpdate: (c: Component) => void }) {
+  const textRef = useRef<HTMLDivElement>(null);
+  const savedRangeRef = useRef<Range | null>(null);
+  const [editingText, setEditingText] = useState(false);
+  const [toolbarColor, setToolbarColor] = useState('#000000');
+  const [toolbarSize, setToolbarSize] = useState(component.type === 'title' ? 21 : 14);
+  const [toolbarFont, setToolbarFont] = useState('Roboto');
+
+  useEffect(() => {
+    const el = textRef.current;
+    if (!el) return;
+    const raw = component.type === 'title' ? component.text : component.content;
+    el.innerHTML = renderVars(raw);
+    // Solo se sincroniza al montar (al seleccionar el bloque) — mientras se edita, el DOM manda.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function saveSelection() {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || !textRef.current) return;
+    const range = sel.getRangeAt(0);
+    if (!textRef.current.contains(range.commonAncestorContainer)) return;
+    savedRangeRef.current = range.cloneRange();
+  }
+
+  function restoreSelection() {
+    const el = textRef.current;
+    if (!el) return;
+    el.focus();
+    if (!savedRangeRef.current) return;
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(savedRangeRef.current);
+  }
+
+  function syncFromDom() {
+    const el = textRef.current;
+    if (!el) return;
+    if (component.type === 'title') onUpdate({ ...component, text: el.innerHTML });
+    else onUpdate({ ...component, content: el.innerHTML });
+  }
+
+  function withSelection(action: () => void) {
+    restoreSelection();
+    action();
+    syncFromDom();
+    saveSelection();
+  }
+
+  const styleBase: React.CSSProperties = component.type === 'title'
+    ? { fontFamily: "'Roboto', sans-serif", fontWeight: 700, fontSize: 21, color: 'rgba(0,0,0,0.85)', letterSpacing: -0.5, padding: '0 32px', margin: 0, textAlign: align, outline: 'none' }
+    : { fontFamily: "'Roboto', sans-serif", fontSize: 13.5, lineHeight: 1.75, color: 'rgba(0,0,0,0.65)', padding: '0 32px', margin: 0, whiteSpace: 'pre-line', textAlign: align, outline: 'none' };
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {editingText && (
+        <FloatingTextToolbar
+          onBold={() => withSelection(() => document.execCommand('bold'))}
+          onItalic={() => withSelection(() => document.execCommand('italic'))}
+          color={toolbarColor}
+          onColor={c => { setToolbarColor(c); withSelection(() => wrapSelectionWithStyle(`color:${c}`)); }}
+          fontSize={toolbarSize}
+          onFontSize={n => { setToolbarSize(n); withSelection(() => wrapSelectionWithStyle(`font-size:${n}px`)); }}
+          fontFamily={toolbarFont}
+          onFontFamily={f => { setToolbarFont(f); withSelection(() => wrapSelectionWithStyle(`font-family:'${f}'`)); }}
+          onEmoji={e => withSelection(() => document.execCommand('insertText', false, e))}
+          onVariable={v => withSelection(() => document.execCommand('insertText', false, `{{${v}}}`))}
+        />
+      )}
+      <div
+        ref={textRef}
+        contentEditable
+        suppressContentEditableWarning
+        onFocus={() => setEditingText(true)}
+        onMouseUp={saveSelection}
+        onKeyUp={saveSelection}
+        onInput={syncFromDom}
+        style={styleBase}
+      />
+    </div>
+  );
+}
+
 // ─── Componente en el canvas ──────────────────────────────────────────────────
 
 const ROW_ITEM = 'row-item';
@@ -440,10 +626,11 @@ function renderComponentContent(component: Component): React.ReactNode {
   return null;
 }
 
-function ComponentBox({ component, index, columnId, selected, onSelect, onRemove, onDuplicate, onInsertAfter, moveComponent }: {
+function ComponentBox({ component, index, columnId, selected, onSelect, onRemove, onDuplicate, onInsertAfter, moveComponent, onUpdate }: {
   component: Component; index: number; columnId: string; selected: boolean;
   onSelect: () => void; onRemove: () => void; onDuplicate: () => void; onInsertAfter: () => void;
   moveComponent: (from: number, to: number) => void;
+  onUpdate: (c: Component) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
@@ -491,7 +678,9 @@ function ComponentBox({ component, index, columnId, selected, onSelect, onRemove
         onClick={e => { e.stopPropagation(); onSelect(); }}
         style={{ cursor: 'pointer', ...pad, background: bg, border, boxShadow: selected ? 'inset 0 0 0 2px #1890ff' : 'none', transition: 'box-shadow .1s' }}
       >
-        {renderComponentContent(component)}
+        {selected && (component.type === 'text' || component.type === 'title')
+          ? <TextInlineEditor component={component} align={d.textAlign} onUpdate={onUpdate} />
+          : renderComponentContent(component)}
       </div>
     </div>
   );
@@ -545,7 +734,7 @@ function AddElementDropZone({ onDropComponent, children }: { onDropComponent: (t
 
 // ─── Fila en el canvas ────────────────────────────────────────────────────────
 
-function RowBox({ row, index, selected, onSelectRow, selectedComponentId, onSelectComponent, onRemoveRow, onDuplicateRow, onInsertRowAfter, moveRow, moveComponentInColumn, onAddComponentToColumn, removeComponent, duplicateComponent, insertComponentAfter }: {
+function RowBox({ row, index, selected, onSelectRow, selectedComponentId, onSelectComponent, onRemoveRow, onDuplicateRow, onInsertRowAfter, moveRow, moveComponentInColumn, onAddComponentToColumn, removeComponent, duplicateComponent, insertComponentAfter, onUpdateComponent }: {
   row: Row; index: number; selected: boolean;
   onSelectRow: () => void;
   selectedComponentId: string | null;
@@ -557,6 +746,7 @@ function RowBox({ row, index, selected, onSelectRow, selectedComponentId, onSele
   removeComponent: (columnId: string, componentId: string) => void;
   duplicateComponent: (columnId: string, componentId: string) => void;
   insertComponentAfter: (columnId: string, atIndex: number) => void;
+  onUpdateComponent: (columnId: string, comp: Component) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
@@ -615,6 +805,7 @@ function RowBox({ row, index, selected, onSelectRow, selectedComponentId, onSele
               duplicateComponent={componentId => duplicateComponent(col.id, componentId)}
               insertComponentAfter={atIndex => insertComponentAfter(col.id, atIndex)}
               moveComponent={(from, to) => moveComponentInColumn(col.id, from, to)}
+              onUpdateComponent={comp => onUpdateComponent(col.id, comp)}
             />
           ))}
         </div>
@@ -625,7 +816,7 @@ function RowBox({ row, index, selected, onSelectRow, selectedComponentId, onSele
 
 // ─── Columna dentro de una fila — también acepta drops de la paleta ──────────
 
-function ColumnBox({ column, onAddComponentToColumn, selectedComponentId, onSelectComponent, removeComponent, duplicateComponent, insertComponentAfter, moveComponent }: {
+function ColumnBox({ column, onAddComponentToColumn, selectedComponentId, onSelectComponent, removeComponent, duplicateComponent, insertComponentAfter, moveComponent, onUpdateComponent }: {
   column: Column;
   onAddComponentToColumn: (type: ComponentType) => void;
   selectedComponentId: string | null;
@@ -634,6 +825,7 @@ function ColumnBox({ column, onAddComponentToColumn, selectedComponentId, onSele
   duplicateComponent: (componentId: string) => void;
   insertComponentAfter: (atIndex: number) => void;
   moveComponent: (from: number, to: number) => void;
+  onUpdateComponent: (comp: Component) => void;
 }) {
   const dropRef = useRef<HTMLDivElement>(null);
   const [{ isOver }, drop] = useDrop({
@@ -665,6 +857,7 @@ function ColumnBox({ column, onAddComponentToColumn, selectedComponentId, onSele
             onDuplicate={() => duplicateComponent(comp.id)}
             onInsertAfter={() => insertComponentAfter(i)}
             moveComponent={moveComponent}
+            onUpdate={onUpdateComponent}
           />
         ))
       )}
@@ -738,69 +931,94 @@ function ColumnsAndSizesField({ row, onChange }: { row: Row; onChange: (widths: 
   );
 }
 
-// ─── Selector de color propio (nunca la ventana nativa del SO) ───────────────
+// ─── Selector de color propio — un solo input (Figma Ajustes 121-151, node 1466-54729) ──
+// La "bolita" abre el color picker de alta gama de AntD; el texto al lado acepta hex libre.
 
 const COLOR_PRESETS = ['#1890ff', '#7C3AED', '#059669', '#DC2626', '#0F172A', '#D97706', '#0D9488', '#ffffff', '#000000', '#f5f5f5'];
 
-function ColorPickerField({ value, onChange, allowTransparent, full }: { value: string; onChange: (c: string) => void; allowTransparent?: boolean; full?: boolean }) {
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDocMouseDown(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener('mousedown', onDocMouseDown);
-    return () => document.removeEventListener('mousedown', onDocMouseDown);
-  }, [open]);
-
-  const swatch = (
-    <span style={{
-      width: 20, height: 20, borderRadius: 4, flexShrink: 0, border: '1px solid rgba(0,0,0,0.1)',
-      background: value === 'transparent' ? 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 8px 8px' : value,
-    }} />
-  );
+function ColorPickerField({ value, onChange, allowTransparent }: { value: string; onChange: (c: string) => void; allowTransparent?: boolean }) {
+  const isTransparent = value === 'transparent';
 
   return (
-    <div ref={wrapRef} style={{ position: 'relative', width: full ? '100%' : undefined, flexShrink: 0 }}>
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: full ? '100%' : 32, height: 32, borderRadius: 8, border: '1px solid #d9d9d9', cursor: 'pointer',
-          padding: full ? '0 10px' : 0, display: 'flex', alignItems: 'center', justifyContent: full ? 'flex-start' : 'center', gap: 12, background: '#fff', boxSizing: 'border-box',
-        }}
-      >
-        {swatch}
-        {full && (
-          <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.65)', fontFamily: "'JetBrains Mono', monospace" }}>
-            {value === 'transparent' ? 'Transparente' : value}
-          </span>
-        )}
-      </button>
-      {open && (
-        <div style={{ position: 'absolute', top: 36, left: 0, zIndex: 30, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 12, width: 200 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginBottom: 12 }}>
-            {COLOR_PRESETS.map(c => (
-              <button
-                key={c} type="button" onClick={() => { onChange(c); setOpen(false); }}
-                style={{ width: 26, height: 26, borderRadius: 4, background: c, border: '1px solid #f0f0f0', cursor: 'pointer', padding: 0 }}
-              />
-            ))}
-          </div>
-          <Input
-            placeholder="#RRGGBB"
-            value={value === 'transparent' ? '' : value}
-            onChange={e => onChange(e.target.value)}
-          />
-          {allowTransparent && (
-            <Button block style={{ marginTop: 12 }} onClick={() => { onChange('transparent'); setOpen(false); }}>
-              Transparente
-            </Button>
-          )}
-        </div>
+    <div style={{ display: 'flex', gap: 16, alignItems: 'center', width: '100%' }}>
+      {allowTransparent && (
+        <button
+          type="button"
+          onClick={() => onChange(isTransparent ? '#ffffff' : 'transparent')}
+          style={{
+            flex: 1, height: 32, borderRadius: 8, cursor: 'pointer', background: '#fff',
+            border: isTransparent ? '1px solid #1890ff' : '1px solid #f0f0f0',
+            color: isTransparent ? '#1890ff' : 'rgba(0,0,0,0.45)',
+            fontSize: 14, fontFamily: "'Roboto', sans-serif",
+          }}
+        >
+          Transparente
+        </button>
       )}
+      <div style={{
+        border: '1px solid #f0f0f0', borderRadius: 8, height: 32, boxSizing: 'border-box',
+        padding: '0 8px', display: 'flex', alignItems: 'center', gap: 8,
+        background: '#fff', flex: 1, minWidth: 100,
+      }}>
+        <ColorPicker
+          value={isTransparent ? '#ffffff' : value}
+          disabledAlpha
+          presets={[{ label: 'Recomendados', colors: COLOR_PRESETS }]}
+          onChange={c => onChange(c.toHexString())}
+        >
+          <span
+            title="Elegir color"
+            style={{
+              width: 20, height: 20, borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
+              border: '1px solid rgba(0,0,0,0.3)',
+              background: isTransparent
+                ? 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 8px 8px'
+                : value,
+            }}
+          />
+        </ColorPicker>
+        <input
+          value={isTransparent ? '' : value}
+          placeholder="#RRGGBB"
+          onChange={e => onChange(e.target.value)}
+          style={{
+            flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent',
+            fontSize: 14, color: 'rgba(0,0,0,0.85)', fontFamily: "'Roboto', sans-serif", padding: 0,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Alineación — segmentado de 3 iconos (Figma Ajustes 121-151, node 1452-52089) ──
+
+const ALIGN_OPTIONS: { value: TextAlign; icon: React.ReactNode }[] = [
+  { value: 'left', icon: <BiAlignLeft /> },
+  { value: 'center', icon: <BiAlignMiddle /> },
+  { value: 'right', icon: <BiAlignRight /> },
+];
+
+function AlignmentField({ value, onChange }: { value: TextAlign; onChange: (v: TextAlign) => void }) {
+  return (
+    <div style={{ background: 'rgba(0,0,0,0.04)', padding: 4, borderRadius: 8, display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+      {ALIGN_OPTIONS.map(opt => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          style={{
+            flex: 1, background: value === opt.value ? '#fff' : 'transparent',
+            boxShadow: value === opt.value ? '0px 2px 8px 0px rgba(0,0,0,0.05)' : 'none',
+            borderRadius: 6, border: 'none', cursor: 'pointer', padding: '4px 0',
+            color: value === opt.value ? '#1890ff' : 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+            transition: 'all .15s',
+          }}
+        >
+          {opt.icon}
+        </button>
+      ))}
     </div>
   );
 }
@@ -861,17 +1079,23 @@ function BorderFields({ borderColor, borderWidth, borderStyle, onUpdate }: {
   onUpdate: (p: { borderColor?: string; borderWidth?: number; borderStyle?: 'solid' | 'dotted' | 'none' }) => void;
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <FieldLabel>Borde</FieldLabel>
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+      <div>
+        <FieldLabel>Color del borde</FieldLabel>
         <ColorPickerField value={borderColor} onChange={c => onUpdate({ borderColor: c })} />
-        <InputNumber min={0} value={borderWidth} onChange={v => onUpdate({ borderWidth: v ?? 0 })} style={{ flex: 1 }} addonAfter="px" />
       </div>
-      <Radio.Group value={borderStyle} onChange={e => onUpdate({ borderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
-        <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
-        <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
-        <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
-      </Radio.Group>
+      <div>
+        <FieldLabel>Grosor del borde</FieldLabel>
+        <InputNumber min={0} value={borderWidth} onChange={v => onUpdate({ borderWidth: v ?? 0 })} style={{ width: '100%' }} addonAfter="px" />
+      </div>
+      <div>
+        <FieldLabel>Estilo del borde</FieldLabel>
+        <Radio.Group value={borderStyle} onChange={e => onUpdate({ borderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
+          <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
+          <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
+          <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
+        </Radio.Group>
+      </div>
     </div>
   );
 }
@@ -879,7 +1103,7 @@ function PaddingGrid({ design, onUpdate }: { design: { paddingTop: number; paddi
   return (
     <div>
       <FieldLabel>Relleno</FieldLabel>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         <PaddingField label="Arriba" value={design.paddingTop} onChange={v => onUpdate({ paddingTop: v })} />
         <PaddingField label="Abajo" value={design.paddingBottom} onChange={v => onUpdate({ paddingBottom: v })} />
         <PaddingField label="Izquierda" value={design.paddingLeft ?? 0} onChange={v => onUpdate({ paddingLeft: v })} />
@@ -892,7 +1116,7 @@ function PaddingGrid({ design, onUpdate }: { design: { paddingTop: number; paddi
 // Tab "Configuración" — layout global del correo (fijo, no depende de la selección)
 function LayoutConfigFields({ layout, onUpdate }: { layout: EmailLayoutConfig; onUpdate: (p: Partial<EmailLayoutConfig>) => void }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
       <div>
         <FieldLabel>Ancho del contenido</FieldLabel>
         <InputNumber value={layout.widthPercent} min={10} max={100} addonAfter="%" onChange={v => onUpdate({ widthPercent: v ?? 100 })} style={{ width: '100%' }} />
@@ -906,7 +1130,7 @@ function LayoutConfigFields({ layout, onUpdate }: { layout: EmailLayoutConfig; o
       </div>
       <div>
         <FieldLabel>Color de fondo</FieldLabel>
-        <ColorPickerField value={layout.bgColor} onChange={c => onUpdate({ bgColor: c })} allowTransparent full />
+        <ColorPickerField value={layout.bgColor} onChange={c => onUpdate({ bgColor: c })} />
       </div>
     </div>
   );
@@ -921,18 +1145,21 @@ function BlockFields<T extends {
 }>({ design, onUpdate, excludeAlign }: { design: T; onUpdate: (p: Partial<T>) => void; excludeAlign?: boolean }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div>
-        <FieldLabel>Color de fondo</FieldLabel>
-        <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent full />
-      </div>
-      {!excludeAlign && (
+      {excludeAlign ? (
         <div>
-          <FieldLabel>Alineación</FieldLabel>
-          <Radio.Group value={design.textAlign ?? 'left'} onChange={e => onUpdate({ textAlign: e.target.value } as Partial<T>)} style={{ display: 'flex', width: '100%' }}>
-            <Radio.Button value="left" style={{ flex: 1, textAlign: 'center' }}><BiAlignLeft /></Radio.Button>
-            <Radio.Button value="center" style={{ flex: 1, textAlign: 'center' }}><BiAlignMiddle /></Radio.Button>
-            <Radio.Button value="right" style={{ flex: 1, textAlign: 'center' }}><BiAlignRight /></Radio.Button>
-          </Radio.Group>
+          <FieldLabel>Color de fondo</FieldLabel>
+          <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent />
+        </div>
+      ) : (
+        <div style={{ display: 'flex', gap: 16 }}>
+          <div style={{ flex: 2 }}>
+            <FieldLabel>Color de fondo</FieldLabel>
+            <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent />
+          </div>
+          <div style={{ flex: 1 }}>
+            <FieldLabel>Alineación</FieldLabel>
+            <AlignmentField value={design.textAlign ?? 'left'} onChange={v => onUpdate({ textAlign: v } as Partial<T>)} />
+          </div>
         </div>
       )}
       <BorderFields borderColor={design.borderColor ?? '#000000'} borderWidth={design.borderWidth ?? 0} borderStyle={design.borderStyle ?? 'none'} onUpdate={onUpdate} />
@@ -1069,7 +1296,7 @@ function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Co
       <SubSectionHeading>Tarjeta</SubSectionHeading>
       <div>
         <FieldLabel tooltip="El color de fondo de toda la tarjeta que envuelve el texto generado.">Fondo</FieldLabel>
-        <ColorPickerField value={block.textBgColor} onChange={c => onUpdate({ ...block, textBgColor: c })} allowTransparent full />
+        <ColorPickerField value={block.textBgColor} onChange={c => onUpdate({ ...block, textBgColor: c })} allowTransparent />
       </div>
       <div>
         <FieldLabel>Color del borde</FieldLabel>
@@ -1338,7 +1565,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
           </div>
           <div style={{ flex: 1 }}>
             <FieldLabel>Fondo de la fila</FieldLabel>
-            <ColorPickerField value={block.questionBg} onChange={c => onUpdate({ ...block, questionBg: c })} allowTransparent full />
+            <ColorPickerField value={block.questionBg} onChange={c => onUpdate({ ...block, questionBg: c })} allowTransparent />
           </div>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
@@ -1360,7 +1587,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
           </div>
           <div style={{ flex: 1 }}>
             <FieldLabel>Fondo de la respuesta</FieldLabel>
-            <ColorPickerField value={block.answerBg} onChange={c => onUpdate({ ...block, answerBg: c })} allowTransparent full />
+            <ColorPickerField value={block.answerBg} onChange={c => onUpdate({ ...block, answerBg: c })} allowTransparent />
           </div>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
@@ -1502,8 +1729,8 @@ function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUp
         </div>
         <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>El enlace puede incluir una variable para llevar a una URL distinta por destinatario.</Text>
       </div>
-      <div><FieldLabel>Color de fondo</FieldLabel><ColorPickerField value={block.bgColor} onChange={c => onUpdate({ ...block, bgColor: c })} full /></div>
-      <div><FieldLabel>Color de texto</FieldLabel><ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} full /></div>
+      <div><FieldLabel>Color de fondo</FieldLabel><ColorPickerField value={block.bgColor} onChange={c => onUpdate({ ...block, bgColor: c })} /></div>
+      <div><FieldLabel>Color de texto</FieldLabel><ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} /></div>
     </div>
   );
 }
@@ -1920,6 +2147,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
                         removeComponent={(columnId, componentId) => removeComponent(row.id, columnId, componentId)}
                         duplicateComponent={(columnId, componentId) => duplicateComponent(row.id, columnId, componentId)}
                         insertComponentAfter={(columnId, atIndex) => insertComponentAfter(row.id, columnId, atIndex)}
+                        onUpdateComponent={(columnId, comp) => updateComponent(row.id, columnId, comp)}
                       />
                     ))}
                     <AddElementDropZone onDropComponent={addComponentRow}>
