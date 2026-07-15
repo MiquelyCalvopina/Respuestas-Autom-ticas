@@ -64,6 +64,8 @@ function emptyRule(): AutoResponse {
     sender: 'cx@hircasa.com',
     recipientVariable: 'correo_electronico',
     replyTo: '',
+    cc: [],
+    bcc: [],
     subject: '',
     rows: [],
     layout: { widthPercent: 100, boxed: true, bgColor: '#f5f5f5' },

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button, Input, Select, Segmented, Radio, DatePicker, InputNumber, Popconfirm, Modal, Tooltip } from 'antd';
-import { BiChevronRight, BiChevronLeft, BiPlus, BiCheck, BiTrash, BiCheckCircle, BiGitBranch, BiMove, BiInfoCircle } from 'react-icons/bi';
+import { BiChevronRight, BiChevronLeft, BiPlus, BiCheck, BiTrash, BiCheckCircle, BiGitBranch, BiMove, BiInfoCircle, BiAt, BiEditAlt } from 'react-icons/bi';
 import dayjs from 'dayjs';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -1165,27 +1165,38 @@ function Step2({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
 
 // ─── Step 3 — Mensaje ─────────────────────────────────────────────────────────
 
-function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-      <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', width: 100, flexShrink: 0 }}>{label}</span>
-      <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)' }}>{value}</span>
-    </div>
-  );
-}
-
 function VariablePill({ value }: { value: string }) {
   const isQuestion = value.startsWith('pregunta:');
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 4,
-      background: 'var(--ds-violet-bg)', color: 'var(--ds-violet)',
-      border: '1px solid var(--ds-violet-mid)', borderRadius: 100,
-      padding: '1px 10px', fontFamily: isQuestion ? "'Roboto', sans-serif" : "'JetBrains Mono', monospace", fontSize: 12,
+      background: '#e6f7ff', color: '#1890ff',
+      border: '1px solid #91d5ff', borderRadius: 100,
+      padding: '4px 8px', fontFamily: "'Roboto', sans-serif", fontSize: 14,
       maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
     }}>
-      {isQuestion ? describeRecipientSource(value) : `@${value}`}
+      <BiAt style={{ fontSize: 14, flexShrink: 0 }} />
+      {isQuestion ? describeRecipientSource(value) : value}
     </span>
+  );
+}
+
+// ─── Fila de campo — label fijo a la izquierda + control a la derecha ────────
+
+function FieldRow({ label, required, tooltip, children }: { label: string; required?: boolean; tooltip?: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, width: 150, flexShrink: 0 }}>
+        {required && <span style={{ color: '#ff4d4f', fontSize: 14 }}>*</span>}
+        <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.45)' }}>{label}</span>
+        {tooltip && (
+          <Tooltip title={tooltip}>
+            <BiInfoCircle style={{ fontSize: 14, color: 'rgba(0,0,0,0.45)', cursor: 'help' }} />
+          </Tooltip>
+        )}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
+    </div>
   );
 }
 
@@ -1196,11 +1207,10 @@ function formatTemplateDate(iso: string | null): string {
 }
 
 function Step3({ rule, onChange, onOpenEditor }: { rule: AutoResponse; onChange: (r: AutoResponse) => void; onOpenEditor: () => void }) {
-  const triggerLabel = rule.trigger === 'farewell' ? 'Cuando el encuestado llega a una despedida' : 'Por cada respuesta nueva';
   const replyToValid = rule.replyTo === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rule.replyTo);
 
   return (
-    <div style={{ maxWidth: 760, margin: '0 auto', width: '100%', boxSizing: 'border-box', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
+    <div style={{ maxWidth: 900, margin: '0 auto', width: '100%', boxSizing: 'border-box', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 20, color: 'rgba(0,0,0,0.45)', margin: 0, lineHeight: 'normal' }}>
@@ -1211,69 +1221,84 @@ function Step3({ rule, onChange, onOpenEditor }: { rule: AutoResponse; onChange:
         </p>
       </div>
 
-      <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: 0 }}>
-          Correo configurado
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <InfoRow label="Asunto" value={rule.subject.trim() || 'Sin asunto configurado'} />
-          <InfoRow label="Enviar a" value={<VariablePill value={rule.recipientVariable} />} />
-          <InfoRow label="Disparador" value={triggerLabel} />
-          <InfoRow
-            label="Plantilla de correo"
-            value={
-              countComponents(rule.rows) === 0 ? (
-                <Button type="link" onClick={onOpenEditor} style={{ padding: 0, height: 'auto' }}>
-                  Diseñar plantilla de correo
-                </Button>
-              ) : (
-                <Button type="link" onClick={onOpenEditor} style={{ padding: 0, height: 'auto' }}>
-                  Editar plantilla — últ. creación {formatTemplateDate(rule.blocksUpdatedAt)}
-                </Button>
-              )
-            }
-          />
+      <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, overflow: 'hidden' }}>
+        <div style={{ background: '#fafafa', padding: '12px 16px' }}>
+          <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: 0 }}>
+            Correo configurado
+          </p>
         </div>
-      </div>
+        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <FieldRow label="Enviar a" required>
+            <VariablePill value={rule.recipientVariable} />
+          </FieldRow>
 
-      {/* Remitente + Reply-to */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        {/* Remitente */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 12px 0' }}>
-            Remitente <span style={{ color: '#ff4d4f' }}>*</span>
-          </p>
-          <Select
-            value={rule.sender || 'cx@hircasa.com'}
-            onChange={v => onChange({ ...rule, sender: v })}
-            style={{ width: '100%', borderRadius: 8, fontFamily: "'Roboto', sans-serif" }}
-            options={[
-              { value: 'cx@hircasa.com',       label: 'CX Postventa · cx@hircasa.com' },
-              { value: 'atencion@hircasa.com',  label: 'Atención al Cliente · atencion@hircasa.com' },
-            ]}
-          />
-        </div>
-        {/* Reply-to */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 12px 0' }}>
-            Reply-to <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 400, color: 'rgba(0,0,0,0.45)' }}>(opcional)</span>
-          </p>
-          <Input
-            value={rule.replyTo}
-            onChange={e => onChange({ ...rule, replyTo: e.target.value })}
-            placeholder="support@example.org"
-            status={rule.replyTo && !replyToValid ? 'error' : undefined}
-            style={{ borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
-          />
-          {rule.replyTo && !replyToValid ? (
-            <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: '#ff4d4f', margin: '8px 0 0 0', lineHeight: 'normal' }}>
-              Ingresa un correo electrónico válido.
-            </p>
-          ) : (
-            <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '8px 0 0 0', lineHeight: 'normal' }}>
-              Si el encuestado responde, el correo llega aquí.
-            </p>
-          )}
+          <FieldRow label="Remitente" required>
+            <Select
+              value={rule.sender || 'cx@hircasa.com'}
+              onChange={v => onChange({ ...rule, sender: v })}
+              style={{ width: '100%', borderRadius: 8, fontFamily: "'Roboto', sans-serif" }}
+              options={[
+                { value: 'cx@hircasa.com',       label: 'CX Postventa · cx@hircasa.com' },
+                { value: 'atencion@hircasa.com',  label: 'Atención al Cliente · atencion@hircasa.com' },
+              ]}
+            />
+          </FieldRow>
+
+          <FieldRow label="Reply to" tooltip="Si el encuestado responde, el correo llega aquí.">
+            <Input
+              value={rule.replyTo}
+              onChange={e => onChange({ ...rule, replyTo: e.target.value })}
+              placeholder="Ingresa un correo electrónico…"
+              status={rule.replyTo && !replyToValid ? 'error' : undefined}
+              style={{ borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
+            />
+          </FieldRow>
+
+          <FieldRow label="CC (Con copia)" tooltip="Destinatarios adicionales que verán el correo — visibles para todos los demás.">
+            <Select
+              mode="tags"
+              value={rule.cc}
+              onChange={v => onChange({ ...rule, cc: v })}
+              tokenSeparators={[',', ';', ' ']}
+              maxTagCount="responsive"
+              placeholder="Ingresa uno o más correos electrónicos…"
+              style={{ width: '100%', fontFamily: "'Roboto', sans-serif" }}
+            />
+          </FieldRow>
+
+          <FieldRow label="CCO (Copia oculta)" tooltip="Destinatarios adicionales que reciben una copia sin que los demás lo sepan.">
+            <Select
+              mode="tags"
+              value={rule.bcc}
+              onChange={v => onChange({ ...rule, bcc: v })}
+              tokenSeparators={[',', ';', ' ']}
+              maxTagCount="responsive"
+              placeholder="Ingresa uno o más correos electrónicos…"
+              style={{ width: '100%', fontFamily: "'Roboto', sans-serif" }}
+            />
+          </FieldRow>
+
+          <FieldRow label="Asunto" required>
+            <Input
+              value={rule.subject}
+              onChange={e => onChange({ ...rule, subject: e.target.value })}
+              placeholder="Escribe el asunto del correo"
+              suffix={<BiEditAlt style={{ color: 'rgba(0,0,0,0.45)' }} />}
+              style={{ borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
+            />
+          </FieldRow>
+
+          <FieldRow label="Plantilla de correo" required>
+            {countComponents(rule.rows) === 0 ? (
+              <Button type="link" onClick={onOpenEditor} style={{ padding: 0, height: 'auto' }}>
+                Diseñar plantilla de correo
+              </Button>
+            ) : (
+              <Button type="link" onClick={onOpenEditor} style={{ padding: 0, height: 'auto' }}>
+                Editar plantilla — últ. creación {formatTemplateDate(rule.blocksUpdatedAt)}
+              </Button>
+            )}
+          </FieldRow>
         </div>
       </div>
 
@@ -1302,7 +1327,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
     ? (rule.name.trim() !== '' && rule.trigger !== null)
     : current === 1
     ? allConditionsComplete(rule.condGroups)
-    : countComponents(rule.rows) > 0 && rule.sender !== '' && replyToValid;
+    : countComponents(rule.rows) > 0 && rule.sender !== '' && rule.subject.trim() !== '' && replyToValid;
   const isLast  = current === 2;
 
   return (

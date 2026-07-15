@@ -199,6 +199,8 @@ export interface AutoResponse {
   sender: string;
   recipientVariable: string;
   replyTo: string;
+  cc: string[];
+  bcc: string[];
   subject: string;
   rows: Row[];
   layout: EmailLayoutConfig;
