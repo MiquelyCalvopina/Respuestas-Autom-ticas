@@ -1170,7 +1170,7 @@ function VariablePill({ value }: { value: string }) {
       display: 'inline-flex', alignItems: 'center', gap: 4,
       background: '#e6f7ff', color: '#1890ff',
       border: '1px solid #91d5ff', borderRadius: 100,
-      padding: '4px 8px', fontFamily: "'Roboto', sans-serif", fontSize: 14,
+      padding: '4px 8px', fontFamily: "'Roboto', sans-serif", fontSize: 14, lineHeight: '16px',
       maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
     }}>
       <BiAt style={{ fontSize: 14, flexShrink: 0 }} />
