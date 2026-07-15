@@ -212,25 +212,11 @@ export const PREGUNTAS_EJEMPLO: Pregunta[] = [
     escala: [0, 10],
     grupos: ['Promotor', 'Neutro', 'Detractor'],
   },
-  {
-    id: 'nps_02',
-    texto: 'Después de haber formalizado tu crédito, ¿qué tan probable es que recomiendes a tu asesor HIR Casa con otras personas?',
-    tipo: 'NPS',
-    escala: [0, 10],
-    grupos: ['Promotor', 'Neutro', 'Detractor'],
-  },
 
   // ── CSAT ─────────────────────────────────────────────────────────────────
   {
     id: 'csat_01',
     texto: '¿Qué tan satisfecho quedaste con la atención que recibiste durante el proceso de solicitud de tu crédito hipotecario?',
-    tipo: 'CSAT',
-    escala: [1, 5],
-    grupos: ['Muy satisfecho', 'Satisfecho', 'Neutral', 'Insatisfecho', 'Muy insatisfecho'],
-  },
-  {
-    id: 'csat_02',
-    texto: '¿Cómo calificarías tu satisfacción con la claridad de la información que te proporcionó HIR Casa sobre tu crédito?',
     tipo: 'CSAT',
     escala: [1, 5],
     grupos: ['Muy satisfecho', 'Satisfecho', 'Neutral', 'Insatisfecho', 'Muy insatisfecho'],
@@ -244,25 +230,11 @@ export const PREGUNTAS_EJEMPLO: Pregunta[] = [
     escala: [1, 7],
     grupos: ['Muy fácil', 'Fácil', 'Algo fácil', 'Neutral', 'Algo difícil', 'Difícil', 'Muy difícil'],
   },
-  {
-    id: 'ces_02',
-    texto: '¿Cuánto esfuerzo te requirió reunir y entregar la documentación solicitada por HIR Casa?',
-    tipo: 'CES',
-    escala: [1, 7],
-    grupos: ['Muy fácil', 'Fácil', 'Algo fácil', 'Neutral', 'Algo difícil', 'Difícil', 'Muy difícil'],
-  },
 
   // ── CLI ──────────────────────────────────────────────────────────────────
   {
     id: 'cli_01',
     texto: '¿Qué tan seguro estás de que seguirás siendo cliente de HIR Casa si en el futuro necesitas un segundo crédito o refinanciamiento?',
-    tipo: 'CLI',
-    escala: [0, 10],
-    grupos: ['Leal', 'Indiferente', 'En riesgo'],
-  },
-  {
-    id: 'cli_02',
-    texto: 'Si un conocido tuyo estuviera evaluando opciones de crédito hipotecario, ¿qué tan probable es que hablaras bien de HIR Casa sin que te lo preguntaran?',
     tipo: 'CLI',
     escala: [0, 10],
     grupos: ['Leal', 'Indiferente', 'En riesgo'],
@@ -283,19 +255,6 @@ export const PREGUNTAS_EJEMPLO: Pregunta[] = [
       'Facilidad del proceso de firma',
     ],
   },
-  {
-    id: 'matriz_02',
-    texto: 'Evalúa los siguientes canales de atención que utilizaste durante tu proceso con HIR Casa.',
-    tipo: 'matriz_escalas',
-    escala: [1, 5],
-    grupos: ['Excelente', 'Bueno', 'Regular', 'Malo', 'Muy malo'],
-    atributos: [
-      'Atención en sucursal',
-      'Atención por WhatsApp',
-      'Atención telefónica',
-      'Portal en línea o aplicación móvil',
-    ],
-  },
 
   // ── RESPUESTA ABIERTA ─────────────────────────────────────────────────────
   {
@@ -303,18 +262,6 @@ export const PREGUNTAS_EJEMPLO: Pregunta[] = [
     texto: '¿Cuál fue el aspecto del proceso que más trabajo te costó o que cambiarías si pudieras?',
     tipo: 'respuesta_abierta',
     categorizable: true,
-  },
-  {
-    id: 'ra_02',
-    texto: '¿Hay algo que tu asesor haya hecho especialmente bien durante el proceso? Cuéntanos con detalle.',
-    tipo: 'respuesta_abierta',
-    categorizable: true,
-  },
-  {
-    id: 'ra_03',
-    texto: '¿Tienes algún comentario adicional para el equipo de HIR Casa?',
-    tipo: 'respuesta_abierta',
-    categorizable: false,
   },
 
   // ── FORMULARIO ────────────────────────────────────────────────────────────
@@ -330,32 +277,8 @@ export const PREGUNTAS_EJEMPLO: Pregunta[] = [
       { nombre: 'URL del expediente digital (si aplica)', tipo: 'url' },
     ],
   },
-  {
-    id: 'form_02',
-    texto: 'Ingresa los datos de tu propiedad para registrarla en nuestro sistema.',
-    tipo: 'formulario',
-    campos: [
-      { nombre: 'Dirección del inmueble', tipo: 'texto' },
-      { nombre: 'Valor del inmueble en pesos (MXN)', tipo: 'numero' },
-      { nombre: 'Correo del notario asignado', tipo: 'correo' },
-      { nombre: 'Fecha de escrituración', tipo: 'fecha' },
-      { nombre: 'Sitio del portal inmobiliario donde viste el inmueble', tipo: 'url' },
-    ],
-  },
 
-  // ── OPCIÓN SIMPLE ─────────────────────────────────────────────────────────
-  // Sin comentario por opción
-  {
-    id: 'os_01',
-    texto: '¿Ya recibiste el monto de tu crédito en tu cuenta bancaria?',
-    tipo: 'opcion_simple',
-    opciones: [
-      'Sí, ya lo recibí',
-      'No, aún está pendiente',
-      'Me informaron que hay un retraso',
-    ],
-  },
-  // Con comentario por opción en algunas opciones y categorizable
+  // ── OPCIÓN SIMPLE — con comentario por opción ─────────────────────────────
   {
     id: 'os_02',
     texto: '¿Cómo calificarías en general la atención que recibiste de tu asesor?',
@@ -370,23 +293,7 @@ export const PREGUNTAS_EJEMPLO: Pregunta[] = [
     comentarioCategorizable: true,
   },
 
-  // ── DROPDOWN ─────────────────────────────────────────────────────────────
-  {
-    id: 'dd_01',
-    texto: '¿En qué sucursal HIR Casa iniciaste tu trámite?',
-    tipo: 'dropdown',
-    opciones: [
-      'CDMX — Insurgentes',
-      'CDMX — Satélite',
-      'CDMX — Santa Fe',
-      'Monterrey — San Pedro',
-      'Guadalajara — Zapopan',
-      'Puebla — Angelópolis',
-      'Querétaro — Juriquilla',
-      'Tijuana — Zona Río',
-      'Otra sucursal',
-    ],
-  },
+  // ── DROPDOWN — con comentario por opción ──────────────────────────────────
   {
     id: 'dd_02',
     texto: '¿Qué canal utilizaste principalmente para comunicarte con tu asesor durante el proceso?',
@@ -402,13 +309,7 @@ export const PREGUNTAS_EJEMPLO: Pregunta[] = [
     comentarioCategorizable: false,
   },
 
-  // ── SÍ / NO ───────────────────────────────────────────────────────────────
-  {
-    id: 'sino_01',
-    texto: '¿Tu asesor te explicó claramente todos los costos asociados al crédito antes de que firmaras?',
-    tipo: 'si_no',
-    opciones: ['Sí', 'No'],
-  },
+  // ── SÍ / NO — con comentario por opción ───────────────────────────────────
   {
     id: 'sino_02',
     texto: '¿Utilizaste la aplicación móvil o el portal en línea de HIR Casa durante tu proceso?',
@@ -420,48 +321,22 @@ export const PREGUNTAS_EJEMPLO: Pregunta[] = [
     comentarioCategorizable: true,
   },
 
-  // ── SELECCIÓN DE IMÁGENES — SIMPLE ────────────────────────────────────────
+  // ── SELECCIÓN DE IMÁGENES — SIMPLE — con comentario por opción ────────────
   {
     id: 'img_s_01',
     texto: '¿Cuál de estas imágenes representa mejor cómo te sentiste al terminar el proceso con HIR Casa?',
     tipo: 'seleccion_imagenes_simple',
     opciones: [
-      'Emocionado y satisfecho',
-      'Tranquilo y conforme',
-      'Indiferente',
-      'Algo frustrado',
-      'Muy frustrado',
+      { texto: 'Emocionado y satisfecho', tieneComentario: false },
+      { texto: 'Tranquilo y conforme', tieneComentario: false },
+      { texto: 'Indiferente', tieneComentario: false },
+      { texto: 'Algo frustrado', tieneComentario: true },
+      { texto: 'Muy frustrado', tieneComentario: true },
     ],
-  },
-  {
-    id: 'img_s_02',
-    texto: 'Selecciona el tipo de vivienda que adquiriste con tu crédito HIR Casa.',
-    tipo: 'seleccion_imagenes_simple',
-    opciones: [
-      'Casa en fraccionamiento',
-      'Departamento en edificio',
-      'Casa independiente',
-      'Casa en condominio horizontal',
-    ],
+    comentarioCategorizable: true,
   },
 
-  // ── OPCIÓN MÚLTIPLE ───────────────────────────────────────────────────────
-  // Sin comentario por opción
-  {
-    id: 'om_01',
-    texto: '¿Cuáles de los siguientes aspectos del proceso te generaron alguna dificultad? Selecciona todos los que apliquen.',
-    tipo: 'opcion_multiple',
-    opciones: [
-      'Reunir la documentación requerida',
-      'Entender los requisitos de elegibilidad',
-      'Tiempo de espera para la aprobación',
-      'Comunicación con el asesor',
-      'Comprensión de las condiciones del crédito',
-      'Proceso de firma y escrituración',
-      'Ninguno, todo estuvo bien',
-    ],
-  },
-  // Con comentario por opción en selecciones relevantes y categorizable
+  // ── OPCIÓN MÚLTIPLE — con comentario por opción ───────────────────────────
   {
     id: 'om_02',
     texto: '¿Qué aspectos del servicio de HIR Casa destacarías positivamente? Selecciona los que apliquen.',
@@ -478,42 +353,25 @@ export const PREGUNTAS_EJEMPLO: Pregunta[] = [
     comentarioCategorizable: true,
   },
 
-  // ── SELECCIÓN DE IMÁGENES — MÚLTIPLE ─────────────────────────────────────
+  // ── SELECCIÓN DE IMÁGENES — MÚLTIPLE — con comentario por opción ─────────
   {
     id: 'img_m_01',
     texto: '¿Qué canales digitales de HIR Casa utilizaste durante tu trámite? Selecciona todos los que apliquen.',
     tipo: 'seleccion_imagenes_multiple',
     opciones: [
-      'App móvil HIR Casa',
-      'Portal web',
-      'WhatsApp Business',
-      'Correo electrónico',
-      'Ninguno',
+      { texto: 'App móvil HIR Casa', tieneComentario: false },
+      { texto: 'Portal web', tieneComentario: false },
+      { texto: 'WhatsApp Business', tieneComentario: true },
+      { texto: 'Correo electrónico', tieneComentario: false },
+      { texto: 'Ninguno', tieneComentario: true },
     ],
-  },
-  {
-    id: 'img_m_02',
-    texto: '¿Qué documentos tuviste que entregar durante el proceso? Selecciona los que apliquen.',
-    tipo: 'seleccion_imagenes_multiple',
-    opciones: [
-      'Identificación oficial',
-      'Comprobante de ingresos',
-      'Comprobante de domicilio',
-      'Acta de matrimonio',
-      'Estados de cuenta bancarios',
-      'Avalúo del inmueble',
-    ],
+    comentarioCategorizable: true,
   },
 
   // ── CASILLA DE VERIFICACIÓN ───────────────────────────────────────────────
   {
     id: 'cv_01',
     texto: 'Autorizo a HIR Casa a contactarme por correo y WhatsApp para enviarme información sobre mi crédito y servicios relacionados.',
-    tipo: 'casilla_verificacion',
-  },
-  {
-    id: 'cv_02',
-    texto: 'Confirmo que mis respuestas serán utilizadas de forma anónima y confidencial para mejorar los servicios de HIR Casa.',
     tipo: 'casilla_verificacion',
   },
 
@@ -531,18 +389,6 @@ export const PREGUNTAS_EJEMPLO: Pregunta[] = [
       'Tasa de interés competitiva',
     ],
   },
-  {
-    id: 'md_02',
-    texto: 'Al pensar en recomendar HIR Casa, ¿qué aspecto tiene MÁS peso para ti y cuál tiene MENOS peso?',
-    tipo: 'maxdiff',
-    opciones: [
-      'La rapidez con que resolvieron mis dudas',
-      'La honestidad del asesor sobre los costos reales',
-      'El tiempo total desde solicitud hasta desembolso',
-      'Lo sencillo que fue entregar y gestionar documentos',
-      'La disposición del asesor para acompañarme en todo',
-    ],
-  },
 
   // ── RANKING ───────────────────────────────────────────────────────────────
   {
@@ -558,18 +404,6 @@ export const PREGUNTAS_EJEMPLO: Pregunta[] = [
       'Atención cercana y personalizada',
     ],
   },
-  {
-    id: 'rank_02',
-    texto: 'Ordena los siguientes momentos del proceso hipotecario según el nivel de dificultad que te representaron, del más difícil (1) al más sencillo.',
-    tipo: 'ranking',
-    opciones: [
-      'Reunir y organizar la documentación',
-      'Esperar la resolución del comité de crédito',
-      'Coordinar la cita con el notario',
-      'Entender el contrato y las condiciones financieras',
-      'Realizar el pago de gastos notariales',
-    ],
-  },
 
   // ── RATING ────────────────────────────────────────────────────────────────
   {
@@ -578,22 +412,11 @@ export const PREGUNTAS_EJEMPLO: Pregunta[] = [
     tipo: 'rating',
     escala: [1, 5],
   },
-  {
-    id: 'rat_02',
-    texto: 'En términos generales, ¿cómo calificarías tu experiencia de compra de vivienda con el apoyo de HIR Casa?',
-    tipo: 'rating',
-    escala: [1, 5],
-  },
 
   // ── CARGAR ARCHIVO ────────────────────────────────────────────────────────
   {
     id: 'arch_01',
     texto: 'Si deseas respaldarnos con evidencia de alguna situación que viviste durante el proceso, puedes adjuntar una captura, foto o documento aquí.',
-    tipo: 'cargar_archivo',
-  },
-  {
-    id: 'arch_02',
-    texto: 'Sube tu comprobante de domicilio para completar tu expediente digital.',
     tipo: 'cargar_archivo',
   },
 
