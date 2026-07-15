@@ -87,7 +87,7 @@ function makeComponent(type: ComponentType): Component {
       questionColor: '#1E293B', questionBg: 'transparent', questionSize: 13, questionWeight: '700',
       answerColor: '#475569', answerBg: 'transparent', answerSize: 13, answerWeight: '400',
       accentColor: '#E2E8F0', accentWidth: 2,
-      includeIfAbandoned: false, includeIfSkippedByLogic: false,
+      includeEmptyAnswers: false,
       design,
     };
     case 'divider':   return { id, type, design };
@@ -1345,24 +1345,16 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
           </div>
         </div>
         <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Marca una pregunta para incluirla · arrastra las incluidas para definir su orden en el correo.</Text>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12, paddingTop: 12, borderTop: '1px solid #f0f0f0' }}>
-          <Text type="secondary" style={{ fontSize: 12, lineHeight: 'normal' }}>Si una pregunta incluida no tiene respuesta para un encuestado:</Text>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <FieldLabel inline>Incluirla si abandonó la encuesta antes de responder</FieldLabel>
-            <Switch size="small" checked={block.includeIfAbandoned} onChange={checked => onUpdate({ ...block, includeIfAbandoned: checked })} />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <FieldLabel inline>Incluirla si la lógica del estudio no se la mostró</FieldLabel>
-            <Switch size="small" checked={block.includeIfSkippedByLogic} onChange={checked => onUpdate({ ...block, includeIfSkippedByLogic: checked })} />
-          </div>
-        </div>
       </CollapsibleSection>
 
       <CollapsibleSection compact defaultOpen={false} title="Visualización y contenedor">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <FieldLabel inline>Mostrar enunciado de la pregunta</FieldLabel>
           <Switch size="small" checked={block.showQuestion} onChange={checked => onUpdate({ ...block, showQuestion: checked })} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <FieldLabel inline tooltip="No sabemos por qué falta — solo que la respuesta está vacía.">Incluir preguntas sin respuesta</FieldLabel>
+          <Switch size="small" checked={block.includeEmptyAnswers} onChange={checked => onUpdate({ ...block, includeEmptyAnswers: checked })} />
         </div>
         <div>
           <FieldLabel>Estilo de visualización</FieldLabel>

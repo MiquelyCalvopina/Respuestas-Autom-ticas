@@ -55,8 +55,7 @@ export interface ResponsesBlock {
   answerWeight: '400' | '600' | '700';
   accentColor: string;
   accentWidth: number;
-  includeIfAbandoned: boolean;      // incluir preguntas sin respuesta por encuesta abandonada a medias
-  includeIfSkippedByLogic: boolean; // incluir preguntas que la lógica del estudio nunca mostró al encuestado
+  includeEmptyAnswers: boolean; // incluir preguntas sin respuesta (no se distingue el motivo: abandono, lógica, etc.)
   design: ComponentDesign;
 }
 export interface DividerBlock {
