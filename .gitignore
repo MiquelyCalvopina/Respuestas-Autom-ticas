@@ -1,3 +1,33 @@
+# Dependencias
 node_modules
-.npmrc
+.pnpm-store
+
+# Build
 dist
+dist-ssr
+*.local
+
+# Cache de herramientas
+.vite
+*.tsbuildinfo
+
+# Variables de entorno / credenciales
+.env
+.env.*
+!.env.example
+.npmrc
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editores / SO
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
