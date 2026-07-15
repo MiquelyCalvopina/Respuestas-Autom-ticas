@@ -180,47 +180,6 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
         </p>
       </div>
 
-      {/* Remitente + Reply-to */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        {/* Remitente */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 12px 0' }}>
-            Remitente <span style={{ color: '#ff4d4f' }}>*</span>
-          </p>
-          <Select
-            value={rule.sender || 'cx@hircasa.com'}
-            onChange={v => onChange({ ...rule, sender: v })}
-            style={{ width: '100%', borderRadius: 8, fontFamily: "'Roboto', sans-serif" }}
-            options={[
-              { value: 'cx@hircasa.com',       label: 'CX Postventa · cx@hircasa.com' },
-              { value: 'atencion@hircasa.com',  label: 'Atención al Cliente · atencion@hircasa.com' },
-            ]}
-          />
-        </div>
-        {/* Reply-to */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 12px 0' }}>
-            Reply-to <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 400, color: 'rgba(0,0,0,0.45)' }}>(opcional)</span>
-          </p>
-          <Input
-            value={rule.replyTo}
-            onChange={e => onChange({ ...rule, replyTo: e.target.value })}
-            placeholder="support@example.org"
-            status={rule.replyTo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rule.replyTo) ? 'error' : undefined}
-            style={{ borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
-          />
-          {rule.replyTo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rule.replyTo) ? (
-            <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: '#ff4d4f', margin: '8px 0 0 0', lineHeight: 'normal' }}>
-              Ingresa un correo electrónico válido.
-            </p>
-          ) : (
-            <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '8px 0 0 0', lineHeight: 'normal' }}>
-              Si el encuestado responde, el correo llega aquí.
-            </p>
-          )}
-        </div>
-      </div>
-
     </div>
   );
 }
@@ -1236,8 +1195,9 @@ function formatTemplateDate(iso: string | null): string {
   return `${d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })} ${d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`;
 }
 
-function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () => void }) {
+function Step3({ rule, onChange, onOpenEditor }: { rule: AutoResponse; onChange: (r: AutoResponse) => void; onOpenEditor: () => void }) {
   const triggerLabel = rule.trigger === 'farewell' ? 'Cuando el encuestado llega a una despedida' : 'Por cada respuesta nueva';
+  const replyToValid = rule.replyTo === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rule.replyTo);
 
   return (
     <div style={{ maxWidth: 760, margin: '0 auto', width: '100%', boxSizing: 'border-box', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
@@ -1258,7 +1218,6 @@ function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () =>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <InfoRow label="Asunto" value={rule.subject.trim() || 'Sin asunto configurado'} />
           <InfoRow label="Enviar a" value={<VariablePill value={rule.recipientVariable} />} />
-          <InfoRow label="Remitente" value={rule.sender} />
           <InfoRow label="Disparador" value={triggerLabel} />
           <InfoRow
             label="Plantilla de correo"
@@ -1274,6 +1233,47 @@ function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () =>
               )
             }
           />
+        </div>
+      </div>
+
+      {/* Remitente + Reply-to */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        {/* Remitente */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 12px 0' }}>
+            Remitente <span style={{ color: '#ff4d4f' }}>*</span>
+          </p>
+          <Select
+            value={rule.sender || 'cx@hircasa.com'}
+            onChange={v => onChange({ ...rule, sender: v })}
+            style={{ width: '100%', borderRadius: 8, fontFamily: "'Roboto', sans-serif" }}
+            options={[
+              { value: 'cx@hircasa.com',       label: 'CX Postventa · cx@hircasa.com' },
+              { value: 'atencion@hircasa.com',  label: 'Atención al Cliente · atencion@hircasa.com' },
+            ]}
+          />
+        </div>
+        {/* Reply-to */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 12px 0' }}>
+            Reply-to <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 400, color: 'rgba(0,0,0,0.45)' }}>(opcional)</span>
+          </p>
+          <Input
+            value={rule.replyTo}
+            onChange={e => onChange({ ...rule, replyTo: e.target.value })}
+            placeholder="support@example.org"
+            status={rule.replyTo && !replyToValid ? 'error' : undefined}
+            style={{ borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
+          />
+          {rule.replyTo && !replyToValid ? (
+            <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: '#ff4d4f', margin: '8px 0 0 0', lineHeight: 'normal' }}>
+              Ingresa un correo electrónico válido.
+            </p>
+          ) : (
+            <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '8px 0 0 0', lineHeight: 'normal' }}>
+              Si el encuestado responde, el correo llega aquí.
+            </p>
+          )}
         </div>
       </div>
 
@@ -1299,10 +1299,10 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
   const rootRef = useRef<HTMLDivElement>(null);
   const replyToValid = rule.replyTo === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rule.replyTo);
   const canNext = current === 0
-    ? (rule.name.trim() !== '' && rule.trigger !== null && rule.sender !== '' && replyToValid)
+    ? (rule.name.trim() !== '' && rule.trigger !== null)
     : current === 1
     ? allConditionsComplete(rule.condGroups)
-    : countComponents(rule.rows) > 0;
+    : countComponents(rule.rows) > 0 && rule.sender !== '' && replyToValid;
   const isLast  = current === 2;
 
   return (
@@ -1367,7 +1367,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', background: '#fff' }}>
         {current === 0 && <Step1 rule={rule} onChange={onChange} />}
         {current === 1 && <Step2 rule={rule} onChange={onChange} />}
-        {current === 2 && <Step3 rule={rule} onOpenEditor={onOpenEditor} />}
+        {current === 2 && <Step3 rule={rule} onChange={onChange} onOpenEditor={onOpenEditor} />}
       </div>
 
       {/* Footer */}
