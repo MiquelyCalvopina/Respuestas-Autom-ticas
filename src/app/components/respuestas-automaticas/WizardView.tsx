@@ -1366,15 +1366,17 @@ function EmailInput({ value, onChange, placeholder }: { value: string; onChange:
   );
 }
 
-// Asunto (Step3): botón/input tipo "click-to-edit" — el lápiz se oculta mientras se escribe
-// y el borde nunca se pone azul de foco, tal como el componente Figma "Subjet input".
+// Asunto (Step3): botón/input tipo "click-to-edit" — el lápiz se oculta mientras se escribe,
+// tal como el componente Figma "Subjet input" (con el anillo de foco azul estándar del resto
+// de inputs/selects del wizard, que el Figma no mostraba pero el usuario pidió conservar).
 function SubjectInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
   const [focused, setFocused] = useState(false);
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: focused ? 2 : 8,
       height: 32, boxSizing: 'border-box', padding: '0 8px',
-      background: '#fff', border: '1px solid #d9d9d9', borderRadius: 8,
+      background: '#fff', border: `1px solid ${focused ? '#40a9ff' : '#d9d9d9'}`, borderRadius: 8,
+      boxShadow: focused ? '0 0 0 2px rgba(24,144,255,0.2)' : undefined,
     }}>
       <input
         className="rf-email-input"
