@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Button, Input, Select, Segmented, Radio, DatePicker, InputNumber, Popconfirm, Modal } from 'antd';
+import { Button, Input, Select, Segmented, Radio, DatePicker, InputNumber, Popconfirm, Modal, Tooltip } from 'antd';
 import { BiChevronRight, BiChevronLeft, BiPlus, BiCheck, BiTrash, BiCheckCircle, BiGitBranch, BiMove, BiInfoCircle, BiErrorCircle } from 'react-icons/bi';
 import dayjs from 'dayjs';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
@@ -21,17 +21,21 @@ interface Props {
 
 // ─── Step indicator ───────────────────────────────────────────────────────────
 
-function StepNode({ num, label, active, done }: { num: number; label: string; active?: boolean; done?: boolean }) {
+function StepNode({ num, label, active, done, onClick }: { num: number; label: string; active?: boolean; done?: boolean; onClick: () => void }) {
   const circleBg     = active ? '#1890ff' : 'transparent';
   const circleBorder = (active || done) ? '#1890ff' : 'rgba(0,0,0,0.25)';
   const labelColor   = active ? '#1890ff' : done ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.45)';
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 12,
-      padding: '8px 12px', borderRadius: 8,
-      background: active ? 'rgba(24,144,255,0.08)' : 'transparent',
-    }}>
+    <button
+      type="button"
+      onClick={onClick}
+      title={`Ir a ${label}`}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
+        background: active ? 'rgba(24,144,255,0.08)' : 'transparent',
+      }}>
       <div style={{
         width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
         background: circleBg,
@@ -46,7 +50,7 @@ function StepNode({ num, label, active, done }: { num: number; label: string; ac
       <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: labelColor, whiteSpace: 'nowrap' }}>
         {label}
       </span>
-    </div>
+    </button>
   );
 }
 
@@ -58,14 +62,14 @@ function StepChevron() {
   );
 }
 
-function NavigationSteps({ current }: { current: number }) {
+function NavigationSteps({ current, onStepClick }: { current: number; onStepClick: (step: number) => void }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-      <StepNode num={1} label="Detalles"    active={current === 0} done={current > 0} />
+      <StepNode num={1} label="Detalles"    active={current === 0} done={current > 0} onClick={() => onStepClick(0)} />
       <StepChevron />
-      <StepNode num={2} label="Condiciones" active={current === 1} done={current > 1} />
+      <StepNode num={2} label="Condiciones" active={current === 1} done={current > 1} onClick={() => onStepClick(1)} />
       <StepChevron />
-      <StepNode num={3} label="Mensaje"     active={current === 2} />
+      <StepNode num={3} label="Mensaje"     active={current === 2} onClick={() => onStepClick(2)} />
     </div>
   );
 }
@@ -1347,7 +1351,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
             style={{ width: 240, borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
           />
         </div>
-        <NavigationSteps current={current} />
+        <NavigationSteps current={current} onStepClick={onStepChange} />
       </div>
 
       <Modal
@@ -1389,20 +1393,25 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
       <div style={{
         background: '#fff', borderTop: '1px solid #f0f0f0',
         padding: '12px 24px', display: 'flex', alignItems: 'center',
-        justifyContent: 'flex-end', gap: 12, flexShrink: 0,
+        justifyContent: 'space-between', gap: 12, flexShrink: 0,
       }}>
-        {current > 0 && (
-          <Button icon={<BiChevronLeft />} onClick={() => onStepChange(current - 1)}>Anterior</Button>
-        )}
-        <Button
-          type="primary"
-          disabled={!canNext}
-          icon={<BiChevronRight />}
-          iconPlacement="end"
-          onClick={() => isLast ? onSaveAndActivate() : onStepChange(current + 1)}
-        >
-          {isLast ? 'Guardar y activar' : 'Siguiente'}
-        </Button>
+        <Tooltip title="Guarda los cambios de esta regla tal como están, sin necesidad de pasar por el resto de los pasos.">
+          <Button onClick={onSaveDraft}>Guardar cambios</Button>
+        </Tooltip>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {current > 0 && (
+            <Button icon={<BiChevronLeft />} onClick={() => onStepChange(current - 1)}>Anterior</Button>
+          )}
+          <Button
+            type="primary"
+            disabled={!canNext}
+            icon={<BiChevronRight />}
+            iconPlacement="end"
+            onClick={() => isLast ? onSaveAndActivate() : onStepChange(current + 1)}
+          >
+            {isLast ? 'Guardar y activar' : 'Siguiente'}
+          </Button>
+        </div>
       </div>
 
     </div>
