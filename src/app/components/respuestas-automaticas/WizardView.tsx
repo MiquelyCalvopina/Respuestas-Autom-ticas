@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button, Input, Select, Segmented, Radio, DatePicker, InputNumber, Popconfirm, Modal, Tooltip } from 'antd';
-import { BiChevronRight, BiChevronLeft, BiPlus, BiCheck, BiTrash, BiCheckCircle, BiGitBranch, BiMove, BiInfoCircle, BiAt, BiEditAlt } from 'react-icons/bi';
+import { BiChevronRight, BiChevronLeft, BiPlus, BiCheck, BiTrash, BiCheckCircle, BiGitBranch, BiMove, BiInfoCircle, BiAt, BiEditAlt, BiEnvelope, BiX } from 'react-icons/bi';
 import dayjs from 'dayjs';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { AutoResponse, ConditionGroup, ConditionRule, Pregunta, OpcionConComentario, SubCondition } from './types';
-import { PREGUNTAS_EJEMPLO, ETIQUETAS_CATEGORIZACION, countComponents, describeRecipientSource, VARIABLES_META } from './data';
+import { PREGUNTAS_EJEMPLO, ETIQUETAS_CATEGORIZACION, countComponents, describeRecipientSource, VARIABLES_META, isValidEmail, getEmailSuggestions } from './data';
 import { cuid } from './cuid';
 
 interface Props {
@@ -1198,6 +1198,174 @@ function FieldRow({ label, required, tooltip, children }: { label: string; requi
   );
 }
 
+// ─── Email input — sugerencia "Usar correo:", autocompletado de dominio, ──────
+// ─── validación con shake + borde rojo, chips removibles (CC/CCO/Reply to) ────
+
+function EmailSuggestionDropdown({ suggestions, highlightIndex, onPick }: {
+  suggestions: string[]; highlightIndex: number; onPick: (value: string) => void;
+}) {
+  if (suggestions.length === 0) return null;
+  return (
+    <div style={{
+      position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 20,
+      background: '#fff', borderRadius: 8, boxShadow: '0px 2px 4px rgba(0,0,0,0.15)',
+      padding: '4px 0', overflow: 'hidden',
+    }}>
+      {suggestions.map((s, i) => (
+        <button
+          key={s}
+          type="button"
+          onMouseDown={e => e.preventDefault()}
+          onClick={() => onPick(s)}
+          className="rf-suggestion-row"
+          style={{
+            width: '100%', textAlign: 'left', background: i === highlightIndex ? 'rgba(0,0,0,0.04)' : 'none',
+            border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px',
+          }}
+        >
+          <BiEnvelope style={{ fontSize: 14, color: 'rgba(0,0,0,0.45)', flexShrink: 0 }} />
+          <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ color: 'rgba(0,0,0,0.45)' }}>Usar correo: </span>
+            <span style={{ color: 'rgba(0,0,0,0.85)', fontWeight: 700 }}>{s}</span>
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function EmailChip({ email, focused, onRemove }: { email: string; focused: boolean; onRemove: () => void }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4, background: '#e6fffb',
+      border: '1px solid #13c2c2', borderRadius: 4, padding: '2px 9px', flexShrink: 0,
+    }}>
+      <BiEnvelope style={{ fontSize: 10, color: '#13c2c2', flexShrink: 0 }} />
+      <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: '#13c2c2', whiteSpace: 'nowrap' }}>{email}</span>
+      {focused ? (
+        <button
+          type="button"
+          onMouseDown={e => e.preventDefault()}
+          onClick={onRemove}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: '#13c2c2', flexShrink: 0 }}
+        >
+          <BiX style={{ fontSize: 10 }} />
+        </button>
+      ) : (
+        <BiCheck style={{ fontSize: 10, color: '#13c2c2', flexShrink: 0 }} />
+      )}
+    </span>
+  );
+}
+
+// Multi-correo con chips removibles (CC/CCO). El "Reply to" (un solo correo) reutiliza este
+// mismo componente vía EmailInput, que solo conserva el último valor confirmado.
+function EmailsInput({ value, onChange, placeholder }: { value: string[]; onChange: (v: string[]) => void; placeholder?: string }) {
+  const [draft, setDraft] = useState('');
+  const [focused, setFocused] = useState(false);
+  const [error, setError] = useState(false);
+  const [shakeKey, setShakeKey] = useState(0);
+  const [highlightIndex, setHighlightIndex] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const suggestions = focused ? getEmailSuggestions(draft) : [];
+
+  // El key={shakeKey} de abajo remonta el recuadro para reiniciar la animación de shake, lo
+  // que también remonta el <input> y le quita el foco un instante — se lo devolvemos.
+  useEffect(() => {
+    if (shakeKey > 0) inputRef.current?.focus();
+  }, [shakeKey]);
+
+  function commit(raw: string) {
+    const v = raw.trim();
+    if (!v) return;
+    if (!isValidEmail(v)) {
+      setError(true);
+      setShakeKey(k => k + 1);
+      return;
+    }
+    if (!value.includes(v)) onChange([...value, v]);
+    setDraft('');
+    setError(false);
+    setHighlightIndex(-1);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commit(highlightIndex >= 0 && suggestions[highlightIndex] ? suggestions[highlightIndex] : draft);
+    } else if (e.key === 'ArrowDown' && suggestions.length > 0) {
+      e.preventDefault();
+      setHighlightIndex(i => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === 'ArrowUp' && suggestions.length > 0) {
+      e.preventDefault();
+      setHighlightIndex(i => Math.max(i - 1, -1));
+    } else if (e.key === 'Backspace' && draft === '' && value.length > 0) {
+      onChange(value.slice(0, -1));
+    }
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value;
+    if (/[,; ]$/.test(raw)) {
+      commit(raw.slice(0, -1));
+      return;
+    }
+    setDraft(raw);
+    setError(false);
+    setHighlightIndex(-1);
+  }
+
+  const borderColor = error ? '#ff4d4f' : focused ? '#40a9ff' : '#d9d9d9';
+  const boxShadow = focused ? `0 0 0 2px ${error ? 'rgba(255,77,79,0.2)' : 'rgba(24,144,255,0.2)'}` : undefined;
+
+  return (
+    <div style={{ position: 'relative', width: '100%' }}>
+      <div
+        key={shakeKey}
+        className={shakeKey > 0 ? 'rf-shake' : undefined}
+        onClick={() => inputRef.current?.focus()}
+        style={{
+          display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4,
+          minHeight: 32, boxSizing: 'border-box', padding: '6px 12px', cursor: 'text',
+          background: '#fff', border: `1px solid ${borderColor}`, borderRadius: 8, boxShadow,
+        }}
+      >
+        {value.map(email => (
+          <EmailChip key={email} email={email} focused={focused} onRemove={() => onChange(value.filter(v => v !== email))} />
+        ))}
+        <input
+          ref={inputRef}
+          className="rf-email-input"
+          value={draft}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setFocused(true)}
+          onBlur={() => { setFocused(false); setHighlightIndex(-1); }}
+          placeholder={value.length === 0 ? (placeholder ?? 'Ingresa un correo electrónico…') : ''}
+          style={{
+            flex: 1, minWidth: 120, border: 'none', outline: 'none', background: 'transparent',
+            fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', padding: '2px 0',
+          }}
+        />
+      </div>
+      {focused && <EmailSuggestionDropdown suggestions={suggestions} highlightIndex={highlightIndex} onPick={commit} />}
+    </div>
+  );
+}
+
+// Ingreso de un solo correo (Reply to): mismo componente, pero cualquier correo nuevo
+// reemplaza al anterior en vez de agregarse — nunca hay más de un chip a la vez.
+function EmailInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <EmailsInput
+      value={value ? [value] : []}
+      onChange={vals => onChange(vals[vals.length - 1] ?? '')}
+      placeholder={placeholder}
+    />
+  );
+}
+
 function formatTemplateDate(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
@@ -1205,8 +1373,6 @@ function formatTemplateDate(iso: string | null): string {
 }
 
 function Step3({ rule, onChange, onOpenEditor }: { rule: AutoResponse; onChange: (r: AutoResponse) => void; onOpenEditor: () => void }) {
-  const replyToValid = rule.replyTo === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rule.replyTo);
-
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', width: '100%', boxSizing: 'border-box', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
 
@@ -1243,36 +1409,25 @@ function Step3({ rule, onChange, onOpenEditor }: { rule: AutoResponse; onChange:
           </FieldRow>
 
           <FieldRow label="Reply to" tooltip="Si el encuestado responde, el correo llega aquí.">
-            <Input
+            <EmailInput
               value={rule.replyTo}
-              onChange={e => onChange({ ...rule, replyTo: e.target.value })}
-              placeholder="Ingresa un correo electrónico…"
-              status={rule.replyTo && !replyToValid ? 'error' : undefined}
-              style={{ borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
+              onChange={v => onChange({ ...rule, replyTo: v })}
             />
           </FieldRow>
 
           <FieldRow label="CC (Con copia)" tooltip="Destinatarios adicionales que verán el correo — visibles para todos los demás.">
-            <Select
-              mode="tags"
+            <EmailsInput
               value={rule.cc}
               onChange={v => onChange({ ...rule, cc: v })}
-              tokenSeparators={[',', ';', ' ']}
-              maxTagCount="responsive"
               placeholder="Ingresa uno o más correos electrónicos…"
-              style={{ width: '100%', fontFamily: "'Roboto', sans-serif" }}
             />
           </FieldRow>
 
           <FieldRow label="CCO (Copia oculta)" tooltip="Destinatarios adicionales que reciben una copia sin que los demás lo sepan.">
-            <Select
-              mode="tags"
+            <EmailsInput
               value={rule.bcc}
               onChange={v => onChange({ ...rule, bcc: v })}
-              tokenSeparators={[',', ';', ' ']}
-              maxTagCount="responsive"
               placeholder="Ingresa uno o más correos electrónicos…"
-              style={{ width: '100%', fontFamily: "'Roboto', sans-serif" }}
             />
           </FieldRow>
 

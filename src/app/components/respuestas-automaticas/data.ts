@@ -33,6 +33,32 @@ export function describeRecipientSource(value: string): string {
 
 export const SENDERS = ['noreply@hircasa.com', 'contacto@hircasa.com', 'encuestas@hircasa.com'];
 
+// Dominios de correo permitidos — simula el sistema de dominios configurado en el setup del
+// estudio, usado para autocompletar sugerencias en los campos de ingreso de correo (CC/CCO/Reply to).
+export const EMAIL_DOMAINS = ['hircasa.com', 'gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com'];
+
+export function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+// Sugerencias para el input de correo: antes de "@" sugiere el texto tal cual (para poder
+// confirmarlo con Enter, como "Usar correo: ejemplo"); después de "@" sugiere completar con
+// cada dominio del sistema que coincida con lo ya escrito ("Usar correo: juan@gmail.com", etc.).
+export function getEmailSuggestions(text: string, domains: string[] = EMAIL_DOMAINS): string[] {
+  const t = text.trim();
+  if (!t) return [];
+  const at = t.indexOf('@');
+  if (at === -1) return [t];
+  const local = t.slice(0, at);
+  if (!local) return [];
+  const domainQuery = t.slice(at + 1).toLowerCase();
+  const matches = domains.filter(d => d.toLowerCase().startsWith(domainQuery)).map(d => `${local}@${d}`);
+  // Si lo escrito no corresponde a un dominio de la lista, se agrega tal cual al final para
+  // poder confirmar con Enter un dominio externo válido que no está en el setup.
+  if (domainQuery && !domains.some(d => d.toLowerCase() === domainQuery)) matches.push(t);
+  return matches.slice(0, 6);
+}
+
 export const CONDITION_FIELDS = ['NPS', 'CSAT', 'Canal', 'Sucursal', 'Comentario'];
 export const CONDITION_OPERATORS = ['grupo es', 'nota es', 'no está vacía', 'contiene'];
 export const CONDITION_VALUES = ['Detractor', 'Neutro', 'Promotor', 'No aplica'];
