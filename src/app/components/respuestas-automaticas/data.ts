@@ -13,10 +13,20 @@ export const SETUP = {
   descripcion: 'HIR Casa acompaña a las familias en el proceso de adquirir su vivienda propia en México.',
 };
 
-export const VARIABLES = [
-  'nombre_preferido', 'correo_electronico', 'sucursal',
-  'canal', 'telefono', 'identificador', 'numero_credito',
+export interface VariableMeta { key: string; type: 'texto' | 'correo' | 'telefono' | 'numero'; }
+
+// Variables mapeadas del estudio (contacto + sistema), con su tipo de dato.
+export const VARIABLES_META: VariableMeta[] = [
+  { key: 'nombre_preferido', type: 'texto' },
+  { key: 'correo_electronico', type: 'correo' },
+  { key: 'sucursal', type: 'texto' },
+  { key: 'canal', type: 'texto' },
+  { key: 'telefono', type: 'telefono' },
+  { key: 'identificador', type: 'texto' },
+  { key: 'numero_credito', type: 'numero' },
 ];
+
+export const VARIABLES = VARIABLES_META.map(v => v.key);
 
 // Decodifica el valor de AutoResponse.recipientVariable, que puede ser una variable plana
 // (ej. "correo_electronico") o una referencia a una pregunta del estudio: "pregunta:{id}"

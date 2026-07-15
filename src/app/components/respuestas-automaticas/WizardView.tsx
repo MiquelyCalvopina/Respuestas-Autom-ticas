@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { AutoResponse, ConditionGroup, ConditionRule, Pregunta, OpcionConComentario, SubCondition, AiBlock } from './types';
-import { PREGUNTAS_EJEMPLO, ETIQUETAS_CATEGORIZACION, countComponents, describeRecipientSource } from './data';
+import { PREGUNTAS_EJEMPLO, ETIQUETAS_CATEGORIZACION, countComponents, describeRecipientSource, VARIABLES_META } from './data';
 import { cuid } from './cuid';
 
 interface Props {
@@ -104,7 +104,12 @@ function TriggerCard({ selected, onSelect, title, description }: {
 
 // ─── Step 1 — Detalles ────────────────────────────────────────────────────────
 
-// Solo preguntas/campos cuya entrada está validada como correo — nunca texto libre sin validar.
+// Variables mapeadas del estudio (de tipo texto, no la de correo — esa va en "Variables de contacto").
+const RECIPIENT_STUDY_TEXT_VARS = VARIABLES_META
+  .filter(v => v.type === 'texto')
+  .map(v => ({ value: v.key, label: v.key }));
+
+// Preguntas/campos cuya entrada está validada como correo — nunca texto libre sin validar.
 const RECIPIENT_EMAIL_QUESTIONS = PREGUNTAS_EJEMPLO.flatMap(q => {
   if (q.tipo === 'respuesta_abierta' && q.validacion === 'correo') {
     return [{ value: `pregunta:${q.id}`, label: q.texto }];
@@ -141,12 +146,13 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
           onChange={v => onChange({ ...rule, recipientVariable: v })}
           style={{ width: '100%', borderRadius: 8, fontFamily: "'Roboto', sans-serif" }}
           options={[
-            { label: 'Datos de contacto', options: [{ value: 'correo_electronico', label: 'correo_electronico' }] },
-            ...(RECIPIENT_EMAIL_QUESTIONS.length ? [{ label: 'Preguntas de correo', options: RECIPIENT_EMAIL_QUESTIONS }] : []),
+            { label: 'Variables de contacto', options: [{ value: 'correo_electronico', label: 'correo_electronico' }] },
+            ...(RECIPIENT_STUDY_TEXT_VARS.length ? [{ label: 'Variables del estudio', options: RECIPIENT_STUDY_TEXT_VARS }] : []),
+            ...(RECIPIENT_EMAIL_QUESTIONS.length ? [{ label: 'Preguntas que obtienen un correo', options: RECIPIENT_EMAIL_QUESTIONS }] : []),
           ]}
         />
         <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '8px 0 0 0', lineHeight: 'normal' }}>
-          El sistema enviará el correo al valor de este dato para cada encuestado. Si está vacío, ese envío se omite y queda registrado en el historial como <strong style={{ color: 'rgba(0,0,0,0.65)' }}>No enviado</strong>.
+          El sistema enviará el correo al valor de este dato para cada encuestado. El valor debe ser un correo válido; si eliges una variable del estudio, asegúrate de que contenga uno. Si está vacío o no es válido, ese envío se omite y queda registrado en el historial como <strong style={{ color: 'rgba(0,0,0,0.65)' }}>No enviado</strong>.
         </p>
       </div>
 
