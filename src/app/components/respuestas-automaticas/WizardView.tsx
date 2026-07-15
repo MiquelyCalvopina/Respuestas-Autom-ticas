@@ -682,14 +682,14 @@ function CondRowUI({ row, onUpdate, onDelete, canDelete }: {
   return (
     <div style={{ position: 'relative' }}>
       <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 2, background: '#bae7ff', borderRadius: '2px 0 0 2px' }} />
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: 24 }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: 16 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', flex: 1, minWidth: 0 }}>
 
         {/* Subject */}
         <Select
           value={subject}
           onChange={v => onUpdate({ subject: v, variable: '', subType: '', attribute: '', operator: '', value: '', valueB: '' })}
-          style={{ width: 180, borderRadius: 8 }}
+          style={{ width: 200, borderRadius: 8 }}
           options={[{ value: 'response', label: 'La respuesta a' }, { value: 'variable', label: 'La variable' }]}
         />
 
@@ -790,13 +790,13 @@ function CondRowUI({ row, onUpdate, onDelete, canDelete }: {
 
       {/* Condición lista / rango inválido */}
       {complete && (
-        <div style={{ paddingLeft: 24, paddingBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ paddingLeft: 16, paddingBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
           <BiCheckCircle style={{ color: '#52c41a', fontSize: 12 }} />
           <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: '#52c41a' }}>Condición lista</span>
         </div>
       )}
       {rangeError && (
-        <div style={{ paddingLeft: 24, paddingBottom: 16 }}>
+        <div style={{ paddingLeft: 16, paddingBottom: 16 }}>
           <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: '#ff4d4f' }}>
             El primer valor debe ser menor o igual al segundo.
           </span>
@@ -828,7 +828,7 @@ function SubConditionUI({ subCondition, onUpdateRow, onSetConnector, onDelete }:
   const selStyle:   React.CSSProperties = { minWidth: 160, borderRadius: 8 };
 
   return (
-    <div style={{ borderLeft: '2px solid #e6f7ff', padding: '12px 24px 12px 24px', display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+    <div style={{ borderLeft: '2px solid #e6f7ff', padding: '12px 16px', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
         <div style={{ background: 'rgba(0,0,0,0.04)', padding: 8, borderRadius: 8, display: 'flex', alignItems: 'center' }}>
           {(['Y', 'O'] as const).map(opt => (
@@ -862,7 +862,7 @@ function SubConditionUI({ subCondition, onUpdateRow, onSetConnector, onDelete }:
       <Select
         value={subject}
         onChange={v => onUpdateRow({ subject: v, variable: '', subType: '', attribute: '', operator: '', value: '', valueB: '' })}
-        style={{ width: 180, borderRadius: 8 }}
+        style={{ width: 200, borderRadius: 8 }}
         options={[{ value: 'response', label: 'La respuesta a' }, { value: 'variable', label: 'La variable' }]}
       />
 
@@ -1004,7 +1004,7 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
     <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, overflow: 'hidden' }}>
       {/* Connector row (Y/O) — only for 2nd+ groups */}
       {index > 0 && (
-        <div style={{ background: '#fafafa', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #f0f0f0' }}>
+        <div style={{ background: '#fafafa', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ background: 'rgba(0,0,0,0.04)', padding: 8, borderRadius: 8, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
             {(['Y', 'O'] as const).map(opt => (
               <button
@@ -1028,7 +1028,7 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
             se cumple que...
           </span>
           <button onClick={addSubCondition} style={{ background: 'white', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)' }}>
-            <BiGitBranch style={{ fontSize: 12, color: '#434343', transform: 'rotate(90deg)' }} />
+            <BiGitBranch style={{ fontSize: 14, color: '#434343', transform: 'rotate(90deg)' }} />
           </button>
           {canDelete && (
             <DeleteConfirm what="este grupo (se perderán sus condiciones y subcondiciones)" onConfirm={onDelete}>
@@ -1041,12 +1041,12 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
       )}
       {/* Header */}
       {index === 0 && (
-        <div style={{ background: '#fafafa', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #f0f0f0' }}>
+        <div style={{ background: '#fafafa', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', flex: 1 }}>
             Dispara una respuesta automática cuando:
           </span>
           <button onClick={addSubCondition} style={{ background: 'white', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)' }}>
-            <BiGitBranch style={{ fontSize: 12, color: '#434343', transform: 'rotate(90deg)' }} />
+            <BiGitBranch style={{ fontSize: 14, color: '#434343', transform: 'rotate(90deg)' }} />
           </button>
           {canDelete && (
             <DeleteConfirm what="este grupo (se perderán sus condiciones y subcondiciones)" onConfirm={onDelete}>
@@ -1143,14 +1143,15 @@ function Step2({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
               width: '100%', borderRadius: 8, background: '#fff',
               border: '1px dashed #69c0ff',
               boxShadow: '0px 2px 0px 0px rgba(0,0,0,0.02)',
-              padding: '12px 8px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+              padding: '8px 9px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
           >
             <BiPlus style={{ color: '#1890ff', fontSize: 14 }} />
             <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: '#1890ff', lineHeight: 'normal' }}>
               Agregar condición
             </span>
+            <BiChevronRight style={{ color: '#1890ff', fontSize: 16 }} />
           </button>
 
         </div>
