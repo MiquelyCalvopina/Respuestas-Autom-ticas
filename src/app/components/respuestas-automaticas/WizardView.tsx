@@ -175,9 +175,6 @@ function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
             description="Se ejecuta cuando un encuestado termina el estudio. Aplica a todas las despedidas o una específica."
           />
         </div>
-        <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '12px 0 0 0', lineHeight: 1.6 }}>
-          El correo no se envía en el instante exacto de la respuesta, sino poco después, una vez que el sistema termina de procesarla.
-        </p>
       </div>
 
     </div>
