@@ -2062,9 +2062,9 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
   return (
     <ConfigProvider theme={EDITOR_THEME}>
     <div ref={rootRef} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f5f5f5', overflow: 'hidden', fontFamily: "'Roboto', sans-serif", position: 'relative' }}>
-      {/* Header — una sola fila (Figma): volver + últ. actualización · toggle de modo · CTAs */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+      {/* Header — envuelve a una segunda línea si no cabe (Figma: volver + últ. actualización · toggle de modo · CTAs) */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '12px 24px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between', gap: 16, rowGap: 8, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flexWrap: 'wrap', rowGap: 4 }}>
           <button
             onClick={handleExit}
             style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}
@@ -2080,6 +2080,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
           value={mode}
           onChange={v => handleModeChange(v as 'visual' | 'html')}
           options={[{ label: 'Editor visual', value: 'visual' }, { label: 'Editor HTML', value: 'html' }]}
+          style={{ flexShrink: 0 }}
         />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <Button icon={<BiSend />} onClick={() => setShowTestModal(true)}>Enviar prueba</Button>

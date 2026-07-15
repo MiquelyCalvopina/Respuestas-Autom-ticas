@@ -64,7 +64,7 @@ function StepChevron() {
 
 function NavigationSteps({ current, onStepClick }: { current: number; onStepClick: (step: number) => void }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
       <StepNode num={1} label="Detalles"    active={current === 0} done={current > 0} onClick={() => onStepClick(0)} />
       <StepChevron />
       <StepNode num={2} label="Condiciones" active={current === 1} done={current > 1} onClick={() => onStepClick(1)} />
@@ -1321,16 +1321,16 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
   return (
     <div ref={rootRef} style={{ display: 'flex', flexDirection: 'column', background: '#fff', width: '100%', height: '100%', position: 'relative', overflowX: 'hidden' }}>
 
-      {/* Topbar — breadcrumb + stepper en una sola fila */}
+      {/* Topbar — breadcrumb + stepper; envuelve a una segunda línea si no cabe */}
       <div style={{
         background: '#fff', borderBottom: '1px solid #f0f0f0',
-        padding: '12px 24px', display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between', gap: 24, flexShrink: 0,
+        padding: '12px 24px', display: 'flex', alignItems: 'center', flexWrap: 'wrap',
+        justifyContent: 'space-between', gap: 12, rowGap: 8, flexShrink: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: '1 1 260px' }}>
           <button
             onClick={() => setShowExitDialog(true)}
-            style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' }}
+            style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap', flexShrink: 0 }}
           >
             Respuestas Automáticas
           </button>
@@ -1340,10 +1340,12 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
             onChange={e => onChange({ ...rule, name: e.target.value.slice(0, 70) })}
             placeholder="Nombre de la regla"
             maxLength={70}
-            style={{ width: 240, borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
+            style={{ flex: '1 1 120px', minWidth: 120, maxWidth: 240, borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
           />
         </div>
-        <NavigationSteps current={current} onStepClick={onStepChange} />
+        <div style={{ flexShrink: 0 }}>
+          <NavigationSteps current={current} onStepClick={onStepChange} />
+        </div>
       </div>
 
       <Modal
@@ -1384,13 +1386,13 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
       {/* Footer */}
       <div style={{
         background: '#fff', borderTop: '1px solid #f0f0f0',
-        padding: '12px 24px', display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between', gap: 12, flexShrink: 0,
+        padding: '12px 24px', display: 'flex', alignItems: 'center', flexWrap: 'wrap',
+        justifyContent: 'space-between', gap: 12, rowGap: 8, flexShrink: 0,
       }}>
         <Tooltip title="Guarda los cambios de esta regla tal como están, sin necesidad de pasar por el resto de los pasos.">
           <Button onClick={onSaveDraft}>Guardar cambios</Button>
         </Tooltip>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           {current > 0 && (
             <Button icon={<BiChevronLeft />} onClick={() => onStepChange(current - 1)}>Anterior</Button>
           )}
