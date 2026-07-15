@@ -1366,6 +1366,33 @@ function EmailInput({ value, onChange, placeholder }: { value: string; onChange:
   );
 }
 
+// Asunto (Step3): botón/input tipo "click-to-edit" — el lápiz se oculta mientras se escribe
+// y el borde nunca se pone azul de foco, tal como el componente Figma "Subjet input".
+function SubjectInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: focused ? 2 : 8,
+      height: 32, boxSizing: 'border-box', padding: '0 8px',
+      background: '#fff', border: '1px solid #d9d9d9', borderRadius: 8,
+    }}>
+      <input
+        className="rf-email-input"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder={placeholder ?? 'Escribe el asunto del correo'}
+        style={{
+          flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent',
+          fontFamily: "'Roboto', sans-serif", fontSize: 14, lineHeight: '22px', color: 'rgba(0,0,0,0.85)', padding: 0,
+        }}
+      />
+      {!focused && <BiEditAlt style={{ fontSize: 16, color: '#1890ff', flexShrink: 0 }} />}
+    </div>
+  );
+}
+
 function formatTemplateDate(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
@@ -1432,12 +1459,9 @@ function Step3({ rule, onChange, onOpenEditor }: { rule: AutoResponse; onChange:
           </FieldRow>
 
           <FieldRow label="Asunto" required>
-            <Input
+            <SubjectInput
               value={rule.subject}
-              onChange={e => onChange({ ...rule, subject: e.target.value })}
-              placeholder="Escribe el asunto del correo"
-              suffix={<BiEditAlt style={{ color: 'rgba(0,0,0,0.45)' }} />}
-              style={{ borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14 }}
+              onChange={v => onChange({ ...rule, subject: v })}
             />
           </FieldRow>
 
