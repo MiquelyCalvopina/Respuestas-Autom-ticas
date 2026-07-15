@@ -6,9 +6,9 @@ import {
 import type { InputRef } from 'antd';
 import {
   BiSend, BiCopy, BiX, BiPlus, BiAlignLeft,
-  BiAlignMiddle, BiAlignRight, BiMinus, BiListUl,
-  BiMove, BiTable, BiImage, BiLink,
-  BiExpandVertical, BiShareAlt, BiInfoCircle, BiErrorCircle, BiHelpCircle,
+  BiAlignMiddle, BiAlignRight, BiMinus, BiText,
+  BiMove, BiTable, BiImage, BiPointer,
+  BiSpaceBar, BiGroup, BiFile, BiInfoCircle, BiErrorCircle, BiHelpCircle,
   BiUpload, BiSearch, BiChevronDown, BiChevronLeft, BiTrash,
   BiBold, BiItalic, BiSmile, BiCodeCurly,
 } from 'react-icons/bi';
@@ -125,13 +125,13 @@ const COLUMN_LAYOUTS: { label: string; widths: number[] }[] = [
 ];
 
 const COMPONENT_PALETTE: { type: ComponentType; label: string; sub: string; icon: React.ReactNode }[] = [
-  { type: 'text', label: 'Texto', sub: 'Con variables del encuestado', icon: <BiAlignLeft /> },
+  { type: 'text', label: 'Texto', sub: 'Con variables del encuestado', icon: <BiText /> },
   { type: 'image', label: 'Imagen', sub: 'Estática o dinámica', icon: <BiImage /> },
   { type: 'divider', label: 'Divisor', sub: 'Línea separadora', icon: <BiMinus /> },
-  { type: 'spacer', label: 'Espaciador', sub: 'Espacio en blanco', icon: <BiExpandVertical /> },
-  { type: 'social', label: 'Redes Sociales', sub: 'Íconos con enlaces', icon: <BiShareAlt /> },
-  { type: 'responses', label: 'Respuesta', sub: 'Las respuestas del encuestado', icon: <BiListUl /> },
-  { type: 'button', label: 'Botón', sub: 'Llamado a la acción', icon: <BiLink /> },
+  { type: 'spacer', label: 'Espaciador', sub: 'Espacio en blanco', icon: <BiSpaceBar /> },
+  { type: 'social', label: 'Redes Sociales', sub: 'Íconos con enlaces', icon: <BiGroup /> },
+  { type: 'responses', label: 'Respuesta', sub: 'Las respuestas del encuestado', icon: <BiFile /> },
+  { type: 'button', label: 'Botón', sub: 'Llamado a la acción', icon: <BiPointer /> },
 ];
 
 const SOCIAL_ICONS: Record<SocialNetworkKey, string> = { facebook: '📘', instagram: '📷', linkedin: '💼', youtube: '▶️', x: '✖️', pinterest: '📌' };
@@ -416,7 +416,7 @@ function TextInlineEditor({ component, align, onUpdate }: { component: TextBlock
   }
 
   const styleBase: React.CSSProperties = component.type === 'title'
-    ? { fontFamily: "'Roboto', sans-serif", fontWeight: 700, fontSize: 21, color: 'rgba(0,0,0,0.85)', letterSpacing: -0.5, padding: '0 32px', margin: 0, textAlign: align, outline: 'none' }
+    ? { fontFamily: "'Roboto', sans-serif", fontWeight: 700, fontSize: 21, lineHeight: 'normal', color: 'rgba(0,0,0,0.85)', letterSpacing: -0.5, padding: '0 32px', margin: 0, textAlign: align, outline: 'none' }
     : { fontFamily: "'Roboto', sans-serif", fontSize: 13.5, lineHeight: 1.75, color: 'rgba(0,0,0,0.65)', padding: '0 32px', margin: 0, whiteSpace: 'pre-line', textAlign: align, outline: 'none' };
 
   return (
@@ -460,12 +460,12 @@ function renderComponentContent(component: Component): React.ReactNode {
   if (component.type === 'header') {
     return (
       <div style={{ background: component.bgColor, padding: '24px 32px', textAlign: 'center' }}>
-        <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 700, fontSize: 22, color: '#fff', letterSpacing: -0.5 }}>{component.name}</span>
+        <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 700, fontSize: 22, lineHeight: 'normal', color: '#fff', letterSpacing: -0.5 }}>{component.name}</span>
       </div>
     );
   }
   if (component.type === 'title') {
-    return <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 700, fontSize: 21, color: 'rgba(0,0,0,0.85)', letterSpacing: -0.5, padding: '0 32px', margin: 0, textAlign: align }} dangerouslySetInnerHTML={{ __html: renderVars(component.text) }} />;
+    return <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 700, fontSize: 21, lineHeight: 'normal', color: 'rgba(0,0,0,0.85)', letterSpacing: -0.5, padding: '0 32px', margin: 0, textAlign: align }} dangerouslySetInnerHTML={{ __html: renderVars(component.text) }} />;
   }
   if (component.type === 'text') {
     return <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13.5, lineHeight: 1.75, color: 'rgba(0,0,0,0.65)', padding: '0 32px', margin: 0, whiteSpace: 'pre-line', textAlign: align }} dangerouslySetInnerHTML={{ __html: renderVars(component.content) }} />;
@@ -546,14 +546,14 @@ function renderComponentContent(component: Component): React.ReactNode {
     ) : (
       <div style={{ margin: '0 32px', padding: '32px', textAlign: 'center', color: '#bfbfbf', border: '1px dashed #d9d9d9', borderRadius: 8 }}>
         <BiImage style={{ fontSize: 24 }} />
-        <div style={{ fontSize: 12, marginTop: 8 }}>Sin imagen — selecciónala y define la URL en Diseño</div>
+        <div style={{ fontSize: 12, lineHeight: 'normal', marginTop: 8 }}>Sin imagen — selecciónala y define la URL en Diseño</div>
       </div>
     );
   }
   if (component.type === 'button') {
     return (
       <div style={{ textAlign: 'center', padding: '12px 32px' }}>
-        <span style={{ display: 'inline-block', padding: '12px 32px', borderRadius: 8, background: component.bgColor, color: component.textColor, fontWeight: 600, fontSize: 14 }}>{component.text}</span>
+        <span style={{ display: 'inline-block', padding: '12px 32px', borderRadius: 8, background: component.bgColor, color: component.textColor, fontWeight: 600, fontSize: 14, lineHeight: 'normal' }}>{component.text}</span>
       </div>
     );
   }
@@ -658,13 +658,13 @@ function EmptyColumnSlot({ onAdd }: { onAdd: (type: ComponentType) => void }) {
   }, [open]);
   return (
     <div ref={wrapRef} style={{ position: 'relative', margin: '8px 12px' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', border: '1px dashed #d9d9d9', borderRadius: 8, padding: '16px 0', background: '#fafafa', cursor: 'pointer', color: '#8c8c8c', fontSize: 12 }}>
+      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', border: '1px dashed #d9d9d9', borderRadius: 8, padding: '16px 0', background: '#fafafa', cursor: 'pointer', color: '#8c8c8c', fontSize: 12, lineHeight: 'normal' }}>
         <BiPlus style={{ marginRight: 8 }} /> Agregar
       </button>
       {open && (
         <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 25, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 8, width: 190, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {COMPONENT_PALETTE.map(item => (
-            <button key={item.type} onClick={() => { onAdd(item.type); setOpen(false); }} style={{ textAlign: 'left', padding: '4px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 12, borderRadius: 4 }}>
+            <button key={item.type} onClick={() => { onAdd(item.type); setOpen(false); }} style={{ textAlign: 'left', padding: '4px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 12, lineHeight: 'normal', borderRadius: 4 }}>
               {item.label}
             </button>
           ))}
@@ -841,14 +841,14 @@ function PaletteItem({ icon, label, onClick, componentType }: {
       onClick={onClick}
       style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
-        padding: '12px 12px', cursor: componentType ? 'grab' : 'pointer', textAlign: 'center',
-        border: '1px solid #d9d9d9',
+        padding: '24px 16px', cursor: componentType ? 'grab' : 'pointer', textAlign: 'center',
+        border: '1px solid #f0f0f0',
         borderRadius: 8, opacity: isDragging ? 0.4 : 1,
-        background: '#fff',
+        background: '#fafafa',
       }}
     >
-      <span style={{ fontSize: 20, color: 'rgba(0,0,0,0.45)' }}>{icon}</span>
-      <div style={{ fontWeight: 500, fontSize: 12, color: 'rgba(0,0,0,0.85)', lineHeight: 1.3 }}>{label}</div>
+      <span style={{ fontSize: 24, color: 'rgba(0,0,0,0.45)', display: 'flex' }}>{icon}</span>
+      <div style={{ fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.45)', lineHeight: '16px' }}>{label}</div>
     </button>
   );
 }
@@ -1191,7 +1191,7 @@ function TitleContentFields({ block, onUpdate }: { block: TitleBlock; onUpdate: 
 }
 function SubSectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(0,0,0,0.35)', borderBottom: '1px solid #f0f0f0', paddingBottom: 8, marginTop: 8 }}>
+    <div style={{ fontSize: 12, lineHeight: 'normal', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(0,0,0,0.35)', borderBottom: '1px solid #f0f0f0', paddingBottom: 8, marginTop: 8 }}>
       {children}
     </div>
   );
@@ -1673,7 +1673,6 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
   const [activeTab, setActiveTab] = useState<'elementos' | 'configuracion' | 'diseno'>('elementos');
   const [selection, setSelection] = useState<Selection>(null);
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
-  const [editingSubject, setEditingSubject] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const rows = draft.rows;
@@ -1849,27 +1848,6 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     ? { maxWidth: cardMaxWidth, margin: '0 auto', background: '#fff', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', overflow: 'visible', minHeight: 180 }
     : { width: '100%', background: '#fff', overflow: 'visible', minHeight: 180 };
 
-  const subjectBar = (
-    <div style={{ maxWidth: cardMaxWidth, margin: '0 auto 12px', display: 'flex', alignItems: 'center', gap: 12, padding: '4px 16px', background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0' }}>
-      <Text type="secondary" style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', flexShrink: 0 }}>ASUNTO</Text>
-      {editingSubject ? (
-        <Input
-          autoFocus bordered={false}
-          value={draft.subject} onChange={e => updateDraft({ subject: e.target.value })}
-          onBlur={() => setEditingSubject(false)} onKeyDown={e => e.key === 'Enter' && setEditingSubject(false)}
-          style={{ flex: 1, padding: 0 }}
-        />
-      ) : (
-        <>
-          <span style={{ flex: 1, fontSize: 13, color: draft.subject ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.25)' }}
-            dangerouslySetInnerHTML={{ __html: draft.subject ? renderVars(draft.subject) : 'Sin asunto…' }}
-          />
-          <Button onClick={() => setEditingSubject(true)}>Editar</Button>
-        </>
-      )}
-    </div>
-  );
-
   const TAB_LABEL: Record<'elementos' | 'configuracion' | 'diseno', string> = {
     elementos: 'Elementos', configuracion: 'Configuración', diseno: 'Diseño',
   };
@@ -1884,7 +1862,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
             flex: 1, border: 'none', background: 'none', cursor: 'pointer', padding: '13px 0', marginBottom: -1,
             borderBottom: activeTab === tab ? '2px solid #1890ff' : '2px solid transparent',
             color: activeTab === tab ? '#1890ff' : 'rgba(0,0,0,0.45)',
-            fontFamily: "'Roboto', sans-serif", fontSize: 14, fontWeight: activeTab === tab ? 500 : 400,
+            fontFamily: "'Roboto', sans-serif", fontSize: 14, lineHeight: 'normal', fontWeight: activeTab === tab ? 500 : 400,
           }}
         >
           {TAB_LABEL[tab]}
@@ -1901,7 +1879,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flexWrap: 'wrap', rowGap: 4 }}>
           <button
             onClick={handleExit}
-            style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}
+            style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, lineHeight: 'normal', color: '#1890ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}
           >
             <BiChevronLeft style={{ fontSize: 16 }} /> Volver al wizard
           </button>
@@ -1927,8 +1905,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
       {mode === 'html' ? (
         <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
           {/* Vista previa en vivo */}
-          <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 24px 24px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
-            {subjectBar}
+          <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 24, background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
             <div style={cardStyle}
               dangerouslySetInnerHTML={{ __html: htmlValue }}
             />
@@ -1954,8 +1931,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
         <DndProvider backend={HTML5Backend}>
           <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
             {/* Canvas */}
-            <div ref={canvasRef} className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 24px 24px', background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
-              {subjectBar}
+            <div ref={canvasRef} className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 24, background: draft.layout.bgColor !== 'transparent' ? draft.layout.bgColor : '#f5f5f5' }}>
               <div style={cardStyle}>
                 {rows.length === 0 ? (
                   <AddElementDropZone onDropComponent={addComponentRow}>
@@ -2001,16 +1977,16 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
             {/* Sidebar — pestañas arriba (Elementos/Configuración/Diseño) + contenido */}
             <div style={{ ...SIDEBAR_WIDTH, background: '#fff', borderLeft: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               {tabStrip}
-              <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 16px' }}>
+              <div className="rf-scroll-hidden" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 24px' }}>
                 {activeTab === 'elementos' && (
                   <div id="palette-section">
-                    <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 12 }}>Estructura</Text>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                    <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.24, lineHeight: '14px', textTransform: 'uppercase', display: 'block', marginBottom: 12 }}>Estructura</Text>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px 24px', marginBottom: 12 }}>
                       <PaletteItem icon={<BiTable />} label="Columnas" onClick={() => setColumnPickerOpen(o => !o)} />
                     </div>
                     {columnPickerOpen && <ColumnLayoutPicker onPick={addRow} onClose={() => setColumnPickerOpen(false)} />}
-                    <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', display: 'block', margin: '12px 0 12px' }}>Componentes</Text>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.24, lineHeight: '14px', textTransform: 'uppercase', display: 'block', margin: '12px 0 12px' }}>Componentes</Text>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px 24px' }}>
                       {COMPONENT_PALETTE.map(item => (
                         <PaletteItem key={item.type} icon={item.icon} label={item.label} componentType={item.type} onClick={() => addComponentRow(item.type)} />
                       ))}
