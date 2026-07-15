@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button, Input, Select, Segmented, Radio, DatePicker, InputNumber, Popconfirm, Modal, Tooltip } from 'antd';
-import { BiChevronRight, BiChevronLeft, BiPlus, BiCheck, BiTrash, BiCheckCircle, BiGitBranch, BiMove, BiInfoCircle, BiErrorCircle } from 'react-icons/bi';
+import { BiChevronRight, BiChevronLeft, BiPlus, BiCheck, BiTrash, BiCheckCircle, BiGitBranch, BiMove, BiInfoCircle } from 'react-icons/bi';
 import dayjs from 'dayjs';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { AutoResponse, ConditionGroup, ConditionRule, Pregunta, OpcionConComentario, SubCondition, AiBlock } from './types';
+import { AutoResponse, ConditionGroup, ConditionRule, Pregunta, OpcionConComentario, SubCondition } from './types';
 import { PREGUNTAS_EJEMPLO, ETIQUETAS_CATEGORIZACION, countComponents, describeRecipientSource, VARIABLES_META } from './data';
 import { cuid } from './cuid';
 
@@ -1238,10 +1238,6 @@ function formatTemplateDate(iso: string | null): string {
 
 function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () => void }) {
   const triggerLabel = rule.trigger === 'farewell' ? 'Cuando el encuestado llega a una despedida' : 'Por cada respuesta nueva';
-  const aiBlockSinObjetivo = rule.rows
-    .flatMap(r => r.columns)
-    .flatMap(c => c.components)
-    .some((comp): comp is AiBlock => comp.type === 'ai' && comp.objetivo.trim() === '');
 
   return (
     <div style={{ maxWidth: 760, margin: '0 auto', width: '100%', boxSizing: 'border-box', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
@@ -1280,15 +1276,6 @@ function Step3({ rule, onOpenEditor }: { rule: AutoResponse; onOpenEditor: () =>
           />
         </div>
       </div>
-
-      {aiBlockSinObjetivo && (
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 8, padding: '12px 16px' }}>
-          <BiErrorCircle style={{ color: '#faad14', fontSize: 14, marginTop: 4 }} />
-          <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.65)', margin: 0, lineHeight: 1.6 }}>
-            Tienes un bloque IA sin objetivo configurado. Ábrelo en el editor de correo y completa "¿Qué debe lograr este bloque?" antes de activar la regla.
-          </p>
-        </div>
-      )}
 
     </div>
   );

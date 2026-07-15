@@ -1,17 +1,7 @@
-import { Pregunta, OpcionConComentario, Etiqueta, AiBlock, AiLanguage, Row } from './types';
+import { Pregunta, OpcionConComentario, Etiqueta, Row } from './types';
 
 export const countComponents = (rows: Row[]): number =>
   rows.flatMap(r => r.columns).flatMap(c => c.components).length;
-
-export const hasAiComponent = (rows: Row[]): boolean =>
-  rows.flatMap(r => r.columns).flatMap(c => c.components).some(comp => comp.type === 'ai');
-
-export const SETUP = {
-  empresa: 'HIR Casa',
-  industria: 'Financiamiento Inmobiliario',
-  tamano: 'Grande (+500 empleados)',
-  descripcion: 'HIR Casa acompaña a las familias en el proceso de adquirir su vivienda propia en México.',
-};
 
 export interface VariableMeta { key: string; type: 'texto' | 'correo' | 'telefono' | 'numero'; }
 
@@ -41,22 +31,6 @@ export function describeRecipientSource(value: string): string {
   return parts[2] === 'campo' ? `${pregunta.texto} → ${parts[3]}` : pregunta.texto;
 }
 
-export const TONOS: Record<string, string> = {
-  empatico: 'empático y cercano, mostrando comprensión genuina sin ser condescendiente',
-  formal: 'formal y profesional, corporativo y preciso',
-  calido: 'cálido y celebratorio, entusiasta y positivo',
-  directo: 'directo y claro, sin rodeos ni adornos',
-  custom: '',
-};
-
-export const TONO_LABELS: Record<string, { label: string; sub: string }> = {
-  empatico: { label: 'Empático', sub: 'Para detractores · comprensión' },
-  formal:   { label: 'Formal',   sub: 'Corporativo · B2B' },
-  calido:   { label: 'Cálido',   sub: 'Para promotores · positivo' },
-  directo:  { label: 'Directo',  sub: 'Sin rodeos · eficiente' },
-  custom:   { label: 'Otro…',    sub: 'Describe el tono' },
-};
-
 export const SENDERS = ['noreply@hircasa.com', 'contacto@hircasa.com', 'encuestas@hircasa.com'];
 
 export const CONDITION_FIELDS = ['NPS', 'CSAT', 'Canal', 'Sucursal', 'Comentario'];
@@ -64,95 +38,6 @@ export const CONDITION_OPERATORS = ['grupo es', 'nota es', 'no está vacía', 'c
 export const CONDITION_VALUES = ['Detractor', 'Neutro', 'Promotor', 'No aplica'];
 
 export const HEADER_COLORS = ['#4338CA', '#7C3AED', '#059669', '#DC2626', '#0F172A', '#D97706', '#0D9488'];
-
-export const DEFAULT_RESTRICTIONS = ['No prometer tiempos de resolución', 'No mencionar compensaciones económicas'];
-
-// Sugerencias del selector de "Acciones prohibidas" — además de estas, el usuario puede
-// escribir cualquier otra acción libre (Select mode="tags").
-export const RESTRICCION_SUGERENCIAS = [
-  'No prometer tiempos de resolución',
-  'No mencionar compensaciones económicas',
-  'No prometer reembolsos',
-  'No compartir información de otros clientes',
-  'No hacer promesas legales',
-  'No usar humor',
-  'No mencionar el número de ticket o caso',
-];
-
-export const IDIOMA_LABELS: Record<AiLanguage, string> = { es: 'Español', en: 'Inglés', pt: 'Portugués', fr: 'Francés' };
-
-const fmtVal = (v: string | string[]): string => Array.isArray(v) ? v.join(' o ') : v;
-
-export const buildAiPrompt = (
-  block: { objetivo: string; tone: string; customTone: string; restricciones: string[]; idioma?: AiLanguage },
-  condGroups: { rows: { variable: string; operator: string; value: string | string[] }[] }[],
-): string => {
-  const condText = condGroups.flatMap(g => g.rows).map(r => `${r.variable} ${r.operator} ${fmtVal(r.value)}`).join(', ') || 'ninguna';
-  const tono = block.tone === 'custom' ? block.customTone : TONOS[block.tone] || '';
-  const idiomaLabel = IDIOMA_LABELS[block.idioma || 'es'];
-  let prompt = `Eres el asistente de comunicación de ${SETUP.empresa}, empresa de ${SETUP.industria}.\n${SETUP.descripcion}\n\nGenera UN SOLO párrafo para un correo automático enviado a un encuestado que cumple: ${condText}.\n\nObjetivo: ${block.objetivo}\nTono: ${tono}.\nIdioma del texto generado: ${idiomaLabel}.`;
-  if (block.restricciones.length > 0) prompt += `\nAcciones prohibidas — nunca hacer: ${block.restricciones.join(', ')}.`;
-  prompt += `\n\nReglas:\n- Solo el párrafo, sin saludo ni firma\n- Máximo 3 oraciones concisas\n- En ${idiomaLabel.toLowerCase()}\n- Sonido genuino y humano, no plantilla genérica\n- No iniciar con el nombre de la empresa`;
-  return prompt;
-};
-
-// Frases de plantilla por idioma para el generador simulado — el objetivo que escribe el
-// administrador del estudio se mantiene tal cual lo redactó (no se traduce).
-const TONE_OPENERS_BY_LANG: Record<AiLanguage, Record<string, string>> = {
-  es: {
-    empatico: 'Entendemos cómo te sentiste y queremos acompañarte en esto.',
-    formal: 'Le escribimos para darle seguimiento a su experiencia reciente con nosotros.',
-    calido: '¡Qué gusto saber de ti! Gracias por compartir tu experiencia.',
-    directo: 'Vamos directo al punto sobre tu experiencia reciente.',
-    custom: 'Gracias por compartir tu experiencia con nosotros.',
-  },
-  en: {
-    empatico: 'We understand how you felt and want to support you through this.',
-    formal: 'We are writing to follow up on your recent experience with us.',
-    calido: "We're so glad to hear from you! Thank you for sharing your experience.",
-    directo: "Let's get straight to the point about your recent experience.",
-    custom: 'Thank you for sharing your experience with us.',
-  },
-  pt: {
-    empatico: 'Entendemos como você se sentiu e queremos te acompanhar nisso.',
-    formal: 'Escrevemos para dar seguimento à sua experiência recente conosco.',
-    calido: 'Que alegria saber de você! Obrigado por compartilhar sua experiência.',
-    directo: 'Vamos direto ao ponto sobre sua experiência recente.',
-    custom: 'Obrigado por compartilhar sua experiência conosco.',
-  },
-  fr: {
-    empatico: 'Nous comprenons ce que vous avez ressenti et souhaitons vous accompagner.',
-    formal: 'Nous vous écrivons pour faire suite à votre expérience récente avec nous.',
-    calido: 'Quel plaisir de vous lire ! Merci de partager votre expérience.',
-    directo: 'Allons droit au but concernant votre expérience récente.',
-    custom: 'Merci de partager votre expérience avec nous.',
-  },
-};
-const FOCUS_BY_LANG: Record<AiLanguage, (summary: string, objetivo: string) => string> = {
-  es: (r, o) => `Basado en tu respuesta (${r}), nuestro equipo se enfoca en ${o}.`,
-  en: (r, o) => `Based on your response (${r}), our team is focused on ${o}.`,
-  pt: (r, o) => `Com base na sua resposta (${r}), nossa equipe está focada em ${o}.`,
-  fr: (r, o) => `D'après votre réponse (${r}), notre équipe se concentre sur ${o}.`,
-};
-const CLOSER_BY_LANG: Record<AiLanguage, (tono: string) => string> = {
-  es: t => ` Seguimos comprometidos en brindarte una experiencia ${t}.`,
-  en: t => ` We remain committed to providing you with a ${t} experience.`,
-  pt: t => ` Continuamos comprometidos em oferecer a você uma experiência ${t}.`,
-  fr: t => ` Nous restons engagés à vous offrir une expérience ${t}.`,
-};
-const TONE_FALLBACK_BY_LANG: Record<AiLanguage, string> = { es: 'cercana y profesional', en: 'warm and professional', pt: 'próxima e profissional', fr: 'chaleureuse et professionnelle' };
-
-// Generador simulado en el cliente — NO llama a ninguna API real. Es un prototipo Figma Make
-// sin backend, así que "Enviar prueba" solo necesita mostrar un texto plausible y determinístico.
-export function mockGenerateAiText(block: AiBlock, responseSummary: string): string {
-  const idioma = block.idioma || 'es';
-  const tono = block.tone === 'custom' ? (block.customTone.trim() || 'cercano') : (TONOS[block.tone] || '');
-  const opener = TONE_OPENERS_BY_LANG[idioma][block.tone] || TONE_OPENERS_BY_LANG[idioma].custom;
-  const objetivo = block.objetivo.trim() || 'darte seguimiento personalizado';
-  let text = `${opener} ${FOCUS_BY_LANG[idioma](responseSummary, objetivo.toLowerCase())}`;
-  text += CLOSER_BY_LANG[idioma](tono || TONE_FALLBACK_BY_LANG[idioma]);
-  return text;
-}
 
 // ─── Respuestas simuladas — usadas por el bloque de Respuestas y "Enviar prueba" ──
 

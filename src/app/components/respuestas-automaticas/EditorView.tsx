@@ -7,7 +7,7 @@ import type { InputRef } from 'antd';
 import {
   BiSend, BiCopy, BiX, BiPlus, BiAlignLeft,
   BiAlignMiddle, BiAlignRight, BiMinus, BiListUl,
-  BiBoltCircle, BiMove, BiTable, BiImage, BiLink,
+  BiMove, BiTable, BiImage, BiLink,
   BiExpandVertical, BiShareAlt, BiInfoCircle, BiErrorCircle, BiHelpCircle,
   BiUpload, BiSearch, BiChevronDown, BiChevronLeft, BiTrash,
   BiBold, BiItalic, BiSmile, BiCodeCurly,
@@ -18,10 +18,10 @@ import CodeMirror from '@uiw/react-codemirror';
 import { html as htmlLang } from '@codemirror/lang-html';
 import {
   AutoResponse, Row, Column, RowDesign, Component, ComponentType, ComponentDesign, EmailLayoutConfig, TextAlign,
-  AiBlock, TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, Pregunta,
-  ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey, Tone, AiLanguage,
+  TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, Pregunta,
+  ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey,
 } from './types';
-import { VARIABLES, PREGUNTAS_EJEMPLO, mockAnswerFor, TONO_LABELS, IDIOMA_LABELS, HEADER_COLORS, DEFAULT_RESTRICTIONS, RESTRICCION_SUGERENCIAS, SETUP, mockGenerateAiText, countComponents } from './data';
+import { VARIABLES, PREGUNTAS_EJEMPLO, mockAnswerFor, HEADER_COLORS, countComponents } from './data';
 import { cuid } from './cuid';
 import TestModal from './TestModal';
 
@@ -78,12 +78,6 @@ function makeComponent(type: ComponentType): Component {
     case 'header':    return { id, type, name: 'HIR Casa', bgColor: '#1890ff', design };
     case 'title':     return { id, type, text: 'Tu opinión importa', design };
     case 'text':      return { id, type, content: 'Hola {{nombre_preferido}},\n\nGracias por tomarte el tiempo de responder nuestra encuesta.', design };
-    case 'ai':        return {
-      id, type, objetivo: '', tone: 'empatico' as Tone, customTone: '', restricciones: [...DEFAULT_RESTRICTIONS], idioma: 'es' as AiLanguage, generatedText: '',
-      textBgColor: '#F5F3FF', textColor: '#4C1D95', fontSize: 13, lineHeight: 1.75, fontStyle: 'italic', fontWeight: '400',
-      cardBorderColor: '#DDD6FE', cardBorderWidth: 1, cardBorderStyle: 'solid', cardBorderRadius: 10,
-      design,
-    };
     case 'responses': return {
       id, type,
       questions: PREGUNTAS_EJEMPLO.map(q => ({ questionId: q.id, included: true })),
@@ -137,7 +131,6 @@ const COMPONENT_PALETTE: { type: ComponentType; label: string; sub: string; icon
   { type: 'spacer', label: 'Espaciador', sub: 'Espacio en blanco', icon: <BiExpandVertical /> },
   { type: 'social', label: 'Redes Sociales', sub: 'Íconos con enlaces', icon: <BiShareAlt /> },
   { type: 'responses', label: 'Respuesta', sub: 'Las respuestas del encuestado', icon: <BiListUl /> },
-  { type: 'ai', label: 'Texto adaptativo', sub: 'Texto único por encuestado', icon: <BiBoltCircle /> },
   { type: 'button', label: 'Botón', sub: 'Llamado a la acción', icon: <BiLink /> },
 ];
 
@@ -188,10 +181,6 @@ function componentToHtml(c: Component): string {
     case 'header':    return `<div style="${style}background:${c.bgColor};text-align:center;"><span style="font-weight:700;font-size:22px;color:#fff;">${c.name}</span></div>`;
     case 'title':     return `<div style="${style}"><h2 style="font-weight:700;font-size:21px;color:#000;margin:0;">${c.text}</h2></div>`;
     case 'text':      return `<div style="${style}"><p style="font-size:13.5px;line-height:1.75;color:#333;white-space:pre-line;margin:0;">${c.content}</p></div>`;
-    case 'ai': {
-      const cardBorder = c.cardBorderStyle !== 'none' && c.cardBorderWidth > 0 ? `border:${c.cardBorderWidth}px ${c.cardBorderStyle} ${c.cardBorderColor};` : '';
-      return `<div style="${style}"><div style="${cardBorder}border-radius:${c.cardBorderRadius}px;background:${c.textBgColor};overflow:hidden;"><p style="font-size:${c.fontSize}px;line-height:${c.lineHeight};color:${c.textColor};font-style:${c.fontStyle};font-weight:${c.fontWeight};margin:0;padding:13px 15px;">${c.generatedText || '[Texto generado pendiente — envía una prueba]'}</p></div></div>`;
-    }
     case 'responses': {
       const included = orderedIncludedQuestions(c);
       const label = `<div style="font-size:${c.headerSize}px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.headerColor};margin-bottom:${c.rowGap}px;">${c.headerLabel}</div>`;
@@ -480,36 +469,6 @@ function renderComponentContent(component: Component): React.ReactNode {
   }
   if (component.type === 'text') {
     return <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: 13.5, lineHeight: 1.75, color: 'rgba(0,0,0,0.65)', padding: '0 32px', margin: 0, whiteSpace: 'pre-line', textAlign: align }} dangerouslySetInnerHTML={{ __html: renderVars(component.content) }} />;
-  }
-  if (component.type === 'ai') {
-    const configured = component.objetivo.trim() !== '';
-    const cardBorder = component.cardBorderStyle !== 'none' && component.cardBorderWidth > 0
-      ? `${component.cardBorderWidth}px ${component.cardBorderStyle} ${component.cardBorderColor}` : 'none';
-    return (
-      <div style={{ border: cardBorder, borderRadius: component.cardBorderRadius, background: component.textBgColor, margin: '0 32px', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px 0' }}>
-          <Tag color="purple" icon={<BiBoltCircle />} style={{ fontWeight: 600 }}>IA</Tag>
-          <Text style={{ fontSize: 12, color: component.textColor }}>
-            {configured ? `Tono: ${TONO_LABELS[component.tone]?.label ?? component.tone} · ${component.generatedText ? 'Generado' : 'Pendiente'}` : 'Sin configurar — selecciona para configurar'}
-          </Text>
-        </div>
-        {!configured ? (
-          <div style={{ textAlign: 'center', padding: '16px 16px' }}>
-            <p style={{ fontSize: 22, margin: '0 0 8px' }}><BiBoltCircle /></p>
-            <Text strong style={{ display: 'block', color: component.textColor }}>Texto adaptativo sin objetivo</Text>
-            <Text style={{ fontSize: 12, color: component.textColor, opacity: 0.7 }}>Define el objetivo en el panel de configuración.</Text>
-          </div>
-        ) : (
-          <p style={{
-            fontFamily: "'Roboto', sans-serif", margin: 0, padding: '12px 16px',
-            fontSize: component.fontSize, lineHeight: component.lineHeight,
-            fontStyle: component.fontStyle, fontWeight: Number(component.fontWeight), color: component.textColor,
-          }}>
-            {component.generatedText || 'Usa "Enviar prueba" para ver el texto real.'}
-          </p>
-        )}
-      </div>
-    );
   }
   if (component.type === 'responses') {
     const included = orderedIncludedQuestions(component);
@@ -1204,125 +1163,6 @@ function TextContentFields({ block, onUpdate }: { block: TextBlock; onUpdate: (b
     </div>
   );
 }
-function AiContentFields({ block, onUpdate }: { block: AiBlock; onUpdate: (b: Component) => void }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--ds-violet-bg)', border: '1px solid var(--ds-violet-mid)' }}>
-        <Text style={{ fontSize: 12, color: 'var(--ds-violet-dark)' }}>
-          <BiBoltCircle style={{ verticalAlign: '-2px' }} /> <strong>{SETUP.empresa}</strong> · {SETUP.industria}
-        </Text>
-        <Text style={{ fontSize: 12, color: 'var(--ds-violet-dark)', display: 'block', marginTop: 4, opacity: 0.85 }}>
-          La IA recibe: datos de contacto, variables de la interacción (incluyendo ticket/caso si se generó) y todas las respuestas del encuestado. Solo usa variables cuyo significado entiende con certeza.
-        </Text>
-      </div>
-      <div>
-        <FieldLabel>¿Qué debe lograr este bloque? *</FieldLabel>
-        <TextArea rows={3} value={block.objetivo} onChange={e => onUpdate({ ...block, objetivo: e.target.value })} placeholder="Ej: Que el cliente sienta que su queja fue escuchada…" />
-        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>La IA genera texto único usando la respuesta real como contexto.</Text>
-      </div>
-      <div>
-        <FieldLabel tooltip="Ajusta el estilo emocional del texto generado — no cambia lo que dice, solo cómo lo dice.">Tono del mensaje</FieldLabel>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {Object.entries(TONO_LABELS).map(([k, v]) => (
-            <Card
-              key={k} size="small" hoverable onClick={() => onUpdate({ ...block, tone: k as Tone })}
-              style={{ cursor: 'pointer', borderColor: block.tone === k ? 'var(--ds-violet)' : '#d9d9d9', background: block.tone === k ? 'var(--ds-violet-bg)' : '#fff' }}
-              styles={{ body: { padding: '8px 12px' } }}
-            >
-              <Text style={{ fontSize: 12, fontWeight: 500, color: block.tone === k ? 'var(--ds-violet-dark)' : undefined, display: 'block' }}>{v.label}</Text>
-              <Text type="secondary" style={{ fontSize: 12 }}>{v.sub}</Text>
-            </Card>
-          ))}
-        </div>
-        {block.tone === 'custom' && <Input style={{ marginTop: 8 }} value={block.customTone} onChange={e => onUpdate({ ...block, customTone: e.target.value })} placeholder="Describe el tono…" />}
-      </div>
-      <div>
-        <FieldLabel tooltip="Solo aplica al texto que genera este bloque IA. El resto del correo mantiene su propio idioma.">Idioma del texto generado</FieldLabel>
-        <Select
-          style={{ width: '100%' }} value={block.idioma}
-          onChange={v => onUpdate({ ...block, idioma: v as AiLanguage })}
-          options={Object.entries(IDIOMA_LABELS).map(([value, label]) => ({ value, label }))}
-        />
-      </div>
-      <div>
-        <FieldLabel tooltip="La IA nunca hará ni sugerirá estas acciones, sin importar el objetivo o el tono elegidos. Elige de la lista o escribe la tuya y presiona Enter.">Acciones prohibidas</FieldLabel>
-        <Select
-          mode="tags" style={{ width: '100%' }} value={block.restricciones}
-          onChange={v => onUpdate({ ...block, restricciones: v })}
-          options={RESTRICCION_SUGERENCIAS.map(r => ({ value: r, label: r }))}
-          placeholder="Elige o escribe una acción prohibida…"
-          tokenSeparators={[',', ';']}
-        />
-      </div>
-
-      <SubSectionHeading>Texto generado</SubSectionHeading>
-      <div>
-        <FieldLabel>Color del texto</FieldLabel>
-        <ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} />
-      </div>
-      <div style={{ display: 'flex', gap: 12 }}>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Tamaño px</FieldLabel>
-          <InputNumber min={10} max={24} value={block.fontSize} onChange={v => onUpdate({ ...block, fontSize: v ?? 13 })} style={{ width: '100%' }} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <FieldLabel tooltip="Espacio vertical entre líneas del párrafo generado.">Interlineado</FieldLabel>
-          <Select
-            style={{ width: '100%' }} value={block.lineHeight}
-            onChange={v => onUpdate({ ...block, lineHeight: v })}
-            options={[
-              { value: 1.4, label: 'Compacto' },
-              { value: 1.6, label: 'Normal' },
-              { value: 1.75, label: 'Cómodo' },
-              { value: 2.0, label: 'Espaciado' },
-            ]}
-          />
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: 12 }}>
-        <div style={{ flex: 1 }}>
-          <FieldLabel tooltip="Cursiva o normal — el formato tipográfico del párrafo generado.">Estilo</FieldLabel>
-          <Radio.Group value={block.fontStyle} onChange={e => onUpdate({ ...block, fontStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
-            <Radio.Button value="italic" style={{ flex: 1, textAlign: 'center', fontStyle: 'italic' }}>Cursiva</Radio.Button>
-            <Radio.Button value="normal" style={{ flex: 1, textAlign: 'center' }}>Normal</Radio.Button>
-          </Radio.Group>
-        </div>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Peso</FieldLabel>
-          <WeightField value={block.fontWeight} onChange={v => onUpdate({ ...block, fontWeight: v })} />
-        </div>
-      </div>
-
-      <SubSectionHeading>Tarjeta</SubSectionHeading>
-      <div>
-        <FieldLabel tooltip="El color de fondo de toda la tarjeta que envuelve el texto generado.">Fondo</FieldLabel>
-        <ColorPickerField value={block.textBgColor} onChange={c => onUpdate({ ...block, textBgColor: c })} allowTransparent />
-      </div>
-      <div>
-        <FieldLabel>Color del borde</FieldLabel>
-        <ColorPickerField value={block.cardBorderColor} onChange={c => onUpdate({ ...block, cardBorderColor: c })} />
-      </div>
-      <div style={{ display: 'flex', gap: 12 }}>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Grosor borde</FieldLabel>
-          <InputNumber min={0} max={8} value={block.cardBorderWidth} onChange={v => onUpdate({ ...block, cardBorderWidth: v ?? 1 })} style={{ width: '100%' }} addonAfter="px" />
-        </div>
-        <div style={{ flex: 1 }}>
-          <FieldLabel>Estilo borde</FieldLabel>
-          <Radio.Group value={block.cardBorderStyle} onChange={e => onUpdate({ ...block, cardBorderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
-            <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
-            <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
-            <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
-          </Radio.Group>
-        </div>
-      </div>
-      <div>
-        <FieldLabel>Radio de esquinas — {block.cardBorderRadius}px</FieldLabel>
-        <Slider min={0} max={24} value={block.cardBorderRadius} onChange={v => onUpdate({ ...block, cardBorderRadius: v })} tooltip={{ formatter: v => `${v}px` }} />
-      </div>
-    </div>
-  );
-}
 function HeaderContentFields({ block, onUpdate }: { block: HeaderBlock; onUpdate: (b: Component) => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1800,13 +1640,12 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
 }
 
 const TYPE_SECTION_TITLE: Partial<Record<ComponentType, string>> = {
-  header: 'Encabezado', title: 'Título', text: 'Texto', ai: 'Texto adaptativo', responses: 'Respuesta',
+  header: 'Encabezado', title: 'Título', text: 'Texto', responses: 'Respuesta',
   image: 'Imagen', button: 'Botón', spacer: 'Espaciador', social: 'Redes Sociales',
 };
 
 function ComponentTypeFields({ component, onUpdate }: { component: Component; onUpdate: (c: Component) => void }) {
   if (component.type === 'text')      return <TextContentFields block={component} onUpdate={onUpdate} />;
-  if (component.type === 'ai')        return <AiContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'header')    return <HeaderContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'title')     return <TitleContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'responses') return <ResponsesContentFields block={component} onUpdate={onUpdate} />;
@@ -1997,12 +1836,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
     }
     setMode(next);
   }
-  function handleTestSent(email: string, summary: string | null) {
-    setDraft(d => {
-      if (!summary) return d;
-      return { ...d, rows: d.rows.map(r => ({ ...r, columns: r.columns.map(c => ({ ...c, components: c.components.map(comp => comp.type === 'ai' ? { ...comp, generatedText: mockGenerateAiText(comp, summary) } : comp) })) })) };
-    });
-    setDirty(true);
+  function handleTestSent(email: string) {
     setTestValidated(true);
     setShowTestModal(false);
     message.success(`Correo de prueba enviado a ${email} ✓`);
@@ -2225,7 +2059,6 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
 
       {showTestModal && (
         <TestModal
-          rule={draft}
           onClose={() => setShowTestModal(false)}
           onSend={handleTestSent}
         />

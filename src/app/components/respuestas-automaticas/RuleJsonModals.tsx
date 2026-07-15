@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
 import { Modal, Button, Alert, Checkbox, Typography } from 'antd';
-import { BiBoltCircle, BiUpload, BiDownload, BiFile } from 'react-icons/bi';
+import { BiUpload, BiDownload, BiFile } from 'react-icons/bi';
 import { AutoResponse, Trigger } from './types';
-import { countComponents, hasAiComponent } from './data';
+import { countComponents } from './data';
 import { parseRulesFile, downloadRules, slugify } from './ruleIo';
 
 const { Text } = Typography;
@@ -24,11 +24,6 @@ function RuleRow({ rule, checked, onToggle }: { rule: AutoResponse; checked: boo
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,0.85)' }}>{rule.name}</span>
-          {hasAiComponent(rule.rows ?? []) && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--ds-violet)', background: 'var(--ds-violet-bg)', border: '1px solid var(--ds-violet-mid)', borderRadius: 1000, padding: '0 8px' }}>
-              <BiBoltCircle style={{ fontSize: 11 }} /> IA
-            </span>
-          )}
         </div>
         <Text type="secondary" style={{ fontSize: 12 }}>
           {triggerLabel(rule.trigger)} · {conds === 0 ? 'Todas las respuestas' : `${conds} ${conds === 1 ? 'condición' : 'condiciones'}`} · {comps} {comps === 1 ? 'componente' : 'componentes'}

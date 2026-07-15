@@ -1,8 +1,6 @@
 export type Trigger = 'response' | 'farewell';
-export type ComponentType = 'header' | 'title' | 'text' | 'ai' | 'responses' | 'divider' | 'image' | 'button' | 'spacer' | 'social';
+export type ComponentType = 'header' | 'title' | 'text' | 'responses' | 'divider' | 'image' | 'button' | 'spacer' | 'social';
 export type TextAlign = 'left' | 'center' | 'right';
-export type Tone = 'empatico' | 'formal' | 'calido' | 'directo' | 'custom';
-export type AiLanguage = 'es' | 'en' | 'pt' | 'fr';
 export type RuleStatus = 'draft' | 'active' | 'inactive';
 
 export interface ComponentDesign {
@@ -31,26 +29,6 @@ export interface TitleBlock {
 export interface TextBlock {
   id: string; type: 'text';
   content: string;
-  design: ComponentDesign;
-}
-export interface AiBlock {
-  id: string; type: 'ai';
-  objetivo: string;
-  tone: Tone;
-  customTone: string;
-  restricciones: string[];
-  idioma: AiLanguage;
-  generatedText: string;
-  textBgColor: string;
-  textColor: string;
-  fontSize: number;
-  lineHeight: number;
-  fontStyle: 'italic' | 'normal';
-  fontWeight: '400' | '600' | '700';
-  cardBorderColor: string;
-  cardBorderWidth: number;
-  cardBorderStyle: 'solid' | 'dotted' | 'none';
-  cardBorderRadius: number;
   design: ComponentDesign;
 }
 export interface ResponseQuestion {
@@ -118,7 +96,7 @@ export interface SocialComponent {
 }
 
 export type Component =
-  | HeaderBlock | TitleBlock | TextBlock | AiBlock | ResponsesBlock | DividerBlock
+  | HeaderBlock | TitleBlock | TextBlock | ResponsesBlock | DividerBlock
   | ImageComponent | ButtonComponent | SpacerComponent | SocialComponent;
 
 export interface Column {
