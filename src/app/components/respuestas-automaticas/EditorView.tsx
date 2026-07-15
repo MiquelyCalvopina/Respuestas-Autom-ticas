@@ -191,7 +191,10 @@ function componentToHtml(c: Component): string {
       const containerOpen = `<div style="width:${c.containerWidth}%;margin:0 auto;border-radius:${c.containerBorderRadius}px;overflow:hidden;">`;
       if (c.displayStyle === 'table') {
         const rows = included.map(q => `<tr>${c.showQuestion ? `<td style="padding:8px 12px;${qStyle}width:45%;border-top:1px solid #f0f0f0;">${q.texto}</td>` : ''}<td style="padding:8px 12px;font-size:${c.answerSize}px;font-weight:${c.answerWeight};color:${c.answerColor};border-top:1px solid #f0f0f0;">${mockAnswerFor(q)}</td></tr>`).join('');
-        return `<div style="${style}">${containerOpen}${label}<table role="presentation" width="100%" style="border-collapse:collapse;border:1px solid #f0f0f0;font-size:12.5px;">${rows}</table></div></div>`;
+        const emptyExampleRow = c.includeEmptyAnswers
+          ? `<tr>${c.showQuestion ? `<td style="padding:8px 12px;${qStyle}width:45%;border-top:1px solid #f0f0f0;font-style:italic;color:rgba(0,0,0,0.35);">Ejemplo — pregunta sin respuesta</td>` : ''}<td style="padding:8px 12px;font-size:${c.answerSize}px;font-style:italic;color:rgba(0,0,0,0.35);border-top:1px solid #f0f0f0;">Sin respuesta</td></tr>`
+          : '';
+        return `<div style="${style}">${containerOpen}${label}<table role="presentation" width="100%" style="border-collapse:collapse;border:1px solid #f0f0f0;font-size:12.5px;">${rows}${emptyExampleRow}</table></div></div>`;
       }
       const items = included.map(q => {
         const qLabel = !c.showQuestion ? '' : c.displayStyle === 'bold-indented'
@@ -205,7 +208,15 @@ function componentToHtml(c: Component): string {
         const answerStyle = `font-size:${c.answerSize}px;font-weight:${c.answerWeight};color:${c.answerColor};line-height:1.5;${accentBorder}${bgStyle}`;
         return `<div style="margin-bottom:${RESPONSES_ROW_GAP}px;">${qLabel}<p style="margin:0;${answerStyle}">${mockAnswerFor(q)}</p></div>`;
       }).join('');
-      return `<div style="${style}">${containerOpen}${label}${items}</div></div>`;
+      const emptyExampleItem = c.includeEmptyAnswers ? (() => {
+        const qLabel = !c.showQuestion ? '' : c.displayStyle === 'bold-indented'
+          ? `<strong style="display:block;font-size:${c.questionSize}px;font-weight:${c.questionWeight};font-style:italic;color:rgba(0,0,0,0.35);">Ejemplo — pregunta sin respuesta</strong>`
+          : `<span style="font-weight:${c.questionWeight};font-style:italic;color:rgba(0,0,0,0.35);">Ejemplo — pregunta sin respuesta: </span>`;
+        const accentLeft = c.displayStyle === 'bold-indented' ? c.accentWidth + 9 : 0;
+        const accentBorder = c.displayStyle === 'bold-indented' ? `border-left:${c.accentWidth}px solid ${c.accentColor};` : '';
+        return `<div style="margin-bottom:${RESPONSES_ROW_GAP}px;">${qLabel}<p style="margin:0;font-size:${c.answerSize}px;font-style:italic;color:rgba(0,0,0,0.35);line-height:1.5;${accentBorder}${accentLeft ? `padding-left:${accentLeft}px;` : ''}">Sin respuesta</p></div>`;
+      })() : '';
+      return `<div style="${style}">${containerOpen}${label}${items}${emptyExampleItem}</div></div>`;
     }
     case 'divider':   return `<hr style="margin:${d.paddingTop}px 26px ${d.paddingBottom}px;" />`;
     case 'image':     return `<div style="${style}text-align:center;">${c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : ''}</div>`;
@@ -496,6 +507,12 @@ function renderComponentContent(component: Component): React.ReactNode {
                     <td style={{ padding: '12px 16px', fontSize: component.answerSize, fontWeight: Number(component.answerWeight), color: component.answerColor }}>{mockAnswerFor(q)}</td>
                   </tr>
                 ))}
+                {component.includeEmptyAnswers && (
+                  <tr style={{ borderTop: included.length > 0 ? '1px solid #f0f0f0' : undefined }}>
+                    {component.showQuestion && <td style={{ padding: '12px 16px', width: '45%', ...questionStyle, fontStyle: 'italic', color: 'rgba(0,0,0,0.35)' }}>Ejemplo — pregunta sin respuesta</td>}
+                    <td style={{ padding: '12px 16px', fontSize: component.answerSize, fontStyle: 'italic', color: 'rgba(0,0,0,0.35)' }}>Sin respuesta</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -530,6 +547,23 @@ function renderComponentContent(component: Component): React.ReactNode {
             </div>
           );
         })}
+        {component.includeEmptyAnswers && (
+          <div style={{ marginBottom: RESPONSES_ROW_GAP }}>
+            {component.showQuestion && component.displayStyle === 'bold-indented' && (
+              <Text style={{ display: 'block', marginBottom: 4, ...questionStyle, fontStyle: 'italic', color: 'rgba(0,0,0,0.35)' }}>Ejemplo — pregunta sin respuesta</Text>
+            )}
+            {component.showQuestion && component.displayStyle === 'list' && (
+              <Text style={{ display: 'inline', fontStyle: 'italic', color: 'rgba(0,0,0,0.35)' }}>Ejemplo — pregunta sin respuesta: </Text>
+            )}
+            <p style={{
+              margin: 0, fontSize: component.answerSize, fontStyle: 'italic', color: 'rgba(0,0,0,0.35)', lineHeight: 1.5,
+              paddingLeft: component.displayStyle === 'bold-indented' ? component.accentWidth + 9 : 0,
+              borderLeft: component.displayStyle === 'bold-indented' ? `${component.accentWidth}px solid ${component.accentColor}` : 'none',
+            }}>
+              Sin respuesta
+            </p>
+          </div>
+        )}
         </div>
       </div>
     );
