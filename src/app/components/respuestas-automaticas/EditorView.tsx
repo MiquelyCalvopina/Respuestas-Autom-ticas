@@ -81,13 +81,13 @@ function makeComponent(type: ComponentType): Component {
     case 'responses': return {
       id, type,
       questions: PREGUNTAS_EJEMPLO.map(q => ({ questionId: q.id, included: true })),
-      displayStyle: 'bold-indented', showQuestion: true, rowGap: 10,
+      displayStyle: 'bold-indented', showQuestion: true,
       containerWidth: 100, containerBorderRadius: 10,
       headerLabel: 'Tus respuestas', headerColor: '#9CA3AF', headerSize: 10,
       questionColor: '#1E293B', questionBg: 'transparent', questionSize: 13, questionWeight: '700',
       answerColor: '#475569', answerBg: 'transparent', answerSize: 13, answerWeight: '400',
       accentColor: '#E2E8F0', accentWidth: 2,
-      separatorStyle: 'solid', separatorColor: '#E5E7EB',
+      includeIfAbandoned: false, includeIfSkippedByLogic: false,
       design,
     };
     case 'divider':   return { id, type, design };
@@ -166,6 +166,9 @@ function formatDate(iso: string | null | undefined): string {
   return `${d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })} ${d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`;
 }
 
+// Espacio entre filas del bloque de respuestas — fijo, ya no configurable (no hay separadores).
+const RESPONSES_ROW_GAP = 12;
+
 function orderedIncludedQuestions(block: ResponsesBlock): Pregunta[] {
   return block.questions
     .filter(bq => bq.included)
@@ -183,16 +186,14 @@ function componentToHtml(c: Component): string {
     case 'text':      return `<div style="${style}"><p style="font-size:13.5px;line-height:1.75;color:#333;white-space:pre-line;margin:0;">${c.content}</p></div>`;
     case 'responses': {
       const included = orderedIncludedQuestions(c);
-      const label = `<div style="font-size:${c.headerSize}px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.headerColor};margin-bottom:${c.rowGap}px;">${c.headerLabel}</div>`;
+      const label = `<div style="font-size:${c.headerSize}px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.headerColor};margin-bottom:${RESPONSES_ROW_GAP}px;">${c.headerLabel}</div>`;
       const qStyle = `font-size:${c.questionSize}px;font-weight:${c.questionWeight};color:${c.questionColor};margin-bottom:3px;${c.questionBg !== 'transparent' ? `background:${c.questionBg};padding:4px 6px;border-radius:4px;` : ''}`;
-      const sepBorder = c.separatorStyle !== 'none' ? `border-bottom:1px ${c.separatorStyle} ${c.separatorColor};padding-bottom:${Math.floor(c.rowGap / 2)}px;` : '';
       const containerOpen = `<div style="width:${c.containerWidth}%;margin:0 auto;border-radius:${c.containerBorderRadius}px;overflow:hidden;">`;
       if (c.displayStyle === 'table') {
         const rows = included.map(q => `<tr>${c.showQuestion ? `<td style="padding:8px 12px;${qStyle}width:45%;border-top:1px solid #f0f0f0;">${q.texto}</td>` : ''}<td style="padding:8px 12px;font-size:${c.answerSize}px;font-weight:${c.answerWeight};color:${c.answerColor};border-top:1px solid #f0f0f0;">${mockAnswerFor(q)}</td></tr>`).join('');
         return `<div style="${style}">${containerOpen}${label}<table role="presentation" width="100%" style="border-collapse:collapse;border:1px solid #f0f0f0;font-size:12.5px;">${rows}</table></div></div>`;
       }
-      const items = included.map((q, i) => {
-        const isLast = i === included.length - 1;
+      const items = included.map(q => {
         const qLabel = !c.showQuestion ? '' : c.displayStyle === 'bold-indented'
           ? `<strong style="display:block;${qStyle}">${q.texto}</strong>`
           : `<span style="font-weight:${c.questionWeight};color:${c.questionColor};">${q.texto}: </span>`;
@@ -202,7 +203,7 @@ function componentToHtml(c: Component): string {
           ? `background:${c.answerBg};border-radius:4px;padding:4px 8px 4px ${accentLeft + 8}px;`
           : (accentLeft ? `padding-left:${accentLeft}px;` : '');
         const answerStyle = `font-size:${c.answerSize}px;font-weight:${c.answerWeight};color:${c.answerColor};line-height:1.5;${accentBorder}${bgStyle}`;
-        return `<div style="margin-bottom:${c.rowGap}px;${!isLast ? sepBorder : ''}">${qLabel}<p style="margin:0;${answerStyle}">${mockAnswerFor(q)}</p></div>`;
+        return `<div style="margin-bottom:${RESPONSES_ROW_GAP}px;">${qLabel}<p style="margin:0;${answerStyle}">${mockAnswerFor(q)}</p></div>`;
       }).join('');
       return `<div style="${style}">${containerOpen}${label}${items}</div></div>`;
     }
@@ -473,7 +474,7 @@ function renderComponentContent(component: Component): React.ReactNode {
   if (component.type === 'responses') {
     const included = orderedIncludedQuestions(component);
     const label = (
-      <Text style={{ fontSize: component.headerSize, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: component.headerColor, display: 'block', marginBottom: component.rowGap }}>
+      <Text style={{ fontSize: component.headerSize, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: component.headerColor, display: 'block', marginBottom: RESPONSES_ROW_GAP }}>
         {component.headerLabel}
       </Text>
     );
@@ -481,9 +482,6 @@ function renderComponentContent(component: Component): React.ReactNode {
       fontSize: component.questionSize, fontWeight: Number(component.questionWeight), color: component.questionColor,
       ...(component.questionBg !== 'transparent' ? { background: component.questionBg, padding: '8px 8px', borderRadius: 4 } : {}),
     };
-    const sepStyle: React.CSSProperties = component.separatorStyle !== 'none'
-      ? { borderBottom: `1px ${component.separatorStyle} ${component.separatorColor}`, paddingBottom: Math.floor(component.rowGap / 2) }
-      : {};
     const containerStyle: React.CSSProperties = { width: `${component.containerWidth}%`, margin: '0 auto', borderRadius: component.containerBorderRadius, overflow: 'hidden' };
     if (component.displayStyle === 'table') {
       return (
@@ -508,10 +506,9 @@ function renderComponentContent(component: Component): React.ReactNode {
       <div style={{ margin: '0 32px' }}>
         <div style={containerStyle}>
         {label}
-        {included.map((q, i) => {
-          const isLast = i === included.length - 1;
+        {included.map(q => {
           return (
-            <div key={q.id} style={{ marginBottom: component.rowGap, ...(!isLast ? sepStyle : {}) }}>
+            <div key={q.id} style={{ marginBottom: RESPONSES_ROW_GAP }}>
               {component.showQuestion && component.displayStyle === 'bold-indented' && (
                 <Text style={{ display: 'block', marginBottom: 4, ...questionStyle }}>{q.texto}</Text>
               )}
@@ -1247,7 +1244,7 @@ function QuestionPickerRow({ q, index, included, onToggle, moveItem }: {
     <div
       ref={ref}
       onClick={() => onToggle(!included)}
-      style={{ display: 'flex', alignItems: 'center', gap: 12, border: '1px solid #f0f0f0', borderRadius: 8, padding: '8px 12px', background: included ? '#e6f7ff' : '#fff', opacity: isDragging ? 0.4 : 1, cursor: 'pointer' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #f0f0f0', borderRadius: 6, padding: '6px 10px', background: included ? '#e6f7ff' : '#fff', opacity: isDragging ? 0.4 : 1, cursor: 'pointer' }}
     >
       {included ? (
         <div ref={handleRef} onClick={e => e.stopPropagation()} style={{ cursor: 'grab', color: 'rgba(0,0,0,0.35)', display: 'flex', flexShrink: 0 }}>
@@ -1256,10 +1253,9 @@ function QuestionPickerRow({ q, index, included, onToggle, moveItem }: {
       ) : (
         <div style={{ width: 12, flexShrink: 0 }} />
       )}
-      <Text style={{ fontSize: 12, color: 'rgba(0,0,0,0.35)', flexShrink: 0, width: 14 }}>{included ? index + 1 : ''}</Text>
       <Checkbox checked={included} onChange={e => onToggle(e.target.checked)} onClick={e => e.stopPropagation()} />
-      <Text style={{ fontSize: 12, flex: 1 }} ellipsis={{ tooltip: q.texto }}>{q.texto}</Text>
-      <Tag style={{ margin: 0, fontSize: 12, flexShrink: 0 }}>{q.tipo}</Tag>
+      <Text style={{ fontSize: 12, lineHeight: '16px', flex: 1 }} ellipsis={{ tooltip: q.texto }}>{q.texto}</Text>
+      <Tag style={{ margin: 0, fontSize: 11, lineHeight: '16px', flexShrink: 0 }}>{q.tipo}</Tag>
     </div>
   );
 }
@@ -1349,6 +1345,18 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
           </div>
         </div>
         <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Marca una pregunta para incluirla · arrastra las incluidas para definir su orden en el correo.</Text>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12, paddingTop: 12, borderTop: '1px solid #f0f0f0' }}>
+          <Text type="secondary" style={{ fontSize: 12, lineHeight: 'normal' }}>Si una pregunta incluida no tiene respuesta para un encuestado:</Text>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <FieldLabel inline>Incluirla si abandonó la encuesta antes de responder</FieldLabel>
+            <Switch size="small" checked={block.includeIfAbandoned} onChange={checked => onUpdate({ ...block, includeIfAbandoned: checked })} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <FieldLabel inline>Incluirla si la lógica del estudio no se la mostró</FieldLabel>
+            <Switch size="small" checked={block.includeIfSkippedByLogic} onChange={checked => onUpdate({ ...block, includeIfSkippedByLogic: checked })} />
+          </div>
+        </div>
       </CollapsibleSection>
 
       <CollapsibleSection compact defaultOpen={false} title="Visualización y contenedor">
@@ -1442,35 +1450,18 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         </div>
       </CollapsibleSection>
 
-      <CollapsibleSection compact defaultOpen={false} title="Acento y separadores">
-        <SubSectionHeading>Acento lateral</SubSectionHeading>
-        <div>
-          <FieldLabel>Color del acento</FieldLabel>
-          <ColorPickerField value={block.accentColor} onChange={c => onUpdate({ ...block, accentColor: c })} />
-        </div>
-        <div>
-          <FieldLabel>Grosor del acento — {block.accentWidth}px</FieldLabel>
-          <Slider min={0} max={8} value={block.accentWidth} onChange={v => onUpdate({ ...block, accentWidth: v })} tooltip={{ formatter: v => `${v}px` }} />
-        </div>
-
-        <SubSectionHeading>Separadores y espaciado</SubSectionHeading>
-        <div>
-          <FieldLabel>Estilo separador</FieldLabel>
-          <Radio.Group value={block.separatorStyle} onChange={e => onUpdate({ ...block, separatorStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
-            <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
-            <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
-            <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
-          </Radio.Group>
-        </div>
-        <div>
-          <FieldLabel>Color del separador</FieldLabel>
-          <ColorPickerField value={block.separatorColor} onChange={c => onUpdate({ ...block, separatorColor: c })} />
-        </div>
-        <div>
-          <FieldLabel>Espacio entre filas — {block.rowGap}px</FieldLabel>
-          <Slider min={4} max={32} value={block.rowGap} onChange={v => onUpdate({ ...block, rowGap: v })} tooltip={{ formatter: v => `${v}px` }} />
-        </div>
-      </CollapsibleSection>
+      {block.displayStyle === 'bold-indented' && (
+        <CollapsibleSection compact defaultOpen={false} title="Acento">
+          <div>
+            <FieldLabel>Color del acento</FieldLabel>
+            <ColorPickerField value={block.accentColor} onChange={c => onUpdate({ ...block, accentColor: c })} />
+          </div>
+          <div>
+            <FieldLabel>Grosor del acento — {block.accentWidth}px</FieldLabel>
+            <Slider min={0} max={8} value={block.accentWidth} onChange={v => onUpdate({ ...block, accentWidth: v })} tooltip={{ formatter: v => `${v}px` }} />
+          </div>
+        </CollapsibleSection>
+      )}
     </div>
   );
 }

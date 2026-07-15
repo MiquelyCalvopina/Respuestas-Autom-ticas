@@ -40,7 +40,6 @@ export interface ResponsesBlock {
   questions: ResponseQuestion[];
   displayStyle: 'bold-indented' | 'list' | 'table';
   showQuestion: boolean;
-  rowGap: number;
   containerWidth: number;
   containerBorderRadius: number;
   headerLabel: string;
@@ -56,8 +55,8 @@ export interface ResponsesBlock {
   answerWeight: '400' | '600' | '700';
   accentColor: string;
   accentWidth: number;
-  separatorStyle: 'solid' | 'dotted' | 'none';
-  separatorColor: string;
+  includeIfAbandoned: boolean;      // incluir preguntas sin respuesta por encuesta abandonada a medias
+  includeIfSkippedByLogic: boolean; // incluir preguntas que la lógica del estudio nunca mostró al encuestado
   design: ComponentDesign;
 }
 export interface DividerBlock {
