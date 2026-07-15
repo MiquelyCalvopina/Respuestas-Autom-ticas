@@ -1241,7 +1241,7 @@ function EmailChip({ email, focused, onRemove }: { email: string; focused: boole
       border: '1px solid #13c2c2', borderRadius: 4, padding: '2px 9px', flexShrink: 0,
     }}>
       <BiEnvelope style={{ fontSize: 10, color: '#13c2c2', flexShrink: 0 }} />
-      <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, color: '#13c2c2', whiteSpace: 'nowrap' }}>{email}</span>
+      <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 12, lineHeight: '16px', color: '#13c2c2', whiteSpace: 'nowrap' }}>{email}</span>
       {focused ? (
         <button
           type="button"
@@ -1327,7 +1327,7 @@ function EmailsInput({ value, onChange, placeholder }: { value: string[]; onChan
         onClick={() => inputRef.current?.focus()}
         style={{
           display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4,
-          minHeight: 32, boxSizing: 'border-box', padding: '6px 12px', cursor: 'text',
+          minHeight: 32, boxSizing: 'border-box', padding: '4px 12px', cursor: 'text',
           background: '#fff', border: `1px solid ${borderColor}`, borderRadius: 8, boxShadow,
         }}
       >
@@ -1345,7 +1345,7 @@ function EmailsInput({ value, onChange, placeholder }: { value: string[]; onChan
           placeholder={value.length === 0 ? (placeholder ?? 'Ingresa un correo electrónico…') : ''}
           style={{
             flex: 1, minWidth: 120, border: 'none', outline: 'none', background: 'transparent',
-            fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', padding: '2px 0',
+            fontFamily: "'Roboto', sans-serif", fontSize: 14, lineHeight: '22px', color: 'rgba(0,0,0,0.85)', padding: 0,
           }}
         />
       </div>
