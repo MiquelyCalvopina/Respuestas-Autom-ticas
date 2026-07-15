@@ -78,18 +78,20 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
   const [view, setView] = useState<ModuleView>('list');
   const [rules, setRules] = useState<AutoResponse[]>([]);
   const [currentRule, setCurrentRule] = useState<AutoResponse>(emptyRule());
+  const [wizardStep, setWizardStep] = useState(0);
   const [logRule, setLogRule] = useState<AutoResponse | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
 
   function openNew() {
     setCurrentRule(emptyRule());
+    setWizardStep(0);
     setView('wizard');
   }
 
   function openEdit(id: string) {
     const r = rules.find(r => r.id === id);
-    if (r) { setCurrentRule({ ...r }); setView('wizard'); }
+    if (r) { setCurrentRule({ ...r }); setWizardStep(0); setView('wizard'); }
   }
 
   function openLog(id: string) {
@@ -209,6 +211,8 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
         onBack={backToList}
         onSaveDraft={saveDraft}
         onOpenEditor={() => setView('editor')}
+        step={wizardStep}
+        onStepChange={setWizardStep}
       />
     );
   } else {

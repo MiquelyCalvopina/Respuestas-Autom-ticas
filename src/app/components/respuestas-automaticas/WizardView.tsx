@@ -15,6 +15,8 @@ interface Props {
   onBack: () => void;
   onSaveDraft: () => void;
   onOpenEditor: () => void;
+  step: number;
+  onStepChange: (step: number) => void;
 }
 
 // ─── Step indicator ───────────────────────────────────────────────────────────
@@ -1308,8 +1310,8 @@ function BreadcrumbChevron() {
 
 // ─── WizardView ───────────────────────────────────────────────────────────────
 
-export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, onSaveDraft, onOpenEditor }: Props) {
-  const [current, setCurrent] = useState(0);
+export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, onSaveDraft, onOpenEditor, step, onStepChange }: Props) {
+  const current = step;
   const [showExitDialog, setShowExitDialog] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const replyToValid = rule.replyTo === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rule.replyTo);
@@ -1390,14 +1392,14 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
         justifyContent: 'flex-end', gap: 12, flexShrink: 0,
       }}>
         {current > 0 && (
-          <Button icon={<BiChevronLeft />} onClick={() => setCurrent(c => c - 1)}>Anterior</Button>
+          <Button icon={<BiChevronLeft />} onClick={() => onStepChange(current - 1)}>Anterior</Button>
         )}
         <Button
           type="primary"
           disabled={!canNext}
           icon={<BiChevronRight />}
           iconPlacement="end"
-          onClick={() => isLast ? onSaveAndActivate() : setCurrent(c => c + 1)}
+          onClick={() => isLast ? onSaveAndActivate() : onStepChange(current + 1)}
         >
           {isLast ? 'Guardar y activar' : 'Siguiente'}
         </Button>
