@@ -782,7 +782,7 @@ function CondRowUI({ row, onUpdate, onDelete, canDelete }: {
         {canDelete && (
           <DeleteConfirm what="esta condición" onConfirm={onDelete}>
             <button style={{ background: '#fff', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)', flexShrink: 0 }}>
-              <BiTrash style={{ fontSize: 14, color: '#434343' }} />
+              <BiTrash style={{ fontSize: 14, color: '#ff4d4f' }} />
             </button>
           </DeleteConfirm>
         )}
@@ -853,7 +853,7 @@ function SubConditionUI({ subCondition, onUpdateRow, onSetConnector, onDelete }:
         </span>
         <DeleteConfirm what="esta sub-condición" onConfirm={onDelete}>
           <button style={{ background: '#fff', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)', flexShrink: 0 }}>
-            <BiTrash style={{ fontSize: 14, color: '#434343' }} />
+            <BiTrash style={{ fontSize: 14, color: '#ff4d4f' }} />
           </button>
         </DeleteConfirm>
       </div>
@@ -1033,7 +1033,7 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
           {canDelete && (
             <DeleteConfirm what="este grupo (se perderán sus condiciones y subcondiciones)" onConfirm={onDelete}>
               <button style={{ background: 'white', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)' }}>
-                <BiTrash style={{ fontSize: 14, color: '#434343' }} />
+                <BiTrash style={{ fontSize: 14, color: '#ff4d4f' }} />
               </button>
             </DeleteConfirm>
           )}
@@ -1051,7 +1051,7 @@ function CondGroupUI({ group, index, onDelete, onUpdateGroup, canDelete }: {
           {canDelete && (
             <DeleteConfirm what="este grupo (se perderán sus condiciones y subcondiciones)" onConfirm={onDelete}>
               <button style={{ background: 'white', border: '1px solid #d9d9d9', borderRadius: 100, cursor: 'pointer', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 0 rgba(0,0,0,0.02)' }}>
-                <BiTrash style={{ fontSize: 14, color: '#434343' }} />
+                <BiTrash style={{ fontSize: 14, color: '#ff4d4f' }} />
               </button>
             </DeleteConfirm>
           )}
