@@ -989,29 +989,27 @@ function ColorPickerField({ value, onChange, allowTransparent }: { value: string
   );
 }
 
-// ─── Alineación — segmentado de 3 iconos (Figma Ajustes 121-151, node 1452-52089) ──
+// ─── Segmentado genérico de íconos, cajas individualmente bordeadas (Figma
+// Ajustes 121-151, node 1560-16696 — usado por Alineación y Estilo del borde) ──
 
-const ALIGN_OPTIONS: { value: TextAlign; icon: React.ReactNode }[] = [
-  { value: 'left', icon: <BiAlignLeft /> },
-  { value: 'center', icon: <BiAlignMiddle /> },
-  { value: 'right', icon: <BiAlignRight /> },
-];
-
-function AlignmentField({ value, onChange }: { value: TextAlign; onChange: (v: TextAlign) => void }) {
+function IconSegmented<T extends string>({ value, options, onChange }: {
+  value: T; options: { value: T; icon: React.ReactNode; title: string }[]; onChange: (v: T) => void;
+}) {
   return (
-    <div style={{ background: 'rgba(0,0,0,0.04)', padding: 4, borderRadius: 8, display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-      {ALIGN_OPTIONS.map(opt => (
+    <div style={{ display: 'flex', width: '100%' }}>
+      {options.map((opt, i) => (
         <button
           key={opt.value}
           type="button"
+          title={opt.title}
           onClick={() => onChange(opt.value)}
           style={{
-            flex: 1, background: value === opt.value ? '#fff' : 'transparent',
-            boxShadow: value === opt.value ? '0px 2px 8px 0px rgba(0,0,0,0.05)' : 'none',
-            borderRadius: 6, border: 'none', cursor: 'pointer', padding: '4px 0',
-            color: value === opt.value ? '#1890ff' : 'rgba(0,0,0,0.45)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
-            transition: 'all .15s',
+            flex: 1, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', background: '#fff', fontSize: 16,
+            border: `1px solid ${value === opt.value ? '#1890ff' : '#f0f0f0'}`,
+            color: value === opt.value ? '#1890ff' : 'rgba(0,0,0,0.25)',
+            marginLeft: i > 0 ? -1 : 0, position: 'relative', zIndex: value === opt.value ? 2 : 1,
+            borderRadius: i === 0 ? '8px 0 0 8px' : i === options.length - 1 ? '0 8px 8px 0' : 0,
           }}
         >
           {opt.icon}
@@ -1019,6 +1017,16 @@ function AlignmentField({ value, onChange }: { value: TextAlign; onChange: (v: T
       ))}
     </div>
   );
+}
+
+const ALIGN_OPTIONS: { value: TextAlign; icon: React.ReactNode; title: string }[] = [
+  { value: 'left', icon: <BiAlignLeft />, title: 'Izquierda' },
+  { value: 'center', icon: <BiAlignMiddle />, title: 'Centro' },
+  { value: 'right', icon: <BiAlignRight />, title: 'Derecha' },
+];
+
+function AlignmentField({ value, onChange }: { value: TextAlign; onChange: (v: TextAlign) => void }) {
+  return <IconSegmented value={value} options={ALIGN_OPTIONS} onChange={onChange} />;
 }
 
 // ─── Sección colapsable — usada en toda la pestaña "Diseño" ──────────────────
@@ -1076,6 +1084,14 @@ function PaddingField({ label, icon, value, onChange }: { label: string; icon: R
     </div>
   );
 }
+function BorderStyleIcon({ style }: { style: 'solid' | 'dotted' | 'none' }) {
+  return (
+    <span style={{
+      display: 'block', width: 14, height: 14, borderRadius: 3,
+      border: style === 'none' ? '1.5px solid transparent' : `1.5px ${style} currentColor`,
+    }} />
+  );
+}
 function BorderFields({ borderColor, borderWidth, borderStyle, onUpdate }: {
   borderColor: string; borderWidth: number; borderStyle: 'solid' | 'dotted' | 'none';
   onUpdate: (p: { borderColor?: string; borderWidth?: number; borderStyle?: 'solid' | 'dotted' | 'none' }) => void;
@@ -1092,11 +1108,15 @@ function BorderFields({ borderColor, borderWidth, borderStyle, onUpdate }: {
       </div>
       <div>
         <FieldLabel icon={<BiPen />}>Estilo del borde</FieldLabel>
-        <Radio.Group value={borderStyle} onChange={e => onUpdate({ borderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
-          <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
-          <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
-          <Radio.Button value="none" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ninguno</Radio.Button>
-        </Radio.Group>
+        <IconSegmented
+          value={borderStyle}
+          onChange={v => onUpdate({ borderStyle: v })}
+          options={[
+            { value: 'solid', icon: <BorderStyleIcon style="solid" />, title: 'Sólido' },
+            { value: 'dotted', icon: <BorderStyleIcon style="dotted" />, title: 'Punteado' },
+            { value: 'none', icon: <BorderStyleIcon style="none" />, title: 'Ninguno' },
+          ]}
+        />
       </div>
     </div>
   );
