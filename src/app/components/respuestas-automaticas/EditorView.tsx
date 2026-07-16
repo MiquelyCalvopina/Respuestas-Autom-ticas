@@ -1343,6 +1343,7 @@ function QuestionPickerRow({ q, index, included, onToggle, moveItem }: {
 
 function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; onUpdate: (b: Component) => void }) {
   const [search, setSearch] = useState('');
+  const [pickerOpen, setPickerOpen] = useState(false);
   const withMeta = block.questions
     .map(bq => ({ bq, q: PREGUNTAS_EJEMPLO.find(x => x.id === bq.questionId) }))
     .filter((x): x is { bq: typeof x.bq; q: Pregunta } => !!x.q);
@@ -1367,175 +1368,193 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
     onUpdate({ ...block, questions: [...reordered, ...restBqs] });
   }
 
+  const questionPicker = (
+    <div style={{ width: 340 }}>
+      <FieldLabel icon={<BiSearch />}>Buscar preguntas del estudio</FieldLabel>
+      <Input
+        allowClear value={search} onChange={e => setSearch(e.target.value)}
+        placeholder="Buscar por texto o tipo…" prefix={<BiSearch style={{ color: 'rgba(0,0,0,0.25)' }} />}
+      />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+        {term ? (
+          <>
+            <Button onClick={() => setIncludedFor([...includedFiltered, ...excludedFiltered].map(x => x.q.id), true)}>
+              Seleccionar coincidencias ({includedFiltered.length + excludedFiltered.length})
+            </Button>
+            <Button onClick={() => setIncludedFor([...includedFiltered, ...excludedFiltered].map(x => x.q.id), false)}>
+              Quitar coincidencias
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button onClick={() => setIncludedFor(withMeta.map(x => x.q.id), true)}>
+              Seleccionar todas ({withMeta.length})
+            </Button>
+            <Button onClick={() => setIncludedFor(withMeta.map(x => x.q.id), false)} disabled={included.length === 0}>
+              Quitar todas
+            </Button>
+          </>
+        )}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 320, overflowY: 'auto', marginTop: 12, paddingRight: 4 }}>
+        {includedFiltered.length === 0 && excludedFiltered.length === 0 && (
+          <Text type="secondary" style={{ fontSize: 12, padding: '12px 0' }}>Sin resultados para "{search}".</Text>
+        )}
+        {includedFiltered.map(({ q }) => (
+          <QuestionPickerRow
+            key={q.id} q={q} included
+            index={included.findIndex(x => x.q.id === q.id)}
+            onToggle={checked => toggleQuestion(q.id, checked)}
+            moveItem={moveIncluded}
+          />
+        ))}
+        {includedFiltered.length > 0 && excludedFiltered.length > 0 && (
+          <div style={{ borderTop: '1px dashed #e8e8e8', margin: '4px 0' }} />
+        )}
+        {excludedFiltered.map(({ q }) => (
+          <QuestionPickerRow
+            key={q.id} q={q} included={false} index={-1}
+            onToggle={checked => toggleQuestion(q.id, checked)}
+            moveItem={moveIncluded}
+          />
+        ))}
+      </div>
+      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>Marca una pregunta para incluirla · arrastra las incluidas para definir su orden en el correo.</Text>
+    </div>
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ padding: '8px 12px', borderRadius: 8, background: '#fafafa', border: '1px solid #f0f0f0', fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>
         Cada encuestado verá sus propias respuestas exactas. El contenido es dinámico y único por persona.
       </div>
 
-      <CollapsibleSection compact title={`Preguntas incluidas (${included.length})`}>
-        <div>
-          <FieldLabel icon={<BiSearch />}>Buscar preguntas del estudio</FieldLabel>
-          <Input
-            allowClear value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por texto o tipo…" prefix={<BiSearch style={{ color: 'rgba(0,0,0,0.25)' }} />}
-          />
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-            {term ? (
-              <>
-                <Button onClick={() => setIncludedFor([...includedFiltered, ...excludedFiltered].map(x => x.q.id), true)}>
-                  Seleccionar coincidencias ({includedFiltered.length + excludedFiltered.length})
-                </Button>
-                <Button onClick={() => setIncludedFor([...includedFiltered, ...excludedFiltered].map(x => x.q.id), false)}>
-                  Quitar coincidencias
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button onClick={() => setIncludedFor(withMeta.map(x => x.q.id), true)}>
-                  Seleccionar todas ({withMeta.length})
-                </Button>
-                <Button onClick={() => setIncludedFor(withMeta.map(x => x.q.id), false)} disabled={included.length === 0}>
-                  Quitar todas
-                </Button>
-              </>
-            )}
+      <div>
+        <GroupHeading>Visualización del contenedor</GroupHeading>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          <div>
+            <FieldLabel icon={<BiPen />}>Estilo</FieldLabel>
+            <Select
+              style={{ width: '100%' }} value={block.displayStyle}
+              onChange={v => onUpdate({ ...block, displayStyle: v as ResponsesBlock['displayStyle'] })}
+              options={[
+                { value: 'bold-indented', label: 'Sangría' },
+                { value: 'list', label: 'Lista' },
+                { value: 'table', label: 'Tabla' },
+              ]}
+            />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 320, overflowY: 'auto', marginTop: 12, paddingRight: 4 }}>
-            {includedFiltered.length === 0 && excludedFiltered.length === 0 && (
-              <Text type="secondary" style={{ fontSize: 12, padding: '12px 0' }}>Sin resultados para "{search}".</Text>
-            )}
-            {includedFiltered.map(({ q }) => (
-              <QuestionPickerRow
-                key={q.id} q={q} included
-                index={included.findIndex(x => x.q.id === q.id)}
-                onToggle={checked => toggleQuestion(q.id, checked)}
-                moveItem={moveIncluded}
-              />
-            ))}
-            {includedFiltered.length > 0 && excludedFiltered.length > 0 && (
-              <div style={{ borderTop: '1px dashed #e8e8e8', margin: '4px 0' }} />
-            )}
-            {excludedFiltered.map(({ q }) => (
-              <QuestionPickerRow
-                key={q.id} q={q} included={false} index={-1}
-                onToggle={checked => toggleQuestion(q.id, checked)}
-                moveItem={moveIncluded}
-              />
-            ))}
-          </div>
-        </div>
-        <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Marca una pregunta para incluirla · arrastra las incluidas para definir su orden en el correo.</Text>
-      </CollapsibleSection>
-
-      <CollapsibleSection compact defaultOpen={false} title="Visualización y contenedor">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <FieldLabel inline>Mostrar enunciado de la pregunta</FieldLabel>
-          <Switch size="small" checked={block.showQuestion} onChange={checked => onUpdate({ ...block, showQuestion: checked })} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <FieldLabel inline tooltip="No sabemos por qué falta — solo que la respuesta está vacía.">Incluir preguntas sin respuesta</FieldLabel>
-          <Switch size="small" checked={block.includeEmptyAnswers} onChange={checked => onUpdate({ ...block, includeEmptyAnswers: checked })} />
-        </div>
-        <div>
-          <FieldLabel icon={<BiPen />}>Estilo de visualización</FieldLabel>
-          <Select
-            style={{ width: '100%' }} value={block.displayStyle}
-            onChange={v => onUpdate({ ...block, displayStyle: v as ResponsesBlock['displayStyle'] })}
-            options={[
-              { value: 'bold-indented', label: 'Pregunta en negrita + respuesta con sangría' },
-              { value: 'list', label: 'Solo respuestas en lista' },
-              { value: 'table', label: 'Tabla pregunta / respuesta' },
-            ]}
-          />
-        </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <FieldLabel icon={<BiMoveHorizontal />}>Ancho del contenedor</FieldLabel>
+          <div>
+            <FieldLabel icon={<BiMoveHorizontal />}>Ancho</FieldLabel>
             <InputNumber min={40} max={100} value={block.containerWidth} onChange={v => onUpdate({ ...block, containerWidth: v ?? 100 })} style={{ width: '100%' }} addonAfter="%" />
           </div>
-          <div style={{ flex: 1 }}>
-            <FieldLabel icon={<BiBorderRadius />}>Radio de esquinas</FieldLabel>
+          <div>
+            <FieldLabel icon={<BiBorderRadius />}>Redondeo</FieldLabel>
             <InputNumber min={0} max={24} value={block.containerBorderRadius} onChange={v => onUpdate({ ...block, containerBorderRadius: v ?? 0 })} style={{ width: '100%' }} addonAfter="px" />
           </div>
         </div>
-      </CollapsibleSection>
+      </div>
 
-      <CollapsibleSection compact defaultOpen={false} title="Etiqueta y textos">
-        <GroupHeading>Etiqueta del bloque</GroupHeading>
-        <div>
-          <FieldLabel icon={<BiText />}>Texto</FieldLabel>
-          <Input value={block.headerLabel} onChange={e => onUpdate({ ...block, headerLabel: e.target.value })} />
+      <div>
+        <GroupHeading>Preguntas del bloque</GroupHeading>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          <div>
+            <FieldLabel>Mostrar enunciado</FieldLabel>
+            <Switch checked={block.showQuestion} onChange={checked => onUpdate({ ...block, showQuestion: checked })} />
+          </div>
+          <div>
+            <FieldLabel tooltip="No sabemos por qué falta — solo que la respuesta está vacía.">Preguntas sin respuesta</FieldLabel>
+            <Switch checked={block.includeEmptyAnswers} onChange={checked => onUpdate({ ...block, includeEmptyAnswers: checked })} />
+          </div>
+          <div>
+            <FieldLabel>Preguntas incluidas</FieldLabel>
+            <Popover
+              open={pickerOpen} onOpenChange={setPickerOpen}
+              trigger="click" placement="bottomRight"
+              content={questionPicker}
+            >
+              <Button type="link" style={{ padding: 0, height: 'auto' }}>Seleccionadas ({included.length})</Button>
+            </Popover>
+          </div>
+        </div>
+      </div>
+
+      <GroupHeading>Título del bloque</GroupHeading>
+      <div>
+        <FieldLabel icon={<BiText />}>Texto</FieldLabel>
+        <Input value={block.headerLabel} onChange={e => onUpdate({ ...block, headerLabel: e.target.value })} />
+      </div>
+      <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ flex: 1 }}>
+          <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
+          <ColorPickerField value={block.headerColor} onChange={c => onUpdate({ ...block, headerColor: c })} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
+          <InputNumber min={8} max={16} value={block.headerSize} onChange={v => onUpdate({ ...block, headerSize: v ?? 10 })} style={{ width: '100%' }} addonAfter="px" />
+        </div>
+      </div>
+
+      <SubSectionHeading title="Preguntas">
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
+            <ColorPickerField value={block.questionColor} onChange={c => onUpdate({ ...block, questionColor: c })} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <FieldLabel icon={<BiColorFill />}>Fondo del bloque</FieldLabel>
+            <ColorPickerField value={block.questionBg} onChange={c => onUpdate({ ...block, questionBg: c })} allowTransparent />
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <FieldLabel icon={<BiColorFill />}>Color</FieldLabel>
-            <ColorPickerField value={block.headerColor} onChange={c => onUpdate({ ...block, headerColor: c })} />
+            <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
+            <InputNumber min={9} max={20} value={block.questionSize} onChange={v => onUpdate({ ...block, questionSize: v ?? 13 })} style={{ width: '100%' }} />
           </div>
           <div style={{ flex: 1 }}>
-            <FieldLabel icon={<BiText />}>Tamaño</FieldLabel>
-            <InputNumber min={8} max={16} value={block.headerSize} onChange={v => onUpdate({ ...block, headerSize: v ?? 10 })} style={{ width: '100%' }} addonAfter="px" />
+            <FieldLabel icon={<BiAlignLeft />}>Grosor del texto</FieldLabel>
+            <WeightField value={block.questionWeight} onChange={v => onUpdate({ ...block, questionWeight: v })} />
           </div>
         </div>
+      </SubSectionHeading>
 
-        <SubSectionHeading title="Preguntas">
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
-              <ColorPickerField value={block.questionColor} onChange={c => onUpdate({ ...block, questionColor: c })} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <FieldLabel icon={<BiColorFill />}>Fondo de la fila</FieldLabel>
-              <ColorPickerField value={block.questionBg} onChange={c => onUpdate({ ...block, questionBg: c })} allowTransparent />
-            </div>
+      <SubSectionHeading title="Respuestas">
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
+            <ColorPickerField value={block.answerColor} onChange={c => onUpdate({ ...block, answerColor: c })} />
           </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <FieldLabel icon={<BiText />}>Tamaño px</FieldLabel>
-              <InputNumber min={9} max={20} value={block.questionSize} onChange={v => onUpdate({ ...block, questionSize: v ?? 13 })} style={{ width: '100%' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <FieldLabel icon={<BiAlignLeft />}>Peso</FieldLabel>
-              <WeightField value={block.questionWeight} onChange={v => onUpdate({ ...block, questionWeight: v })} />
-            </div>
+          <div style={{ flex: 1 }}>
+            <FieldLabel icon={<BiColorFill />}>Fondo del bloque</FieldLabel>
+            <ColorPickerField value={block.answerBg} onChange={c => onUpdate({ ...block, answerBg: c })} allowTransparent />
           </div>
-        </SubSectionHeading>
-
-        <SubSectionHeading title="Respuestas">
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
-              <ColorPickerField value={block.answerColor} onChange={c => onUpdate({ ...block, answerColor: c })} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <FieldLabel icon={<BiColorFill />}>Fondo de la respuesta</FieldLabel>
-              <ColorPickerField value={block.answerBg} onChange={c => onUpdate({ ...block, answerBg: c })} allowTransparent />
-            </div>
+        </div>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
+            <InputNumber min={9} max={20} value={block.answerSize} onChange={v => onUpdate({ ...block, answerSize: v ?? 13 })} style={{ width: '100%' }} />
           </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <FieldLabel icon={<BiText />}>Tamaño px</FieldLabel>
-              <InputNumber min={9} max={20} value={block.answerSize} onChange={v => onUpdate({ ...block, answerSize: v ?? 13 })} style={{ width: '100%' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <FieldLabel icon={<BiAlignLeft />}>Peso</FieldLabel>
-              <WeightField value={block.answerWeight} onChange={v => onUpdate({ ...block, answerWeight: v })} />
-            </div>
+          <div style={{ flex: 1 }}>
+            <FieldLabel icon={<BiAlignLeft />}>Grosor del texto</FieldLabel>
+            <WeightField value={block.answerWeight} onChange={v => onUpdate({ ...block, answerWeight: v })} />
           </div>
-        </SubSectionHeading>
-      </CollapsibleSection>
+        </div>
+      </SubSectionHeading>
 
       {block.displayStyle === 'bold-indented' && (
-        <CollapsibleSection compact defaultOpen={false} title="Acento">
-          <div>
-            <FieldLabel icon={<BiColorFill />}>Color del acento</FieldLabel>
-            <ColorPickerField value={block.accentColor} onChange={c => onUpdate({ ...block, accentColor: c })} />
+        <div>
+          <GroupHeading>Detalle de sangría</GroupHeading>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <FieldLabel icon={<BiColorFill />}>Color del acento</FieldLabel>
+              <ColorPickerField value={block.accentColor} onChange={c => onUpdate({ ...block, accentColor: c })} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <FieldLabel icon={<BiVerticalCenter />}>Grosor del acento</FieldLabel>
+              <InputNumber min={0} max={8} value={block.accentWidth} onChange={v => onUpdate({ ...block, accentWidth: v ?? 0 })} style={{ width: '100%' }} addonAfter="px" />
+            </div>
           </div>
-          <div>
-            <FieldLabel icon={<BiVerticalCenter />}>Grosor del acento — {block.accentWidth}px</FieldLabel>
-            <Slider min={0} max={8} value={block.accentWidth} onChange={v => onUpdate({ ...block, accentWidth: v })} tooltip={{ formatter: v => `${v}px` }} />
-          </div>
-        </CollapsibleSection>
+        </div>
       )}
     </div>
   );
@@ -1706,7 +1725,7 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
 }
 
 const TYPE_SECTION_TITLE: Partial<Record<ComponentType, string>> = {
-  header: 'Encabezado', title: 'Título', text: 'Texto', responses: 'Respuesta',
+  header: 'Encabezado', title: 'Título', text: 'Texto', responses: 'Bloque de respuestas',
   image: 'Imagen', button: 'Botón', spacer: 'Espaciador', social: 'Redes Sociales',
 };
 
