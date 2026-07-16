@@ -1460,11 +1460,15 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
           <div>
             <FieldLabel>Mostrar enunciado</FieldLabel>
-            <Switch checked={block.showQuestion} onChange={checked => onUpdate({ ...block, showQuestion: checked })} />
+            <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, height: 32, boxSizing: 'border-box', padding: '0 12px', display: 'flex', alignItems: 'center', background: '#fff' }}>
+              <Switch checked={block.showQuestion} onChange={checked => onUpdate({ ...block, showQuestion: checked })} />
+            </div>
           </div>
           <div>
             <FieldLabel tooltip="No sabemos por qué falta — solo que la respuesta está vacía.">Preguntas sin respuesta</FieldLabel>
-            <Switch checked={block.includeEmptyAnswers} onChange={checked => onUpdate({ ...block, includeEmptyAnswers: checked })} />
+            <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, height: 32, boxSizing: 'border-box', padding: '0 12px', display: 'flex', alignItems: 'center', background: '#fff' }}>
+              <Switch checked={block.includeEmptyAnswers} onChange={checked => onUpdate({ ...block, includeEmptyAnswers: checked })} />
+            </div>
           </div>
           <div>
             <FieldLabel>Preguntas incluidas</FieldLabel>
@@ -1473,7 +1477,16 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
               trigger="click" placement="bottomRight"
               content={questionPicker}
             >
-              <Button type="link" style={{ padding: 0, height: 'auto' }}>Seleccionadas ({included.length})</Button>
+              <button
+                type="button"
+                style={{
+                  width: '100%', height: 32, boxSizing: 'border-box', border: 'none', borderRadius: 8,
+                  background: '#e6f7ff', color: '#1890ff', fontSize: 14, fontFamily: "'Roboto', sans-serif",
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                Seleccionadas ({included.length})
+              </button>
             </Popover>
           </div>
         </div>
@@ -1484,34 +1497,34 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <FieldLabel icon={<BiText />}>Texto</FieldLabel>
         <Input value={block.headerLabel} onChange={e => onUpdate({ ...block, headerLabel: e.target.value })} />
       </div>
-      <div style={{ display: 'flex', gap: 12 }}>
-        <div style={{ flex: 1 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div>
           <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
           <ColorPickerField value={block.headerColor} onChange={c => onUpdate({ ...block, headerColor: c })} />
         </div>
-        <div style={{ flex: 1 }}>
+        <div>
           <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
           <InputNumber min={8} max={16} value={block.headerSize} onChange={v => onUpdate({ ...block, headerSize: v ?? 10 })} style={{ width: '100%' }} addonAfter="px" />
         </div>
       </div>
 
       <SubSectionHeading title="Preguntas">
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          <div>
             <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
             <ColorPickerField value={block.questionColor} onChange={c => onUpdate({ ...block, questionColor: c })} />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ gridColumn: 'span 2' }}>
             <FieldLabel icon={<BiColorFill />}>Fondo del bloque</FieldLabel>
             <ColorPickerField value={block.questionBg} onChange={c => onUpdate({ ...block, questionBg: c })} allowTransparent />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          <div>
             <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
             <InputNumber min={9} max={20} value={block.questionSize} onChange={v => onUpdate({ ...block, questionSize: v ?? 13 })} style={{ width: '100%' }} />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ gridColumn: 'span 2' }}>
             <FieldLabel icon={<BiAlignLeft />}>Grosor del texto</FieldLabel>
             <WeightField value={block.questionWeight} onChange={v => onUpdate({ ...block, questionWeight: v })} />
           </div>
@@ -1519,22 +1532,22 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
       </SubSectionHeading>
 
       <SubSectionHeading title="Respuestas">
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          <div>
             <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
             <ColorPickerField value={block.answerColor} onChange={c => onUpdate({ ...block, answerColor: c })} />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ gridColumn: 'span 2' }}>
             <FieldLabel icon={<BiColorFill />}>Fondo del bloque</FieldLabel>
             <ColorPickerField value={block.answerBg} onChange={c => onUpdate({ ...block, answerBg: c })} allowTransparent />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          <div>
             <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
             <InputNumber min={9} max={20} value={block.answerSize} onChange={v => onUpdate({ ...block, answerSize: v ?? 13 })} style={{ width: '100%' }} />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ gridColumn: 'span 2' }}>
             <FieldLabel icon={<BiAlignLeft />}>Grosor del texto</FieldLabel>
             <WeightField value={block.answerWeight} onChange={v => onUpdate({ ...block, answerWeight: v })} />
           </div>
@@ -1544,12 +1557,12 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
       {block.displayStyle === 'bold-indented' && (
         <div>
           <GroupHeading>Detalle de sangría</GroupHeading>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            <div>
               <FieldLabel icon={<BiColorFill />}>Color del acento</FieldLabel>
               <ColorPickerField value={block.accentColor} onChange={c => onUpdate({ ...block, accentColor: c })} />
             </div>
-            <div style={{ flex: 1 }}>
+            <div>
               <FieldLabel icon={<BiVerticalCenter />}>Grosor del acento</FieldLabel>
               <InputNumber min={0} max={8} value={block.accentWidth} onChange={v => onUpdate({ ...block, accentWidth: v ?? 0 })} style={{ width: '100%' }} addonAfter="px" />
             </div>
