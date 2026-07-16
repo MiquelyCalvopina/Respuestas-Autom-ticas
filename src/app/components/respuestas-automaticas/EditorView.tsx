@@ -11,6 +11,8 @@ import {
   BiSpaceBar, BiGroup, BiFile, BiInfoCircle, BiErrorCircle, BiHelpCircle,
   BiUpload, BiSearch, BiChevronDown, BiChevronLeft, BiTrash,
   BiBold, BiItalic, BiSmile, BiCodeCurly,
+  BiColorFill, BiVerticalCenter, BiPen, BiMoveHorizontal, BiBorderRadius,
+  BiArrowToTop, BiArrowToBottom, BiArrowToLeft, BiArrowToRight, BiLink, BiPalette,
 } from 'react-icons/bi';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -940,8 +942,14 @@ function ColorPickerField({ value, onChange, allowTransparent }: { value: string
             border: isTransparent ? '1px solid #1890ff' : '1px solid #f0f0f0',
             color: isTransparent ? '#1890ff' : 'rgba(0,0,0,0.45)',
             fontSize: 14, fontFamily: "'Roboto', sans-serif",
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '0 8px',
           }}
         >
+          <span style={{
+            width: 20, height: 20, borderRadius: 4, flexShrink: 0,
+            background: 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 8px 8px',
+            border: '1px solid rgba(0,0,0,0.15)',
+          }} />
           Transparente
         </button>
       )}
@@ -1044,22 +1052,26 @@ function CollapsibleSection({ title, children, defaultOpen = true, compact }: { 
 
 // ─── Campos compartidos de diseño (fila / componente) ────────────────────────
 
-function FieldLabel({ children, inline, tooltip }: { children: React.ReactNode; inline?: boolean; tooltip?: string }) {
+function FieldLabel({ children, icon, inline, tooltip }: { children: React.ReactNode; icon?: React.ReactNode; inline?: boolean; tooltip?: string }) {
   return (
-    <Text style={{ fontSize: 13, fontWeight: 500, color: 'rgba(0,0,0,0.65)', display: inline ? 'inline' : 'block', marginBottom: inline ? 0 : 6 }}>
+    <Text style={{
+      display: inline ? 'inline-flex' : 'flex', alignItems: 'center', gap: 4,
+      fontSize: 14, fontWeight: 400, color: 'rgba(0,0,0,0.45)', marginBottom: inline ? 0 : 4,
+    }}>
+      {icon && <span style={{ display: 'flex', fontSize: 14, flexShrink: 0 }}>{icon}</span>}
       {children}
       {tooltip && (
         <Tooltip title={tooltip}>
-          <BiHelpCircle style={{ marginLeft: 4, fontSize: 12, color: 'rgba(0,0,0,0.35)', cursor: 'help' }} />
+          <BiHelpCircle style={{ fontSize: 12, color: 'rgba(0,0,0,0.35)', cursor: 'help', flexShrink: 0 }} />
         </Tooltip>
       )}
     </Text>
   );
 }
-function PaddingField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+function PaddingField({ label, icon, value, onChange }: { label: string; icon: React.ReactNode; value: number; onChange: (v: number) => void }) {
   return (
     <div>
-      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>{label}</Text>
+      <FieldLabel icon={icon}>{label}</FieldLabel>
       <InputNumber value={value} onChange={v => onChange(v ?? 0)} style={{ width: '100%' }} min={0} addonAfter="px" />
     </div>
   );
@@ -1071,15 +1083,15 @@ function BorderFields({ borderColor, borderWidth, borderStyle, onUpdate }: {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
       <div>
-        <FieldLabel>Color del borde</FieldLabel>
+        <FieldLabel icon={<BiColorFill />}>Color del borde</FieldLabel>
         <ColorPickerField value={borderColor} onChange={c => onUpdate({ borderColor: c })} />
       </div>
       <div>
-        <FieldLabel>Grosor del borde</FieldLabel>
+        <FieldLabel icon={<BiVerticalCenter />}>Grosor del borde</FieldLabel>
         <InputNumber min={0} value={borderWidth} onChange={v => onUpdate({ borderWidth: v ?? 0 })} style={{ width: '100%' }} addonAfter="px" />
       </div>
       <div>
-        <FieldLabel>Estilo del borde</FieldLabel>
+        <FieldLabel icon={<BiPen />}>Estilo del borde</FieldLabel>
         <Radio.Group value={borderStyle} onChange={e => onUpdate({ borderStyle: e.target.value })} style={{ display: 'flex', width: '100%' }}>
           <Radio.Button value="solid" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Sólido</Radio.Button>
           <Radio.Button value="dotted" style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Punteado</Radio.Button>
@@ -1092,12 +1104,12 @@ function BorderFields({ borderColor, borderWidth, borderStyle, onUpdate }: {
 function PaddingGrid({ design, onUpdate }: { design: { paddingTop: number; paddingBottom: number; paddingLeft?: number; paddingRight?: number }; onUpdate: (p: object) => void }) {
   return (
     <div>
-      <FieldLabel>Relleno</FieldLabel>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-        <PaddingField label="Arriba" value={design.paddingTop} onChange={v => onUpdate({ paddingTop: v })} />
-        <PaddingField label="Abajo" value={design.paddingBottom} onChange={v => onUpdate({ paddingBottom: v })} />
-        <PaddingField label="Izquierda" value={design.paddingLeft ?? 0} onChange={v => onUpdate({ paddingLeft: v })} />
-        <PaddingField label="Derecha" value={design.paddingRight ?? 0} onChange={v => onUpdate({ paddingRight: v })} />
+      <GroupHeading>Relleno</GroupHeading>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+        <PaddingField label="Arriba" icon={<BiArrowToTop />} value={design.paddingTop} onChange={v => onUpdate({ paddingTop: v })} />
+        <PaddingField label="Abajo" icon={<BiArrowToBottom />} value={design.paddingBottom} onChange={v => onUpdate({ paddingBottom: v })} />
+        <PaddingField label="Izquierda" icon={<BiArrowToLeft />} value={design.paddingLeft ?? 0} onChange={v => onUpdate({ paddingLeft: v })} />
+        <PaddingField label="Derecha" icon={<BiArrowToRight />} value={design.paddingRight ?? 0} onChange={v => onUpdate({ paddingRight: v })} />
       </div>
     </div>
   );
@@ -1108,18 +1120,18 @@ function LayoutConfigFields({ layout, onUpdate }: { layout: EmailLayoutConfig; o
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
       <div>
-        <FieldLabel>Ancho del contenido</FieldLabel>
+        <FieldLabel icon={<BiMoveHorizontal />}>Ancho del contenido</FieldLabel>
         <InputNumber value={layout.widthPercent} min={10} max={100} addonAfter="%" onChange={v => onUpdate({ widthPercent: v ?? 100 })} style={{ width: '100%' }} />
       </div>
       <div>
-        <FieldLabel>Estilo del contenedor</FieldLabel>
+        <FieldLabel icon={<BiPen />}>Estilo del contenedor</FieldLabel>
         <Radio.Group value={layout.boxed} onChange={e => onUpdate({ boxed: e.target.value })} style={{ display: 'flex', width: '100%' }}>
           <Radio.Button value={true} style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Con margen</Radio.Button>
           <Radio.Button value={false} style={{ flex: 1, textAlign: 'center', paddingInline: 4 }}>Ancho completo</Radio.Button>
         </Radio.Group>
       </div>
       <div>
-        <FieldLabel>Color de fondo</FieldLabel>
+        <FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel>
         <ColorPickerField value={layout.bgColor} onChange={c => onUpdate({ bgColor: c })} />
       </div>
     </div>
@@ -1137,17 +1149,17 @@ function BlockFields<T extends {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {excludeAlign ? (
         <div>
-          <FieldLabel>Color de fondo</FieldLabel>
+          <FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel>
           <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent />
         </div>
       ) : (
         <div style={{ display: 'flex', gap: 16 }}>
           <div style={{ flex: 2 }}>
-            <FieldLabel>Color de fondo</FieldLabel>
+            <FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel>
             <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent />
           </div>
           <div style={{ flex: 1 }}>
-            <FieldLabel>Alineación</FieldLabel>
+            <FieldLabel icon={<BiAlignLeft />}>Alineación</FieldLabel>
             <AlignmentField value={design.textAlign ?? 'left'} onChange={v => onUpdate({ textAlign: v } as Partial<T>)} />
           </div>
         </div>
@@ -1155,7 +1167,7 @@ function BlockFields<T extends {
       <BorderFields borderColor={design.borderColor ?? '#000000'} borderWidth={design.borderWidth ?? 0} borderStyle={design.borderStyle ?? 'none'} onUpdate={onUpdate} />
       <PaddingGrid design={design} onUpdate={onUpdate} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <FieldLabel inline>Ocultar en móvil</FieldLabel>
+        <FieldLabel inline tooltip="Este bloque no se mostrará al abrir el correo desde un celular.">Ocultar en móvil</FieldLabel>
         <Switch checked={design.hideMobile ?? false} onChange={v => onUpdate({ hideMobile: v } as Partial<T>)} />
       </div>
     </div>
@@ -1169,11 +1181,11 @@ function TextContentFields({ block, onUpdate }: { block: TextBlock; onUpdate: (b
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <FieldLabel>Contenido</FieldLabel>
+        <FieldLabel icon={<BiText />}>Contenido</FieldLabel>
         <TextArea ref={taRef} rows={4} value={block.content} onChange={e => onUpdate({ ...block, content: e.target.value })} />
       </div>
       <div>
-        <FieldLabel>Insertar variable</FieldLabel>
+        <FieldLabel icon={<BiCodeCurly />}>Insertar variable</FieldLabel>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {VARIABLES.map(v => (
             <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }} color="blue" onClick={() => {
@@ -1198,11 +1210,11 @@ function HeaderContentFields({ block, onUpdate }: { block: HeaderBlock; onUpdate
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <FieldLabel>Nombre o logo</FieldLabel>
+        <FieldLabel icon={<BiText />}>Nombre o logo</FieldLabel>
         <Input value={block.name} onChange={e => onUpdate({ ...block, name: e.target.value })} />
       </div>
       <div>
-        <FieldLabel>Color de fondo</FieldLabel>
+        <FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {HEADER_COLORS.map(c => (
             <div key={c} onClick={() => onUpdate({ ...block, bgColor: c })} style={{ width: 24, height: 24, borderRadius: '50%', background: c, border: block.bgColor === c ? '3px solid #1890ff' : '3px solid transparent', cursor: 'pointer', outline: block.bgColor === c ? '2px solid white' : 'none', outlineOffset: -4 }} />
@@ -1215,15 +1227,30 @@ function HeaderContentFields({ block, onUpdate }: { block: HeaderBlock; onUpdate
 function TitleContentFields({ block, onUpdate }: { block: TitleBlock; onUpdate: (b: Component) => void }) {
   return (
     <div>
-      <FieldLabel>Texto del título</FieldLabel>
+      <FieldLabel icon={<BiText />}>Texto del título</FieldLabel>
       <Input value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} />
     </div>
   );
 }
-function SubSectionHeading({ children }: { children: React.ReactNode }) {
+// Encabezado de grupo simple, no colapsable — ej. "Relleno", "Etiqueta del bloque".
+function GroupHeading({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: 12, lineHeight: 'normal', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(0,0,0,0.35)', borderBottom: '1px solid #f0f0f0', paddingBottom: 8, marginTop: 8 }}>
+    <Text style={{ fontSize: 14, fontWeight: 400, color: 'rgba(0,0,0,0.85)', display: 'block', marginTop: 8, marginBottom: 12 }}>
       {children}
+    </Text>
+  );
+}
+
+// Encabezado de grupo colapsable con chevron — ej. "Preguntas"/"Respuestas" del bloque de respuestas.
+function SubSectionHeading({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+      <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+        <Text style={{ fontSize: 14, fontWeight: 400, color: 'rgba(0,0,0,0.85)' }}>{title}</Text>
+        <BiChevronDown style={{ fontSize: 14, color: 'rgba(0,0,0,0.85)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 150ms', flexShrink: 0 }} />
+      </div>
+      {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</div>}
     </div>
   );
 }
@@ -1328,7 +1355,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
 
       <CollapsibleSection compact title={`Preguntas incluidas (${included.length})`}>
         <div>
-          <FieldLabel>Buscar preguntas del estudio</FieldLabel>
+          <FieldLabel icon={<BiSearch />}>Buscar preguntas del estudio</FieldLabel>
           <Input
             allowClear value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por texto o tipo…" prefix={<BiSearch style={{ color: 'rgba(0,0,0,0.25)' }} />}
@@ -1391,7 +1418,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
           <Switch size="small" checked={block.includeEmptyAnswers} onChange={checked => onUpdate({ ...block, includeEmptyAnswers: checked })} />
         </div>
         <div>
-          <FieldLabel>Estilo de visualización</FieldLabel>
+          <FieldLabel icon={<BiPen />}>Estilo de visualización</FieldLabel>
           <Select
             style={{ width: '100%' }} value={block.displayStyle}
             onChange={v => onUpdate({ ...block, displayStyle: v as ResponsesBlock['displayStyle'] })}
@@ -1404,86 +1431,88 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <FieldLabel>Ancho del contenedor</FieldLabel>
+            <FieldLabel icon={<BiMoveHorizontal />}>Ancho del contenedor</FieldLabel>
             <InputNumber min={40} max={100} value={block.containerWidth} onChange={v => onUpdate({ ...block, containerWidth: v ?? 100 })} style={{ width: '100%' }} addonAfter="%" />
           </div>
           <div style={{ flex: 1 }}>
-            <FieldLabel>Radio de esquinas</FieldLabel>
+            <FieldLabel icon={<BiBorderRadius />}>Radio de esquinas</FieldLabel>
             <InputNumber min={0} max={24} value={block.containerBorderRadius} onChange={v => onUpdate({ ...block, containerBorderRadius: v ?? 0 })} style={{ width: '100%' }} addonAfter="px" />
           </div>
         </div>
       </CollapsibleSection>
 
       <CollapsibleSection compact defaultOpen={false} title="Etiqueta y textos">
-        <SubSectionHeading>Etiqueta del bloque</SubSectionHeading>
+        <GroupHeading>Etiqueta del bloque</GroupHeading>
         <div>
-          <FieldLabel>Texto</FieldLabel>
+          <FieldLabel icon={<BiText />}>Texto</FieldLabel>
           <Input value={block.headerLabel} onChange={e => onUpdate({ ...block, headerLabel: e.target.value })} />
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <FieldLabel>Color</FieldLabel>
+            <FieldLabel icon={<BiColorFill />}>Color</FieldLabel>
             <ColorPickerField value={block.headerColor} onChange={c => onUpdate({ ...block, headerColor: c })} />
           </div>
           <div style={{ flex: 1 }}>
-            <FieldLabel>Tamaño</FieldLabel>
+            <FieldLabel icon={<BiText />}>Tamaño</FieldLabel>
             <InputNumber min={8} max={16} value={block.headerSize} onChange={v => onUpdate({ ...block, headerSize: v ?? 10 })} style={{ width: '100%' }} addonAfter="px" />
           </div>
         </div>
 
-        <SubSectionHeading>Preguntas</SubSectionHeading>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <FieldLabel>Color del texto</FieldLabel>
-            <ColorPickerField value={block.questionColor} onChange={c => onUpdate({ ...block, questionColor: c })} />
+        <SubSectionHeading title="Preguntas">
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
+              <ColorPickerField value={block.questionColor} onChange={c => onUpdate({ ...block, questionColor: c })} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <FieldLabel icon={<BiColorFill />}>Fondo de la fila</FieldLabel>
+              <ColorPickerField value={block.questionBg} onChange={c => onUpdate({ ...block, questionBg: c })} allowTransparent />
+            </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <FieldLabel>Fondo de la fila</FieldLabel>
-            <ColorPickerField value={block.questionBg} onChange={c => onUpdate({ ...block, questionBg: c })} allowTransparent />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <FieldLabel icon={<BiText />}>Tamaño px</FieldLabel>
+              <InputNumber min={9} max={20} value={block.questionSize} onChange={v => onUpdate({ ...block, questionSize: v ?? 13 })} style={{ width: '100%' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <FieldLabel icon={<BiAlignLeft />}>Peso</FieldLabel>
+              <WeightField value={block.questionWeight} onChange={v => onUpdate({ ...block, questionWeight: v })} />
+            </div>
           </div>
-        </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <FieldLabel>Tamaño px</FieldLabel>
-            <InputNumber min={9} max={20} value={block.questionSize} onChange={v => onUpdate({ ...block, questionSize: v ?? 13 })} style={{ width: '100%' }} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <FieldLabel>Peso</FieldLabel>
-            <WeightField value={block.questionWeight} onChange={v => onUpdate({ ...block, questionWeight: v })} />
-          </div>
-        </div>
+        </SubSectionHeading>
 
-        <SubSectionHeading>Respuestas</SubSectionHeading>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <FieldLabel>Color del texto</FieldLabel>
-            <ColorPickerField value={block.answerColor} onChange={c => onUpdate({ ...block, answerColor: c })} />
+        <SubSectionHeading title="Respuestas">
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
+              <ColorPickerField value={block.answerColor} onChange={c => onUpdate({ ...block, answerColor: c })} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <FieldLabel icon={<BiColorFill />}>Fondo de la respuesta</FieldLabel>
+              <ColorPickerField value={block.answerBg} onChange={c => onUpdate({ ...block, answerBg: c })} allowTransparent />
+            </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <FieldLabel>Fondo de la respuesta</FieldLabel>
-            <ColorPickerField value={block.answerBg} onChange={c => onUpdate({ ...block, answerBg: c })} allowTransparent />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <FieldLabel icon={<BiText />}>Tamaño px</FieldLabel>
+              <InputNumber min={9} max={20} value={block.answerSize} onChange={v => onUpdate({ ...block, answerSize: v ?? 13 })} style={{ width: '100%' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <FieldLabel icon={<BiAlignLeft />}>Peso</FieldLabel>
+              <WeightField value={block.answerWeight} onChange={v => onUpdate({ ...block, answerWeight: v })} />
+            </div>
           </div>
-        </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <FieldLabel>Tamaño px</FieldLabel>
-            <InputNumber min={9} max={20} value={block.answerSize} onChange={v => onUpdate({ ...block, answerSize: v ?? 13 })} style={{ width: '100%' }} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <FieldLabel>Peso</FieldLabel>
-            <WeightField value={block.answerWeight} onChange={v => onUpdate({ ...block, answerWeight: v })} />
-          </div>
-        </div>
+        </SubSectionHeading>
       </CollapsibleSection>
 
       {block.displayStyle === 'bold-indented' && (
         <CollapsibleSection compact defaultOpen={false} title="Acento">
           <div>
-            <FieldLabel>Color del acento</FieldLabel>
+            <FieldLabel icon={<BiColorFill />}>Color del acento</FieldLabel>
             <ColorPickerField value={block.accentColor} onChange={c => onUpdate({ ...block, accentColor: c })} />
           </div>
           <div>
-            <FieldLabel>Grosor del acento — {block.accentWidth}px</FieldLabel>
+            <FieldLabel icon={<BiVerticalCenter />}>Grosor del acento — {block.accentWidth}px</FieldLabel>
             <Slider min={0} max={8} value={block.accentWidth} onChange={v => onUpdate({ ...block, accentWidth: v })} tooltip={{ formatter: v => `${v}px` }} />
           </div>
         </CollapsibleSection>
@@ -1507,14 +1536,14 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <FieldLabel>Origen</FieldLabel>
+        <FieldLabel icon={<BiImage />}>Origen</FieldLabel>
         <Radio.Group value={block.dynamic} onChange={e => onUpdate({ ...block, dynamic: e.target.value })}>
           <Radio value={false}>Imagen estática</Radio>
           <Radio value={true}>Imagen dinámica</Radio>
         </Radio.Group>
       </div>
       <div>
-        <FieldLabel>Imagen</FieldLabel>
+        <FieldLabel icon={<BiImage />}>Imagen</FieldLabel>
         <div style={{ display: 'flex', gap: 12 }}>
           <Input
             ref={urlRef} value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })}
@@ -1528,7 +1557,7 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
       </div>
       {block.dynamic && (
         <div>
-          <FieldLabel>Insertar variable</FieldLabel>
+          <FieldLabel icon={<BiCodeCurly />}>Insertar variable</FieldLabel>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {VARIABLES.map(v => (
               <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }} color="blue" onClick={() => {
@@ -1548,11 +1577,11 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
         </div>
       )}
       <div>
-        <FieldLabel>Texto alternativo</FieldLabel>
+        <FieldLabel icon={<BiText />}>Texto alternativo</FieldLabel>
         <Input value={block.alt} onChange={e => onUpdate({ ...block, alt: e.target.value })} />
       </div>
       <div>
-        <FieldLabel>Tamaño</FieldLabel>
+        <FieldLabel icon={<BiMoveHorizontal />}>Tamaño</FieldLabel>
         <InputNumber min={10} max={100} value={block.widthPercent} addonAfter="%" onChange={v => onUpdate({ ...block, widthPercent: v ?? 100 })} style={{ width: '100%' }} />
       </div>
     </div>
@@ -1562,13 +1591,13 @@ function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUp
   const urlRef = useRef<InputRef>(null);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div><FieldLabel>Texto del botón</FieldLabel><Input value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} /></div>
+      <div><FieldLabel icon={<BiText />}>Texto del botón</FieldLabel><Input value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} /></div>
       <div>
-        <FieldLabel>URL de destino</FieldLabel>
+        <FieldLabel icon={<BiLink />}>URL de destino</FieldLabel>
         <Input ref={urlRef} value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })} placeholder="https://.../{{variable}}" />
       </div>
       <div>
-        <FieldLabel>Insertar variable</FieldLabel>
+        <FieldLabel icon={<BiCodeCurly />}>Insertar variable</FieldLabel>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {VARIABLES.map(v => (
             <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }} color="blue" onClick={() => {
@@ -1586,15 +1615,15 @@ function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUp
         </div>
         <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>El enlace puede incluir una variable para llevar a una URL distinta por destinatario.</Text>
       </div>
-      <div><FieldLabel>Color de fondo</FieldLabel><ColorPickerField value={block.bgColor} onChange={c => onUpdate({ ...block, bgColor: c })} /></div>
-      <div><FieldLabel>Color de texto</FieldLabel><ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} /></div>
+      <div><FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel><ColorPickerField value={block.bgColor} onChange={c => onUpdate({ ...block, bgColor: c })} /></div>
+      <div><FieldLabel icon={<BiColorFill />}>Color de texto</FieldLabel><ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} /></div>
     </div>
   );
 }
 function SpacerContentFields({ block, onUpdate }: { block: SpacerComponent; onUpdate: (b: Component) => void }) {
   return (
     <div>
-      <FieldLabel>Tamaño</FieldLabel>
+      <FieldLabel icon={<BiVerticalCenter />}>Tamaño</FieldLabel>
       <InputNumber min={4} max={200} value={block.height} addonAfter="px" onChange={v => onUpdate({ ...block, height: v ?? 24 })} style={{ width: '100%' }} />
     </div>
   );
@@ -1612,7 +1641,7 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <FieldLabel>Tipo</FieldLabel>
+        <FieldLabel icon={<BiPalette />}>Tipo</FieldLabel>
         <Radio.Group value={block.style} onChange={e => onUpdate({ ...block, style: e.target.value })} style={{ width: '100%', display: 'flex' }}>
           <Radio.Button value="negro" style={{ flex: 1, textAlign: 'center' }}>Negro</Radio.Button>
           <Radio.Button value="blanco" style={{ flex: 1, textAlign: 'center' }}>Blanco</Radio.Button>
@@ -1621,16 +1650,16 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
       </div>
       <div style={{ display: 'flex', gap: 12 }}>
         <div style={{ flex: 1 }}>
-          <FieldLabel>Tamaño</FieldLabel>
+          <FieldLabel icon={<BiMoveHorizontal />}>Tamaño</FieldLabel>
           <InputNumber min={12} max={64} value={block.size} addonAfter="px" onChange={v => onUpdate({ ...block, size: v ?? 26 })} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1 }}>
-          <FieldLabel>Espacio entre íconos</FieldLabel>
+          <FieldLabel icon={<BiMoveHorizontal />}>Espacio entre íconos</FieldLabel>
           <InputNumber min={0} max={40} value={block.gap} addonAfter="px" onChange={v => onUpdate({ ...block, gap: v ?? 8 })} style={{ width: '100%' }} />
         </div>
       </div>
       <div>
-        <FieldLabel>Estilo del borde</FieldLabel>
+        <FieldLabel icon={<BiPen />}>Estilo del borde</FieldLabel>
         <Radio.Group value={block.shape} onChange={e => onUpdate({ ...block, shape: e.target.value })} style={{ display: 'flex' }}>
           <Radio.Button value="square" style={{ flex: 1, textAlign: 'center' }}><ShapeSwatch shape="square" /></Radio.Button>
           <Radio.Button value="rounded" style={{ flex: 1, textAlign: 'center' }}><ShapeSwatch shape="rounded" /></Radio.Button>
