@@ -19,7 +19,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import CodeMirror from '@uiw/react-codemirror';
 import { html as htmlLang } from '@codemirror/lang-html';
 import {
-  AutoResponse, Row, Column, RowDesign, Component, ComponentType, ComponentDesign, EmailLayoutConfig, TextAlign,
+  EmailTemplate, Row, Column, RowDesign, Component, ComponentType, ComponentDesign, EmailLayoutConfig, TextAlign,
   TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, Pregunta,
   ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey,
 } from './types';
@@ -31,8 +31,8 @@ const { Text } = Typography;
 const { TextArea } = Input;
 
 interface Props {
-  rule: AutoResponse;
-  onChange: (r: AutoResponse) => void;
+  template: EmailTemplate;
+  onChange: (t: EmailTemplate) => void;
   onBack: () => void;
 }
 
@@ -1771,13 +1771,13 @@ type Selection =
   | { kind: 'component'; rowId: string; columnId: string; componentId: string }
   | null;
 
-export default function EditorView({ rule, onChange, onBack }: Props) {
+export default function EditorView({ template, onChange, onBack }: Props) {
   const { message } = App.useApp();
-  const [draft, setDraft] = useState<AutoResponse>(rule);
+  const [draft, setDraft] = useState<EmailTemplate>(template);
   const [dirty, setDirty] = useState(false);
   const [testValidated, setTestValidated] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
-  const [mode, setMode] = useState<'visual' | 'html'>(rule.customHtml ? 'html' : 'visual');
+  const [mode, setMode] = useState<'visual' | 'html'>(template.customHtml ? 'html' : 'visual');
   const [activeTab, setActiveTab] = useState<'elementos' | 'configuracion' | 'diseno'>('elementos');
   const [selection, setSelection] = useState<Selection>(null);
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
@@ -1785,7 +1785,7 @@ export default function EditorView({ rule, onChange, onBack }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const rows = draft.rows;
 
-  function updateDraft(patch: Partial<AutoResponse>) {
+  function updateDraft(patch: Partial<EmailTemplate>) {
     setDraft(d => ({ ...d, ...patch }));
     setDirty(true);
     setTestValidated(false);

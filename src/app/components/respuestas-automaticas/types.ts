@@ -187,6 +187,21 @@ export interface Etiqueta {
   n3: string;
 }
 
+// Una plantilla de correo con vigencia. Sin `endDate` = candidata a respaldo permanente
+// (la de inicio más reciente entre las "sin fin" es la que rige salvo que una temporal la
+// cubra). Con `endDate` = ventana temporal de una sola vez, sin recurrencia. `startDate: null`
+// = borrador "sin programar", nunca se usa hasta que se le asigne una fecha de inicio.
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  rows: Row[];
+  layout: EmailLayoutConfig;
+  customHtml?: string | null;
+  blocksUpdatedAt: string | null;
+  startDate: string | null;
+  endDate: string | null;
+}
+
 export interface AutoResponse {
   id: string;
   name: string;
@@ -200,11 +215,8 @@ export interface AutoResponse {
   cc: string[];
   bcc: string[];
   subject: string;
-  rows: Row[];
-  layout: EmailLayoutConfig;
-  blocksUpdatedAt: string | null;
-  customHtml?: string | null;
+  templates: EmailTemplate[]; // siempre al menos una (la plantilla permanente de respaldo)
   scheduledAt: string | null; // fecha/hora futura para activación automática, o null si no hay programación
 }
 
-export type ModuleView = 'list' | 'wizard' | 'editor' | 'log';
+export type ModuleView = 'list' | 'wizard' | 'editor' | 'templates' | 'log';

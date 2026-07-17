@@ -17,7 +17,7 @@ function conditionCount(rule: AutoResponse): number {
 // Fila con checkbox + resumen de una regla — compartida por importar y descargar.
 function RuleRow({ rule, checked, onToggle }: { rule: AutoResponse; checked: boolean; onToggle: () => void }) {
   const conds = conditionCount(rule);
-  const comps = countComponents(rule.rows ?? []);
+  const comps = (rule.templates ?? []).reduce((n, t) => n + countComponents(t.rows ?? []), 0);
   return (
     <label style={{ display: 'flex', gap: 12, alignItems: 'flex-start', cursor: 'pointer', border: '1px solid #f0f0f0', borderRadius: 8, padding: '10px 12px' }}>
       <Checkbox checked={checked} onChange={onToggle} style={{ marginTop: 2 }} />

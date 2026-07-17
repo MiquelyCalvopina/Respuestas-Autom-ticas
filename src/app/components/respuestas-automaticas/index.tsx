@@ -4,10 +4,12 @@ import { App, ConfigProvider } from 'antd';
 import { toast } from 'sonner';
 import { AutoResponse, ModuleView } from './types';
 import { cuid } from './cuid';
-import { countComponents } from './data';
+import { countComponents, makeTemplate } from './data';
+import { templateForDate, todayISO } from './templateResolution';
 import ListPage from './ListPage';
 import WizardView from './WizardView';
 import EditorView from './EditorView';
+import TemplatesManagerView from './TemplatesManagerView';
 import LogView from './LogView';
 import { ImportRulesModal, ExportRulesModal } from './RuleJsonModals';
 
@@ -35,13 +37,17 @@ function cloneRule(r: AutoResponse, name: string): AutoResponse {
     active: false,
     published: false,
     scheduledAt: null,
-    rows: (r.rows ?? []).map(row => ({
-      ...row,
+    templates: (r.templates ?? []).map(t => ({
+      ...t,
       id: cuid(),
-      columns: (row.columns ?? []).map(col => ({
-        ...col,
+      rows: (t.rows ?? []).map(row => ({
+        ...row,
         id: cuid(),
-        components: (col.components ?? []).map(c => ({ ...c, id: cuid() })),
+        columns: (row.columns ?? []).map(col => ({
+          ...col,
+          id: cuid(),
+          components: (col.components ?? []).map(c => ({ ...c, id: cuid() })),
+        })),
       })),
     })),
     condGroups: (r.condGroups ?? []).map(g => ({
@@ -67,10 +73,7 @@ function emptyRule(): AutoResponse {
     cc: [],
     bcc: [],
     subject: '',
-    rows: [],
-    layout: { widthPercent: 100, boxed: true, bgColor: '#f5f5f5' },
-    blocksUpdatedAt: null,
-    customHtml: null,
+    templates: [makeTemplate('Estándar', { startDate: new Date().toISOString() })],
     scheduledAt: null,
   };
 }
@@ -84,6 +87,15 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
   const [logRule, setLogRule] = useState<AutoResponse | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+
+  // Abre el editor de correo sobre una plantilla puntual de la regla en curso. Al volver
+  // (EditorView.onBack), si la regla tiene 2+ plantillas se regresa al gestor; si solo tiene
+  // una, directo al wizard — sin pasos extra para el caso simple.
+  function openEditorForTemplate(templateId: string) {
+    setEditingTemplateId(templateId);
+    setView('editor');
+  }
 
   function openNew() {
     setCurrentRule(emptyRule());
@@ -125,7 +137,7 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
   function toggleRule(id: string) {
     setRules(prev => prev.map(r => {
       if (r.id !== id) return r;
-      if (!r.active && countComponents(r.rows) === 0) {
+      if (!r.active && countComponents(templateForDate(r.templates, todayISO()).rows) === 0) {
         message.warning('Esta regla no tiene una plantilla de correo. Edítala y agrega contenido antes de activarla.');
         return r;
       }
@@ -136,7 +148,7 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
   function scheduleRule(id: string, iso: string) {
     setRules(prev => prev.map(r => {
       if (r.id !== id) return r;
-      if (countComponents(r.rows) === 0) {
+      if (countComponents(templateForDate(r.templates, todayISO()).rows) === 0) {
         message.warning('Esta regla no tiene una plantilla de correo. Edítala y agrega contenido antes de programarla.');
         return r;
       }
@@ -197,11 +209,21 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
     const ruleForLog = logRule ?? rules[0] ?? emptyRule();
     content = <LogView rule={ruleForLog} onBack={backToList} />;
   } else if (view === 'editor') {
+    const editingTemplate = currentRule.templates.find(t => t.id === editingTemplateId) ?? currentRule.templates[0];
     content = (
       <EditorView
+        template={editingTemplate}
+        onChange={t => setCurrentRule(r => ({ ...r, templates: r.templates.map(x => x.id === t.id ? t : x) }))}
+        onBack={() => setView(currentRule.templates.length > 1 ? 'templates' : 'wizard')}
+      />
+    );
+  } else if (view === 'templates') {
+    content = (
+      <TemplatesManagerView
         rule={currentRule}
         onChange={setCurrentRule}
         onBack={() => setView('wizard')}
+        onEditTemplate={openEditorForTemplate}
       />
     );
   } else if (view === 'wizard') {
@@ -212,7 +234,8 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
         onSaveAndActivate={saveAndActivate}
         onBack={backToList}
         onSaveDraft={saveDraft}
-        onOpenEditor={() => setView('editor')}
+        onOpenEditor={openEditorForTemplate}
+        onOpenTemplatesManager={() => setView('templates')}
         step={wizardStep}
         onStepChange={setWizardStep}
       />

@@ -1,7 +1,25 @@
-import { Pregunta, OpcionConComentario, Etiqueta, Row } from './types';
+import { Pregunta, OpcionConComentario, Etiqueta, Row, EmailTemplate } from './types';
+import { cuid } from './cuid';
 
 export const countComponents = (rows: Row[]): number =>
   rows.flatMap(r => r.columns).flatMap(c => c.components).length;
+
+// Plantilla nueva en blanco. Sin `startDate` = borrador "sin programar" por defecto —
+// crear nunca implica programar. `Partial<EmailTemplate>` permite fijar startDate/endDate
+// de una (ej. la plantilla inicial de una regla nueva, que nace vigente desde ya).
+export function makeTemplate(name: string, overrides?: Partial<EmailTemplate>): EmailTemplate {
+  return {
+    id: cuid(),
+    name,
+    rows: [],
+    layout: { widthPercent: 100, boxed: true, bgColor: '#f5f5f5' },
+    customHtml: null,
+    blocksUpdatedAt: null,
+    startDate: null,
+    endDate: null,
+    ...overrides,
+  };
+}
 
 export interface VariableMeta { key: string; type: 'texto' | 'correo' | 'telefono' | 'numero'; }
 

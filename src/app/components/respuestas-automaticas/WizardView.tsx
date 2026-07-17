@@ -6,6 +6,7 @@ import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { AutoResponse, ConditionGroup, ConditionRule, Pregunta, OpcionConComentario, SubCondition } from './types';
 import { PREGUNTAS_EJEMPLO, ETIQUETAS_CATEGORIZACION, countComponents, describeRecipientSource, VARIABLES_META, isValidEmail, getEmailSuggestions } from './data';
+import { templateForDate, todayISO } from './templateResolution';
 import { cuid } from './cuid';
 
 interface Props {
@@ -14,7 +15,8 @@ interface Props {
   onSaveAndActivate: () => void;
   onBack: () => void;
   onSaveDraft: () => void;
-  onOpenEditor: () => void;
+  onOpenEditor: (templateId: string) => void;
+  onOpenTemplatesManager: () => void;
   step: number;
   onStepChange: (step: number) => void;
 }
@@ -1401,7 +1403,9 @@ function formatTemplateDate(iso: string | null): string {
   return `${d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })} ${d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`;
 }
 
-function Step3({ rule, onChange, onOpenEditor }: { rule: AutoResponse; onChange: (r: AutoResponse) => void; onOpenEditor: () => void }) {
+function Step3({ rule, onChange, onOpenEditor, onOpenTemplatesManager }: {
+  rule: AutoResponse; onChange: (r: AutoResponse) => void; onOpenEditor: (templateId: string) => void; onOpenTemplatesManager: () => void;
+}) {
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', width: '100%', boxSizing: 'border-box', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
 
@@ -1468,14 +1472,27 @@ function Step3({ rule, onChange, onOpenEditor }: { rule: AutoResponse; onChange:
           </FieldRow>
 
           <FieldRow label="Plantilla de correo" required>
-            {countComponents(rule.rows) === 0 ? (
-              <Button type="link" onClick={onOpenEditor} style={{ padding: 0, height: 'auto' }}>
-                Diseñar plantilla de correo
-              </Button>
+            {rule.templates.length === 1 ? (
+              countComponents(rule.templates[0].rows) === 0 ? (
+                <Button type="link" onClick={() => onOpenEditor(rule.templates[0].id)} style={{ padding: 0, height: 'auto' }}>
+                  Diseñar plantilla de correo
+                </Button>
+              ) : (
+                <Button type="link" onClick={() => onOpenEditor(rule.templates[0].id)} style={{ padding: 0, height: 'auto' }}>
+                  Editar plantilla — últ. creación {formatTemplateDate(rule.templates[0].blocksUpdatedAt)}
+                </Button>
+              )
             ) : (
-              <Button type="link" onClick={onOpenEditor} style={{ padding: 0, height: 'auto' }}>
-                Editar plantilla — últ. creación {formatTemplateDate(rule.blocksUpdatedAt)}
-              </Button>
+              <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#52c41a', flexShrink: 0 }} />
+                  <b>{templateForDate(rule.templates, todayISO()).name}</b> se envía hoy
+                </span>
+                {' · '}
+                <Button type="link" onClick={onOpenTemplatesManager} style={{ padding: 0, height: 'auto' }}>
+                  {rule.templates.length} plantillas — ver todas →
+                </Button>
+              </span>
             )}
           </FieldRow>
         </div>
@@ -1506,7 +1523,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
     ? (rule.name.trim() !== '' && rule.trigger !== null)
     : current === 1
     ? allConditionsComplete(rule.condGroups)
-    : countComponents(rule.rows) > 0 && rule.sender !== '' && rule.subject.trim() !== '' && replyToValid;
+    : countComponents(templateForDate(rule.templates, todayISO()).rows) > 0 && rule.sender !== '' && rule.subject.trim() !== '' && replyToValid;
   const isLast  = current === 2;
 
   return (
@@ -1571,7 +1588,7 @@ export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, 
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', background: '#fff' }}>
         {current === 0 && <Step1 rule={rule} onChange={onChange} />}
         {current === 1 && <Step2 rule={rule} onChange={onChange} />}
-        {current === 2 && <Step3 rule={rule} onChange={onChange} onOpenEditor={onOpenEditor} />}
+        {current === 2 && <Step3 rule={rule} onChange={onChange} onOpenEditor={onOpenEditor} onOpenTemplatesManager={onOpenTemplatesManager} />}
       </div>
 
       {/* Footer */}

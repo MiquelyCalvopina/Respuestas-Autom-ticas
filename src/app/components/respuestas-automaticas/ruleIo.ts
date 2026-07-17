@@ -42,7 +42,7 @@ function looksLikeRule(o: unknown): o is AutoResponse {
   return !!o && typeof o === 'object'
     && typeof (o as AutoResponse).name === 'string'
     && 'condGroups' in (o as object)
-    && 'rows' in (o as object);
+    && 'templates' in (o as object);
 }
 
 // Parsea el contenido de un archivo y devuelve las reglas válidas. Acepta tres formas:
