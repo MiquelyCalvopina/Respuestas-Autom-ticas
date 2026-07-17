@@ -1472,28 +1472,41 @@ function Step3({ rule, onChange, onOpenEditor, onOpenTemplatesManager }: {
           </FieldRow>
 
           <FieldRow label="Plantilla de correo" required>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              {rule.templates.length === 1 ? (
-                countComponents(rule.templates[0].rows) === 0 ? (
-                  <Button type="link" onClick={() => onOpenEditor(rule.templates[0].id)} style={{ padding: 0, height: 'auto' }}>
-                    Diseñar plantilla de correo
-                  </Button>
-                ) : (
-                  <Button type="link" onClick={() => onOpenEditor(rule.templates[0].id)} style={{ padding: 0, height: 'auto' }}>
-                    Editar plantilla — últ. creación {formatTemplateDate(rule.templates[0].blocksUpdatedAt)}
-                  </Button>
-                )
-              ) : (
-                <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#52c41a', flexShrink: 0 }} />
-                  <b>{templateForDate(rule.templates, todayISO()).name}</b> se envía hoy
+            {(() => {
+              const hasContent = countComponents(rule.templates[0].rows) > 0;
+              // Recién agregamos el link "Gestionar" una vez que hay algo real por gestionar
+              // (contenido diseñado o 2+ plantillas) — una regla recién creada no debe mostrar
+              // ninguna plantilla "ya creada" antes de que el usuario diseñe la primera.
+              const showManage = rule.templates.length > 1 || hasContent;
+              return (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  {rule.templates.length === 1 ? (
+                    !hasContent ? (
+                      <Button type="link" onClick={() => onOpenEditor(rule.templates[0].id)} style={{ padding: 0, height: 'auto' }}>
+                        Diseñar plantilla de correo
+                      </Button>
+                    ) : (
+                      <Button type="link" onClick={() => onOpenEditor(rule.templates[0].id)} style={{ padding: 0, height: 'auto' }}>
+                        Editar plantilla — últ. creación {formatTemplateDate(rule.templates[0].blocksUpdatedAt)}
+                      </Button>
+                    )
+                  ) : (
+                    <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#52c41a', flexShrink: 0 }} />
+                      <b>{templateForDate(rule.templates, todayISO()).name}</b> se envía hoy
+                    </span>
+                  )}
+                  {showManage && (
+                    <>
+                      {' · '}
+                      <Button type="link" onClick={onOpenTemplatesManager} style={{ padding: 0, height: 'auto' }}>
+                        {rule.templates.length === 1 ? 'Gestionar plantillas' : `${rule.templates.length} plantillas — gestionar →`}
+                      </Button>
+                    </>
+                  )}
                 </span>
-              )}
-              {' · '}
-              <Button type="link" onClick={onOpenTemplatesManager} style={{ padding: 0, height: 'auto' }}>
-                {rule.templates.length === 1 ? 'Gestionar plantillas' : `${rule.templates.length} plantillas — gestionar →`}
-              </Button>
-            </span>
+              );
+            })()}
           </FieldRow>
         </div>
       </div>
