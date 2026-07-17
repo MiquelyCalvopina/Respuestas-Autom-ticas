@@ -1174,7 +1174,7 @@ function BlockFields<T extends {
   hideMobile?: boolean;
 }>({ design, onUpdate, excludeAlign }: { design: T; onUpdate: (p: Partial<T>) => void; excludeAlign?: boolean }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {excludeAlign ? (
         <div>
           <FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel>
@@ -1675,8 +1675,10 @@ function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUp
         </div>
         <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>El enlace puede incluir una variable para llevar a una URL distinta por destinatario.</Text>
       </div>
-      <div><FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel><ColorPickerField value={block.bgColor} onChange={c => onUpdate({ ...block, bgColor: c })} /></div>
-      <div><FieldLabel icon={<BiColorFill />}>Color de texto</FieldLabel><ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} /></div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+        <div><FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel><ColorPickerField value={block.bgColor} onChange={c => onUpdate({ ...block, bgColor: c })} /></div>
+        <div><FieldLabel icon={<BiColorFill />}>Color de texto</FieldLabel><ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} /></div>
+      </div>
     </div>
   );
 }
@@ -1708,12 +1710,12 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
           <Radio.Button value="color" style={{ flex: 1, textAlign: 'center' }}>Color</Radio.Button>
         </Radio.Group>
       </div>
-      <div style={{ display: 'flex', gap: 12 }}>
-        <div style={{ flex: 1 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+        <div>
           <FieldLabel icon={<BiMoveHorizontal />}>Tamaño</FieldLabel>
           <InputNumber min={12} max={64} value={block.size} addonAfter="px" onChange={v => onUpdate({ ...block, size: v ?? 26 })} style={{ width: '100%' }} />
         </div>
-        <div style={{ flex: 1 }}>
+        <div>
           <FieldLabel icon={<BiMoveHorizontal />}>Espacio entre íconos</FieldLabel>
           <InputNumber min={0} max={40} value={block.gap} addonAfter="px" onChange={v => onUpdate({ ...block, gap: v ?? 8 })} style={{ width: '100%' }} />
         </div>
