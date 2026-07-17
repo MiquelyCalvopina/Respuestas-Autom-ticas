@@ -1514,7 +1514,7 @@ function BreadcrumbChevron() {
 
 // ─── WizardView ───────────────────────────────────────────────────────────────
 
-export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, onSaveDraft, onOpenEditor, step, onStepChange }: Props) {
+export default function WizardView({ rule, onChange, onSaveAndActivate, onBack, onSaveDraft, onOpenEditor, onOpenTemplatesManager, step, onStepChange }: Props) {
   const current = step;
   const [showExitDialog, setShowExitDialog] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
