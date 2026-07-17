@@ -63,7 +63,7 @@ const ROUND_BTN = { style: { borderRadius: 8 } };
 
 // Panel de propiedades — al menos 35% del ancho del editor, con un piso/techo en px
 // para que no se vuelva inusable en pantallas muy angostas ni excesivo en muy anchas.
-const SIDEBAR_WIDTH: React.CSSProperties = { width: '36%', minWidth: 380, maxWidth: 560, flexShrink: 0 };
+const SIDEBAR_WIDTH: React.CSSProperties = { width: '38%', minWidth: 420, maxWidth: 600, flexShrink: 0 };
 
 // ─── Construcción de filas/columnas/componentes ───────────────────────────────
 
@@ -1085,11 +1085,19 @@ function PaddingField({ label, icon, value, onChange }: { label: string; icon: R
   );
 }
 function BorderStyleIcon({ style }: { style: 'solid' | 'dotted' | 'none' }) {
+  if (style === 'none') {
+    // Un borde "ninguno" transparente no deja nada visible dentro del ícono —
+    // se dibuja un tache diagonal sobre un contorno tenue para que la opción
+    // seleccionada siga siendo reconocible.
+    return (
+      <span style={{ position: 'relative', display: 'block', width: 14, height: 14 }}>
+        <span style={{ position: 'absolute', inset: 0, borderRadius: 3, border: '1.5px solid currentColor', opacity: 0.35 }} />
+        <span style={{ position: 'absolute', top: '50%', left: -1, right: -1, height: 1.5, background: 'currentColor', transform: 'rotate(-45deg)' }} />
+      </span>
+    );
+  }
   return (
-    <span style={{
-      display: 'block', width: 14, height: 14, borderRadius: 3,
-      border: style === 'none' ? '1.5px solid transparent' : `1.5px ${style} currentColor`,
-    }} />
+    <span style={{ display: 'block', width: 14, height: 14, borderRadius: 3, border: `1.5px ${style} currentColor` }} />
   );
 }
 function BorderFields({ borderColor, borderWidth, borderStyle, onUpdate }: {
@@ -1173,12 +1181,12 @@ function BlockFields<T extends {
           <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent />
         </div>
       ) : (
-        <div style={{ display: 'flex', gap: 16 }}>
-          <div style={{ flex: 2 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          <div style={{ gridColumn: 'span 2' }}>
             <FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel>
             <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent />
           </div>
-          <div style={{ flex: 1 }}>
+          <div>
             <FieldLabel icon={<BiAlignLeft />}>Alineación</FieldLabel>
             <AlignmentField value={design.textAlign ?? 'left'} onChange={v => onUpdate({ textAlign: v } as Partial<T>)} />
           </div>
