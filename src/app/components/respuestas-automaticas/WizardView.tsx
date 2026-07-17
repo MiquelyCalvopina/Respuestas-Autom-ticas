@@ -1472,28 +1472,28 @@ function Step3({ rule, onChange, onOpenEditor, onOpenTemplatesManager }: {
           </FieldRow>
 
           <FieldRow label="Plantilla de correo" required>
-            {rule.templates.length === 1 ? (
-              countComponents(rule.templates[0].rows) === 0 ? (
-                <Button type="link" onClick={() => onOpenEditor(rule.templates[0].id)} style={{ padding: 0, height: 'auto' }}>
-                  Diseñar plantilla de correo
-                </Button>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              {rule.templates.length === 1 ? (
+                countComponents(rule.templates[0].rows) === 0 ? (
+                  <Button type="link" onClick={() => onOpenEditor(rule.templates[0].id)} style={{ padding: 0, height: 'auto' }}>
+                    Diseñar plantilla de correo
+                  </Button>
+                ) : (
+                  <Button type="link" onClick={() => onOpenEditor(rule.templates[0].id)} style={{ padding: 0, height: 'auto' }}>
+                    Editar plantilla — últ. creación {formatTemplateDate(rule.templates[0].blocksUpdatedAt)}
+                  </Button>
+                )
               ) : (
-                <Button type="link" onClick={() => onOpenEditor(rule.templates[0].id)} style={{ padding: 0, height: 'auto' }}>
-                  Editar plantilla — últ. creación {formatTemplateDate(rule.templates[0].blocksUpdatedAt)}
-                </Button>
-              )
-            ) : (
-              <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#52c41a', flexShrink: 0 }} />
                   <b>{templateForDate(rule.templates, todayISO()).name}</b> se envía hoy
                 </span>
-                {' · '}
-                <Button type="link" onClick={onOpenTemplatesManager} style={{ padding: 0, height: 'auto' }}>
-                  {rule.templates.length} plantillas — ver todas →
-                </Button>
-              </span>
-            )}
+              )}
+              {' · '}
+              <Button type="link" onClick={onOpenTemplatesManager} style={{ padding: 0, height: 'auto' }}>
+                {rule.templates.length === 1 ? 'Gestionar plantillas' : `${rule.templates.length} plantillas — gestionar →`}
+              </Button>
+            </span>
           </FieldRow>
         </div>
       </div>
