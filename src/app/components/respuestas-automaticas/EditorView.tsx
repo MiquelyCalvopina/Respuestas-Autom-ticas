@@ -1460,13 +1460,13 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
           <div>
             <FieldLabel>Mostrar enunciado</FieldLabel>
-            <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, height: 32, boxSizing: 'border-box', padding: '0 12px', display: 'flex', alignItems: 'center', background: '#fff' }}>
+            <div style={{ height: 32, display: 'flex', alignItems: 'center' }}>
               <Switch checked={block.showQuestion} onChange={checked => onUpdate({ ...block, showQuestion: checked })} />
             </div>
           </div>
           <div>
             <FieldLabel tooltip="No sabemos por qué falta — solo que la respuesta está vacía.">Preguntas sin respuesta</FieldLabel>
-            <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, height: 32, boxSizing: 'border-box', padding: '0 12px', display: 'flex', alignItems: 'center', background: '#fff' }}>
+            <div style={{ height: 32, display: 'flex', alignItems: 'center' }}>
               <Switch checked={block.includeEmptyAnswers} onChange={checked => onUpdate({ ...block, includeEmptyAnswers: checked })} />
             </div>
           </div>
