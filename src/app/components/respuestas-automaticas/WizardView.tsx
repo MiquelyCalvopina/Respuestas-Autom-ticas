@@ -1500,7 +1500,7 @@ function Step3({ rule, onChange, onOpenEditor, onOpenTemplatesManager }: {
                     <>
                       {' · '}
                       <Button type="link" onClick={onOpenTemplatesManager} style={{ padding: 0, height: 'auto' }}>
-                        {rule.templates.length === 1 ? 'Gestionar plantillas' : `${rule.templates.length} plantillas — gestionar →`}
+                        {rule.templates.length === 1 ? 'Gestionar plantillas' : `${rule.templates.length} plantillas — ver todas →`}
                       </Button>
                     </>
                   )}
