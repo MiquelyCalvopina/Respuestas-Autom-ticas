@@ -67,6 +67,7 @@ export interface DividerBlock {
 export interface ImageComponent {
   id: string; type: 'image';
   src: string; alt: string; dynamic: boolean; widthPercent: number;
+  link: string; // URL opcional — si no está vacía, la imagen se envuelve en un enlace
   design: ComponentDesign;
 }
 export interface ButtonComponent {

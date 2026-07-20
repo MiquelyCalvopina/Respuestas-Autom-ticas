@@ -95,7 +95,7 @@ function makeComponent(type: ComponentType): Component {
       design,
     };
     case 'divider':   return { id, type, design };
-    case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, design };
+    case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, link: '', design };
     case 'button':    return { id, type, text: 'Responder estudio', url: '', bgColor: '#1890ff', textColor: '#ffffff', design };
     case 'spacer':    return { id, type, height: 24, design };
     case 'social':    return { id, type, style: 'negro', size: 26, gap: 12, shape: 'square', networks: SOCIAL_KEYS.map(k => ({ network: k, included: false, url: '' })), design };
@@ -224,7 +224,10 @@ function componentToHtml(c: Component): string {
       return `<div style="${style}">${containerOpen}${label}${items}${emptyExampleItem}</div></div>`;
     }
     case 'divider':   return `<hr style="margin:${d.paddingTop}px 26px ${d.paddingBottom}px;" />`;
-    case 'image':     return `<div style="${style}text-align:center;">${c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : ''}</div>`;
+    case 'image': {
+      const img = c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : '';
+      return `<div style="${style}text-align:center;">${c.link ? `<a href="${c.link}" style="text-decoration:none;">${img}</a>` : img}</div>`;
+    }
     case 'button':    return `<div style="${style}text-align:center;"><a href="${c.url}" style="display:inline-block;padding:10px 24px;border-radius:6px;background:${c.bgColor};color:${c.textColor};font-weight:600;text-decoration:none;">${c.text}</a></div>`;
     case 'spacer':    return `<div style="${style}height:${c.height}px;"></div>`;
     case 'social': {
@@ -576,9 +579,10 @@ function renderComponentContent(component: Component): React.ReactNode {
   }
   if (component.type === 'divider') return <Divider style={{ margin: '0 24px', minWidth: 'auto', width: 'auto' }} />;
   if (component.type === 'image') {
+    const img = <img src={component.src} alt={component.alt} style={{ width: `${component.widthPercent}%`, display: 'inline-block' }} />;
     return component.src ? (
       <div style={{ padding: '0 32px', textAlign: 'center' }}>
-        <img src={component.src} alt={component.alt} style={{ width: `${component.widthPercent}%`, display: 'inline-block' }} />
+        {component.link ? <a href={component.link} onClick={e => e.preventDefault()} style={{ display: 'inline-block' }}>{img}</a> : img}
       </div>
     ) : (
       <div style={{ margin: '0 32px', padding: '32px', textAlign: 'center', color: '#bfbfbf', border: '1px dashed #d9d9d9', borderRadius: 8 }}>
@@ -1626,8 +1630,9 @@ function ImagePreviewThumb({ src }: { src: string }) {
 }
 function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpdate: (b: Component) => void }) {
   const urlRef = useRef<InputRef>(null);
+  const linkRef = useRef<InputRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [varPickerOpen, setVarPickerOpen] = useState(false);
+  const [varTarget, setVarTarget] = useState<'src' | 'link' | null>(null);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -1639,12 +1644,16 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
   }
 
   function insertVariable(key: string) {
-    const input = urlRef.current?.input;
+    const field = varTarget;
+    if (!field) return;
+    const ref = field === 'src' ? urlRef : linkRef;
+    const value = field === 'src' ? block.src : block.link;
+    const input = ref.current?.input;
     const tag = `{{${key}}}`;
-    if (!input) { onUpdate({ ...block, src: block.src + tag }); return; }
-    const s = input.selectionStart ?? block.src.length, e2 = input.selectionEnd ?? block.src.length;
-    const next = block.src.slice(0, s) + tag + block.src.slice(e2);
-    onUpdate({ ...block, src: next });
+    if (!input) { onUpdate({ ...block, [field]: value + tag }); return; }
+    const s = input.selectionStart ?? value.length, e2 = input.selectionEnd ?? value.length;
+    const next = value.slice(0, s) + tag + value.slice(e2);
+    onUpdate({ ...block, [field]: next });
     setTimeout(() => { input.focus(); input.selectionStart = input.selectionEnd = s + tag.length; }, 0);
   }
 
@@ -1672,7 +1681,7 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
         {block.dynamic ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
             <button
-              type="button" onClick={() => setVarPickerOpen(true)}
+              type="button" onClick={() => setVarTarget('src')}
               style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: '#1890ff', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4 }}
             >
               <BiPlus style={{ fontSize: 14 }} /> variable
@@ -1682,8 +1691,21 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
         ) : (
           <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>Sube un archivo o pega el enlace de una imagen.</Text>
         )}
-        <VariablePickerModal open={varPickerOpen} onClose={() => setVarPickerOpen(false)} onPick={insertVariable} />
       </div>
+      <div>
+        <FieldLabel icon={<BiLink />}>Enlace</FieldLabel>
+        <Input ref={linkRef} value={block.link} onChange={e => onUpdate({ ...block, link: e.target.value })} placeholder="https://..." />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+          <button
+            type="button" onClick={() => setVarTarget('link')}
+            style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: '#1890ff', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+          >
+            <BiPlus style={{ fontSize: 14 }} /> variable
+          </button>
+          <Text type="secondary" style={{ fontSize: 12 }}>Opcional — al hacer clic en la imagen se abrirá esta URL.</Text>
+        </div>
+      </div>
+      <VariablePickerModal open={varTarget !== null} onClose={() => setVarTarget(null)} onPick={insertVariable} />
       <div>
         <FieldLabel icon={<BiText />}>Texto alternativo</FieldLabel>
         <Input value={block.alt} onChange={e => onUpdate({ ...block, alt: e.target.value })} maxLength={124} />
