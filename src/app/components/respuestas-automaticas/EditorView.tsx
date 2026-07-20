@@ -64,7 +64,7 @@ const ROUND_BTN = { style: { borderRadius: 8 } };
 
 // Panel de propiedades — al menos 35% del ancho del editor, con un piso/techo en px
 // para que no se vuelva inusable en pantallas muy angostas ni excesivo en muy anchas.
-const SIDEBAR_WIDTH: React.CSSProperties = { width: '38%', minWidth: 420, maxWidth: 600, flexShrink: 0 };
+const SIDEBAR_WIDTH: React.CSSProperties = { width: '44%', minWidth: 460, maxWidth: 680, flexShrink: 0 };
 
 // ─── Construcción de filas/columnas/componentes ───────────────────────────────
 
