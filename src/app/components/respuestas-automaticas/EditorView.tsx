@@ -1128,7 +1128,7 @@ function BorderFields({ borderColor, borderWidth, borderStyle, onUpdate }: {
 }
 function PaddingGrid({ design, onUpdate }: { design: { paddingTop: number; paddingBottom: number; paddingLeft?: number; paddingRight?: number }; onUpdate: (p: object) => void }) {
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <GroupHeading>Relleno</GroupHeading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 16 }}>
         <PaddingField label="Arriba" icon={<BiArrowToTop />} value={design.paddingTop} onChange={v => onUpdate({ paddingTop: v })} />
@@ -1171,25 +1171,27 @@ function BlockFields<T extends {
   hideMobile?: boolean;
 }>({ design, onUpdate, excludeAlign }: { design: T; onUpdate: (p: Partial<T>) => void; excludeAlign?: boolean }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {excludeAlign ? (
-        <div>
-          <FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel>
-          <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent />
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
-          <div style={{ gridColumn: 'span 2' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {excludeAlign ? (
+          <div>
             <FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel>
             <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent />
           </div>
-          <div>
-            <FieldLabel icon={<BiAlignLeft />}>Alineación</FieldLabel>
-            <AlignmentField value={design.textAlign ?? 'left'} onChange={v => onUpdate({ textAlign: v } as Partial<T>)} />
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
+            <div style={{ gridColumn: 'span 2' }}>
+              <FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel>
+              <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent />
+            </div>
+            <div>
+              <FieldLabel icon={<BiAlignLeft />}>Alineación</FieldLabel>
+              <AlignmentField value={design.textAlign ?? 'left'} onChange={v => onUpdate({ textAlign: v } as Partial<T>)} />
+            </div>
           </div>
-        </div>
-      )}
-      <BorderFields borderColor={design.borderColor ?? '#000000'} borderWidth={design.borderWidth ?? 0} borderStyle={design.borderStyle ?? 'none'} onUpdate={onUpdate} />
+        )}
+        <BorderFields borderColor={design.borderColor ?? '#000000'} borderWidth={design.borderWidth ?? 0} borderStyle={design.borderStyle ?? 'none'} onUpdate={onUpdate} />
+      </div>
       <PaddingGrid design={design} onUpdate={onUpdate} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <FieldLabel inline tooltip="Este bloque no se mostrará al abrir el correo desde un celular.">Ocultar en móvil</FieldLabel>
@@ -1258,9 +1260,12 @@ function TitleContentFields({ block, onUpdate }: { block: TitleBlock; onUpdate: 
   );
 }
 // Encabezado de grupo simple, no colapsable — ej. "Relleno", "Etiqueta del bloque".
+// Título de grupo simple — sin margen propio; el espaciado (12px a su contenido,
+// 24px a otros grupos) lo da el contenedor padre vía gap, para no mezclar
+// margin+gap con resultados impredecibles (ver Figma Ajustes 121-151, node 1560-16696).
 function GroupHeading({ children }: { children: React.ReactNode }) {
   return (
-    <Text style={{ fontSize: 14, fontWeight: 400, color: 'rgba(0,0,0,0.85)', display: 'block', marginTop: 8, marginBottom: 12 }}>
+    <Text style={{ fontSize: 14, fontWeight: 400, color: 'rgba(0,0,0,0.85)', display: 'block' }}>
       {children}
     </Text>
   );
@@ -1270,7 +1275,7 @@ function GroupHeading({ children }: { children: React.ReactNode }) {
 function SubSectionHeading({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
         <Text style={{ fontSize: 14, fontWeight: 400, color: 'rgba(0,0,0,0.85)' }}>{title}</Text>
         <BiChevronDown style={{ fontSize: 14, color: 'rgba(0,0,0,0.85)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 150ms', flexShrink: 0 }} />
@@ -1429,12 +1434,12 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ padding: 8, borderRadius: 8, background: '#fafafa', border: '1px solid #d9d9d9', fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>
         Cada encuestado verá sus respuestas exactas, es decir, el contenido es dinámico y único por persona.
       </div>
 
-      <div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <GroupHeading>Visualización del contenedor</GroupHeading>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           <div>
@@ -1460,7 +1465,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         </div>
       </div>
 
-      <div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <GroupHeading>Preguntas del bloque</GroupHeading>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           <div>
@@ -1497,19 +1502,21 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         </div>
       </div>
 
-      <GroupHeading>Título del bloque</GroupHeading>
-      <div>
-        <FieldLabel icon={<BiText />}>Texto</FieldLabel>
-        <Input value={block.headerLabel} onChange={e => onUpdate({ ...block, headerLabel: e.target.value })} />
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <GroupHeading>Título del bloque</GroupHeading>
         <div>
-          <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
-          <ColorPickerField value={block.headerColor} onChange={c => onUpdate({ ...block, headerColor: c })} />
+          <FieldLabel icon={<BiText />}>Texto</FieldLabel>
+          <Input value={block.headerLabel} onChange={e => onUpdate({ ...block, headerLabel: e.target.value })} />
         </div>
-        <div>
-          <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
-          <InputNumber min={8} max={32} value={block.headerSize} onChange={v => onUpdate({ ...block, headerSize: v ?? 18 })} style={{ width: '100%' }} addonAfter="px" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
+          <div>
+            <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
+            <ColorPickerField value={block.headerColor} onChange={c => onUpdate({ ...block, headerColor: c })} />
+          </div>
+          <div>
+            <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
+            <InputNumber min={8} max={32} value={block.headerSize} onChange={v => onUpdate({ ...block, headerSize: v ?? 18 })} style={{ width: '100%' }} addonAfter="px" />
+          </div>
         </div>
       </div>
 
@@ -1560,7 +1567,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
       </SubSectionHeading>
 
       {block.displayStyle === 'bold-indented' && (
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <GroupHeading>Detalle de sangría</GroupHeading>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
             <div>
