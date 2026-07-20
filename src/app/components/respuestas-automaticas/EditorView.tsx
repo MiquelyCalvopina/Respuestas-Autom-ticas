@@ -1775,7 +1775,6 @@ type Selection =
 export default function EditorView({ template, onChange, onBack }: Props) {
   const { message } = App.useApp();
   const [draft, setDraft] = useState<EmailTemplate>(template);
-  const [dirty, setDirty] = useState(false);
   const [testValidated, setTestValidated] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   const [mode, setMode] = useState<'visual' | 'html'>(template.customHtml ? 'html' : 'visual');
@@ -1894,7 +1893,6 @@ export default function EditorView({ template, onChange, onBack }: Props) {
     : null;
 
   function handleExit() {
-    if (!dirty) { onBack(); return; }
     Modal.confirm({
       title: '¿Estás seguro de salir?',
       content: 'Si abandona la edición del estudio, se perderá el diseño del correo hasta dónde lo ha configurado.',

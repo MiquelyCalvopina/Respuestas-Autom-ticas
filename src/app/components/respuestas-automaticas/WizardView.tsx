@@ -1397,12 +1397,6 @@ function SubjectInput({ value, onChange, placeholder }: { value: string; onChang
   );
 }
 
-function formatTemplateDate(iso: string | null): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return `${d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })} ${d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`;
-}
-
 function Step3({ rule, onChange, onOpenEditor, onOpenTemplatesManager }: {
   rule: AutoResponse; onChange: (r: AutoResponse) => void; onOpenEditor: (templateId: string) => void; onOpenTemplatesManager: () => void;
 }) {
@@ -1474,36 +1468,25 @@ function Step3({ rule, onChange, onOpenEditor, onOpenTemplatesManager }: {
           <FieldRow label="Plantilla de correo" required>
             {(() => {
               const hasContent = countComponents(rule.templates[0].rows) > 0;
-              // Recién agregamos el link "Gestionar" una vez que hay algo real por gestionar
-              // (contenido diseñado o 2+ plantillas) — una regla recién creada no debe mostrar
-              // ninguna plantilla "ya creada" antes de que el usuario diseñe la primera.
-              const showManage = rule.templates.length > 1 || hasContent;
+              // Mismo diseño exista 1 o muchas plantillas: solo cambia si ya hay algo diseñado.
+              if (rule.templates.length === 1 && !hasContent) {
+                return (
+                  <Button type="link" onClick={() => onOpenEditor(rule.templates[0].id)} style={{ padding: 0, height: 'auto' }}>
+                    Diseñar plantilla de correo
+                  </Button>
+                );
+              }
+              const current = templateForDate(rule.templates, todayISO());
               return (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  {rule.templates.length === 1 ? (
-                    !hasContent ? (
-                      <Button type="link" onClick={() => onOpenEditor(rule.templates[0].id)} style={{ padding: 0, height: 'auto' }}>
-                        Diseñar plantilla de correo
-                      </Button>
-                    ) : (
-                      <Button type="link" onClick={() => onOpenEditor(rule.templates[0].id)} style={{ padding: 0, height: 'auto' }}>
-                        Editar plantilla — últ. creación {formatTemplateDate(rule.templates[0].blocksUpdatedAt)}
-                      </Button>
-                    )
-                  ) : (
-                    <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#52c41a', flexShrink: 0 }} />
-                      <b>{templateForDate(rule.templates, todayISO()).name}</b> se envía hoy
-                    </span>
-                  )}
-                  {showManage && (
-                    <>
-                      {' · '}
-                      <Button type="link" onClick={onOpenTemplatesManager} style={{ padding: 0, height: 'auto' }}>
-                        {rule.templates.length === 1 ? 'Gestionar plantillas' : `${rule.templates.length} plantillas — ver todas →`}
-                      </Button>
-                    </>
-                  )}
+                  <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: 14, color: 'rgba(0,0,0,0.85)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#52c41a', flexShrink: 0 }} />
+                    <b>{current.name}</b> se envía hoy
+                  </span>
+                  {' · '}
+                  <Button type="link" onClick={onOpenTemplatesManager} style={{ padding: 0, height: 'auto' }}>
+                    {rule.templates.length === 1 ? 'Gestionar plantillas' : `${rule.templates.length} plantillas — ver todas →`}
+                  </Button>
                 </span>
               );
             })()}
