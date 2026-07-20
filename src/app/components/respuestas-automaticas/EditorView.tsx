@@ -1208,30 +1208,33 @@ function BlockFields<T extends {
 
 function TextContentFields({ block, onUpdate }: { block: TextBlock; onUpdate: (b: Component) => void }) {
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const [varPickerOpen, setVarPickerOpen] = useState(false);
+
+  function insertVariable(key: string) {
+    const ta = taRef.current;
+    const tag = `{{${key}}}`;
+    if (!ta) { onUpdate({ ...block, content: block.content + tag }); return; }
+    const s = ta.selectionStart, e2 = ta.selectionEnd;
+    const nc = block.content.slice(0, s) + tag + block.content.slice(e2);
+    onUpdate({ ...block, content: nc });
+    setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = s + tag.length; }, 0);
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <FieldLabel icon={<BiText />}>Contenido</FieldLabel>
         <TextArea ref={taRef} rows={4} value={block.content} onChange={e => onUpdate({ ...block, content: e.target.value })} />
-      </div>
-      <div>
-        <FieldLabel icon={<BiCodeCurly />}>Insertar variable</FieldLabel>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {VARIABLES.map(v => (
-            <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }} color="blue" onClick={() => {
-              const ta = taRef.current;
-              const tag = `{{${v}}}`;
-              if (!ta) { onUpdate({ ...block, content: block.content + tag }); return; }
-              const s = ta.selectionStart, e2 = ta.selectionEnd;
-              const nc = block.content.slice(0, s) + tag + block.content.slice(e2);
-              onUpdate({ ...block, content: nc });
-              setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = s + tag.length; }, 0);
-            }}>
-              {`{{${v}}}`}
-            </Tag>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+          <button
+            type="button" onClick={() => setVarPickerOpen(true)}
+            style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: '#1890ff', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+          >
+            <BiPlus style={{ fontSize: 14 }} /> variable
+          </button>
+          <Text type="secondary" style={{ fontSize: 12 }}>Se reemplaza con el dato real al enviarse.</Text>
         </div>
-        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>Se reemplaza con el dato real al enviarse.</Text>
+        <VariablePickerModal open={varPickerOpen} onClose={() => setVarPickerOpen(false)} onPick={insertVariable} />
       </div>
     </div>
   );
@@ -1606,6 +1609,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
 function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpdate: (b: Component) => void }) {
   const urlRef = useRef<InputRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [varPickerOpen, setVarPickerOpen] = useState(false);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -1614,6 +1618,16 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
     // (URL.createObjectURL), no sube el archivo a ningún servidor.
     onUpdate({ ...block, src: URL.createObjectURL(file), alt: block.alt || file.name.replace(/\.[^.]+$/, '') });
     e.target.value = '';
+  }
+
+  function insertVariable(key: string) {
+    const input = urlRef.current?.input;
+    const tag = `{{${key}}}`;
+    if (!input) { onUpdate({ ...block, src: block.src + tag }); return; }
+    const s = input.selectionStart ?? block.src.length, e2 = input.selectionEnd ?? block.src.length;
+    const next = block.src.slice(0, s) + tag + block.src.slice(e2);
+    onUpdate({ ...block, src: next });
+    setTimeout(() => { input.focus(); input.selectionStart = input.selectionEnd = s + tag.length; }, 0);
   }
 
   return (
@@ -1636,29 +1650,21 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
           <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
           <Button icon={<BiUpload />} onClick={() => fileInputRef.current?.click()}>Subir</Button>
         </div>
-        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>Sube un archivo o pega el enlace de una imagen.</Text>
-      </div>
-      {block.dynamic && (
-        <div>
-          <FieldLabel icon={<BiCodeCurly />}>Insertar variable</FieldLabel>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {VARIABLES.map(v => (
-              <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }} color="blue" onClick={() => {
-                const input = urlRef.current?.input;
-                const tag = `{{${v}}}`;
-                if (!input) { onUpdate({ ...block, src: block.src + tag }); return; }
-                const s = input.selectionStart ?? block.src.length, e2 = input.selectionEnd ?? block.src.length;
-                const next = block.src.slice(0, s) + tag + block.src.slice(e2);
-                onUpdate({ ...block, src: next });
-                setTimeout(() => { input.focus(); input.selectionStart = input.selectionEnd = s + tag.length; }, 0);
-              }}>
-                {`{{${v}}}`}
-              </Tag>
-            ))}
+        {block.dynamic ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+            <button
+              type="button" onClick={() => setVarPickerOpen(true)}
+              style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: '#1890ff', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+            >
+              <BiPlus style={{ fontSize: 14 }} /> variable
+            </button>
+            <Text type="secondary" style={{ fontSize: 12 }}>La URL puede mostrar una imagen distinta por destinatario.</Text>
           </div>
-          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>La URL puede incluir una variable para mostrar una imagen distinta por destinatario.</Text>
-        </div>
-      )}
+        ) : (
+          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>Sube un archivo o pega el enlace de una imagen.</Text>
+        )}
+        <VariablePickerModal open={varPickerOpen} onClose={() => setVarPickerOpen(false)} onPick={insertVariable} />
+      </div>
       <div>
         <FieldLabel icon={<BiText />}>Texto alternativo</FieldLabel>
         <Input value={block.alt} onChange={e => onUpdate({ ...block, alt: e.target.value })} />
