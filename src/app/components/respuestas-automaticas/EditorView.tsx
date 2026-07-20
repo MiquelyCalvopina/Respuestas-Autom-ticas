@@ -1606,6 +1606,24 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
     </div>
   );
 }
+function ImagePreviewThumb({ src }: { src: string }) {
+  const [broken, setBroken] = useState(false);
+  return (
+    <div style={{
+      width: 32, height: 32, borderRadius: 8, flexShrink: 0, overflow: 'hidden',
+      background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      {src && !broken ? (
+        <img
+          src={src} alt="" onError={() => setBroken(true)}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      ) : (
+        <BiImage style={{ fontSize: 16, color: 'rgba(0,0,0,0.25)' }} />
+      )}
+    </div>
+  );
+}
 function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpdate: (b: Component) => void }) {
   const urlRef = useRef<InputRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1641,7 +1659,8 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
       </div>
       <div>
         <FieldLabel icon={<BiImage />}>Imagen</FieldLabel>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <ImagePreviewThumb key={block.src} src={block.src} />
           <Input
             ref={urlRef} value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })}
             placeholder={block.dynamic ? 'https://.../{{variable}}.png' : 'https://...'}
@@ -1667,7 +1686,8 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
       </div>
       <div>
         <FieldLabel icon={<BiText />}>Texto alternativo</FieldLabel>
-        <Input value={block.alt} onChange={e => onUpdate({ ...block, alt: e.target.value })} />
+        <Input value={block.alt} onChange={e => onUpdate({ ...block, alt: e.target.value })} maxLength={124} />
+        <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'right', marginTop: 4 }}>{block.alt.length}/124</Text>
       </div>
       <div>
         <FieldLabel icon={<BiMoveHorizontal />}>Tamaño</FieldLabel>
