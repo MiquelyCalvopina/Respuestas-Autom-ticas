@@ -304,7 +304,7 @@ function wrapSelectionWithStyle(cssText: string) {
 
 function EmojiGrid({ onPick }: { onPick: (e: string) => void }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 2, width: 184 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: 2, width: 184 }}>
       {EMOJI_LIST.map(e => (
         <button
           key={e} onMouseDown={ev => ev.preventDefault()} onClick={() => onPick(e)}
@@ -894,7 +894,7 @@ function ColumnLayoutPicker({ onPick, onClose }: { onPick: (widths: number[]) =>
         <Text type="secondary" style={{ fontSize: 12 }}>Elige un layout de columnas</Text>
         <button onClick={onClose} aria-label="Cerrar" style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.45)', display: 'inline-flex', alignItems: 'center', fontSize: 16 }}><BiX /></button>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)', gap: 8 }}>
         {COLUMN_LAYOUTS.map(l => (
           <button key={l.label} onClick={() => onPick(l.widths)} title={l.label} style={{ display: 'flex', gap: 4, border: '1px solid #d9d9d9', borderRadius: 8, padding: 8, cursor: 'pointer', background: '#fff' }}>
             {l.widths.map((w, i) => <div key={i} style={{ flex: w, height: 24, background: '#e6f4ff', borderRadius: 2 }} />)}
@@ -910,7 +910,7 @@ function ColumnsAndSizesField({ row, onChange }: { row: Row; onChange: (widths: 
   const currentWidths = row.columns.map(c => c.widthPercent);
   const isActive = (widths: number[]) => widths.length === currentWidths.length && widths.every((w, i) => Math.abs(w - currentWidths[i]) < 0.5);
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)', gap: 8 }}>
       {COLUMN_LAYOUTS.map(l => (
         <button key={l.label} onClick={() => onChange(l.widths)} title={l.label} style={{
           display: 'flex', gap: 4, borderRadius: 8, padding: 8, cursor: 'pointer',
@@ -1102,7 +1102,7 @@ function BorderFields({ borderColor, borderWidth, borderStyle, onUpdate }: {
   onUpdate: (p: { borderColor?: string; borderWidth?: number; borderStyle?: 'solid' | 'dotted' | 'none' }) => void;
 }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
       <div>
         <FieldLabel icon={<BiColorFill />}>Color del borde</FieldLabel>
         <ColorPickerField value={borderColor} onChange={c => onUpdate({ borderColor: c })} />
@@ -1130,7 +1130,7 @@ function PaddingGrid({ design, onUpdate }: { design: { paddingTop: number; paddi
   return (
     <div>
       <GroupHeading>Relleno</GroupHeading>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 16 }}>
         <PaddingField label="Arriba" icon={<BiArrowToTop />} value={design.paddingTop} onChange={v => onUpdate({ paddingTop: v })} />
         <PaddingField label="Abajo" icon={<BiArrowToBottom />} value={design.paddingBottom} onChange={v => onUpdate({ paddingBottom: v })} />
         <PaddingField label="Izquierda" icon={<BiArrowToLeft />} value={design.paddingLeft ?? 0} onChange={v => onUpdate({ paddingLeft: v })} />
@@ -1143,7 +1143,7 @@ function PaddingGrid({ design, onUpdate }: { design: { paddingTop: number; paddi
 // Tab "Configuración" — layout global del correo (fijo, no depende de la selección)
 function LayoutConfigFields({ layout, onUpdate }: { layout: EmailLayoutConfig; onUpdate: (p: Partial<EmailLayoutConfig>) => void }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
       <div>
         <FieldLabel icon={<BiMoveHorizontal />}>Ancho del contenido</FieldLabel>
         <InputNumber value={layout.widthPercent} min={10} max={100} addonAfter="%" onChange={v => onUpdate({ widthPercent: v ?? 100 })} style={{ width: '100%' }} />
@@ -1178,7 +1178,7 @@ function BlockFields<T extends {
           <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent />
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           <div style={{ gridColumn: 'span 2' }}>
             <FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel>
             <ColorPickerField value={design.bgColor} onChange={c => onUpdate({ bgColor: c } as Partial<T>)} allowTransparent />
@@ -1436,7 +1436,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
 
       <div>
         <GroupHeading>Visualización del contenedor</GroupHeading>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           <div>
             <FieldLabel icon={<BiPen />}>Estilo</FieldLabel>
             <Select
@@ -1462,7 +1462,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
 
       <div>
         <GroupHeading>Preguntas del bloque</GroupHeading>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           <div>
             <FieldLabel>Mostrar enunciado</FieldLabel>
             <div style={{ height: 32, display: 'flex', alignItems: 'center' }}>
@@ -1502,7 +1502,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <FieldLabel icon={<BiText />}>Texto</FieldLabel>
         <Input value={block.headerLabel} onChange={e => onUpdate({ ...block, headerLabel: e.target.value })} />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
         <div>
           <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
           <ColorPickerField value={block.headerColor} onChange={c => onUpdate({ ...block, headerColor: c })} />
@@ -1514,7 +1514,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
       </div>
 
       <SubSectionHeading title="Preguntas">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           <div>
             <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
             <ColorPickerField value={block.questionColor} onChange={c => onUpdate({ ...block, questionColor: c })} />
@@ -1524,7 +1524,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
             <ColorPickerField value={block.questionBg} onChange={c => onUpdate({ ...block, questionBg: c })} allowTransparent />
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           <div>
             <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
             <InputNumber min={9} max={20} value={block.questionSize} onChange={v => onUpdate({ ...block, questionSize: v ?? 14 })} style={{ width: '100%' }} />
@@ -1537,7 +1537,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
       </SubSectionHeading>
 
       <SubSectionHeading title="Respuestas">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           <div>
             <FieldLabel icon={<BiColorFill />}>Color del texto</FieldLabel>
             <ColorPickerField value={block.answerColor} onChange={c => onUpdate({ ...block, answerColor: c })} />
@@ -1547,7 +1547,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
             <ColorPickerField value={block.answerBg} onChange={c => onUpdate({ ...block, answerBg: c })} allowTransparent />
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           <div>
             <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
             <InputNumber min={9} max={20} value={block.answerSize} onChange={v => onUpdate({ ...block, answerSize: v ?? 14 })} style={{ width: '100%' }} />
@@ -1562,7 +1562,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
       {block.displayStyle === 'bold-indented' && (
         <div>
           <GroupHeading>Detalle de sangría</GroupHeading>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
             <div>
               <FieldLabel icon={<BiColorFill />}>Color del acento</FieldLabel>
               <ColorPickerField value={block.accentColor} onChange={c => onUpdate({ ...block, accentColor: c })} />
@@ -1672,7 +1672,7 @@ function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUp
         </div>
         <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>El enlace puede incluir una variable para llevar a una URL distinta por destinatario.</Text>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
         <div><FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel><ColorPickerField value={block.bgColor} onChange={c => onUpdate({ ...block, bgColor: c })} /></div>
         <div><FieldLabel icon={<BiColorFill />}>Color de texto</FieldLabel><ColorPickerField value={block.textColor} onChange={c => onUpdate({ ...block, textColor: c })} /></div>
       </div>
@@ -1707,7 +1707,7 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
           <Radio.Button value="color" style={{ flex: 1, textAlign: 'center' }}>Color</Radio.Button>
         </Radio.Group>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
         <div>
           <FieldLabel icon={<BiMoveHorizontal />}>Tamaño</FieldLabel>
           <InputNumber min={12} max={64} value={block.size} addonAfter="px" onChange={v => onUpdate({ ...block, size: v ?? 26 })} style={{ width: '100%' }} />
@@ -2095,12 +2095,12 @@ export default function EditorView({ template, onChange, onBack }: Props) {
                 {activeTab === 'elementos' && (
                   <div id="palette-section">
                     <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.24, lineHeight: '14px', textTransform: 'uppercase', display: 'block', marginBottom: 12 }}>Estructura</Text>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px 24px', marginBottom: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)', gap: '16px 24px', marginBottom: 12 }}>
                       <PaletteItem icon={<BiTable />} label="Columnas" onClick={() => setColumnPickerOpen(o => !o)} />
                     </div>
                     {columnPickerOpen && <ColumnLayoutPicker onPick={addRow} onClose={() => setColumnPickerOpen(false)} />}
                     <Text type="secondary" style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.24, lineHeight: '14px', textTransform: 'uppercase', display: 'block', margin: '12px 0 12px' }}>Componentes</Text>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px 24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)', gap: '16px 24px' }}>
                       {COMPONENT_PALETTE.map(item => (
                         <PaletteItem key={item.type} icon={item.icon} label={item.label} componentType={item.type} onClick={() => addComponentRow(item.type)} />
                       ))}
