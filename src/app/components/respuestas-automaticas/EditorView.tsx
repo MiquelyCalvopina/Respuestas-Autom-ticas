@@ -13,7 +13,7 @@ import {
   BiBold, BiItalic, BiSmile, BiCodeCurly,
   BiColorFill, BiVerticalCenter, BiPen, BiMoveHorizontal, BiBorderRadius,
   BiArrowToTop, BiArrowToBottom, BiArrowToLeft, BiArrowToRight, BiLink, BiPalette,
-  BiCheckDouble,
+  BiCheckDouble, BiBlock,
 } from 'react-icons/bi';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -85,10 +85,10 @@ function makeComponent(type: ComponentType): Component {
       id, type,
       questions: PREGUNTAS_EJEMPLO.map(q => ({ questionId: q.id, included: true })),
       displayStyle: 'bold-indented', showQuestion: true,
-      containerWidth: 100, containerBorderRadius: 10,
-      headerLabel: 'Tus respuestas', headerColor: '#9CA3AF', headerSize: 10,
-      questionColor: '#1E293B', questionBg: 'transparent', questionSize: 13, questionWeight: '700',
-      answerColor: '#475569', answerBg: 'transparent', answerSize: 13, answerWeight: '400',
+      containerWidth: 100, containerBorderRadius: 8,
+      headerLabel: 'Tus respuestas', headerColor: '#9CA3AF', headerSize: 18,
+      questionColor: '#1E293B', questionBg: 'transparent', questionSize: 14, questionWeight: '700',
+      answerColor: '#475569', answerBg: 'transparent', answerSize: 14, answerWeight: '400',
       accentColor: '#E2E8F0', accentWidth: 2,
       includeEmptyAnswers: false,
       design,
@@ -946,11 +946,7 @@ function ColorPickerField({ value, onChange, allowTransparent }: { value: string
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '0 8px',
           }}
         >
-          <span style={{
-            width: 20, height: 20, borderRadius: 4, flexShrink: 0,
-            background: 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 8px 8px',
-            border: '1px solid rgba(0,0,0,0.15)',
-          }} />
+          <BiBlock style={{ fontSize: 18, flexShrink: 0 }} />
           Transparente
         </button>
       )}
@@ -1434,8 +1430,8 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ padding: '8px 12px', borderRadius: 8, background: '#fafafa', border: '1px solid #f0f0f0', fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>
-        Cada encuestado verá sus propias respuestas exactas. El contenido es dinámico y único por persona.
+      <div style={{ padding: 8, borderRadius: 8, background: '#fafafa', border: '1px solid #d9d9d9', fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>
+        Cada encuestado verá sus respuestas exactas, es decir, el contenido es dinámico y único por persona.
       </div>
 
       <div>
@@ -1447,7 +1443,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
               style={{ width: '100%' }} value={block.displayStyle}
               onChange={v => onUpdate({ ...block, displayStyle: v as ResponsesBlock['displayStyle'] })}
               options={[
-                { value: 'bold-indented', label: 'Sangría' },
+                { value: 'bold-indented', label: 'Listado con sangría' },
                 { value: 'list', label: 'Lista' },
                 { value: 'table', label: 'Tabla' },
               ]}
@@ -1513,7 +1509,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         </div>
         <div>
           <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
-          <InputNumber min={8} max={16} value={block.headerSize} onChange={v => onUpdate({ ...block, headerSize: v ?? 10 })} style={{ width: '100%' }} addonAfter="px" />
+          <InputNumber min={8} max={32} value={block.headerSize} onChange={v => onUpdate({ ...block, headerSize: v ?? 18 })} style={{ width: '100%' }} addonAfter="px" />
         </div>
       </div>
 
@@ -1531,7 +1527,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
           <div>
             <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
-            <InputNumber min={9} max={20} value={block.questionSize} onChange={v => onUpdate({ ...block, questionSize: v ?? 13 })} style={{ width: '100%' }} />
+            <InputNumber min={9} max={20} value={block.questionSize} onChange={v => onUpdate({ ...block, questionSize: v ?? 14 })} style={{ width: '100%' }} />
           </div>
           <div style={{ gridColumn: 'span 2' }}>
             <FieldLabel icon={<BiAlignLeft />}>Grosor del texto</FieldLabel>
@@ -1554,7 +1550,7 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
           <div>
             <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
-            <InputNumber min={9} max={20} value={block.answerSize} onChange={v => onUpdate({ ...block, answerSize: v ?? 13 })} style={{ width: '100%' }} />
+            <InputNumber min={9} max={20} value={block.answerSize} onChange={v => onUpdate({ ...block, answerSize: v ?? 14 })} style={{ width: '100%' }} />
           </div>
           <div style={{ gridColumn: 'span 2' }}>
             <FieldLabel icon={<BiAlignLeft />}>Grosor del texto</FieldLabel>
