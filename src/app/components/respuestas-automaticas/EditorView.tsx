@@ -90,6 +90,7 @@ function makeComponent(type: ComponentType): Component {
       questionColor: '#1E293B', questionBg: 'transparent', questionSize: 14, questionWeight: '700',
       answerColor: '#475569', answerBg: 'transparent', answerSize: 14, answerWeight: '400',
       accentColor: '#E2E8F0', accentWidth: 2,
+      tableBorderColor: '#f0f0f0', tableBorderWidth: 1,
       includeEmptyAnswers: false,
       design,
     };
@@ -193,11 +194,12 @@ function componentToHtml(c: Component): string {
       const qStyle = `font-size:${c.questionSize}px;font-weight:${c.questionWeight};color:${c.questionColor};margin-bottom:3px;${c.questionBg !== 'transparent' ? `background:${c.questionBg};padding:4px 6px;border-radius:4px;` : ''}`;
       const containerOpen = `<div style="width:${c.containerWidth}%;margin:0 auto;border-radius:${c.containerBorderRadius}px;overflow:hidden;">`;
       if (c.displayStyle === 'table') {
-        const rows = included.map(q => `<tr>${c.showQuestion ? `<td style="padding:8px 12px;${qStyle}width:45%;border-top:1px solid #f0f0f0;">${q.texto}</td>` : ''}<td style="padding:8px 12px;font-size:${c.answerSize}px;font-weight:${c.answerWeight};color:${c.answerColor};border-top:1px solid #f0f0f0;">${mockAnswerFor(q)}</td></tr>`).join('');
+        const tableBorder = `${c.tableBorderWidth}px solid ${c.tableBorderColor}`;
+        const rows = included.map(q => `<tr>${c.showQuestion ? `<td style="padding:8px 12px;${qStyle}width:45%;border-top:${tableBorder};">${q.texto}</td>` : ''}<td style="padding:8px 12px;font-size:${c.answerSize}px;font-weight:${c.answerWeight};color:${c.answerColor};border-top:${tableBorder};">${mockAnswerFor(q)}</td></tr>`).join('');
         const emptyExampleRow = c.includeEmptyAnswers
-          ? `<tr>${c.showQuestion ? `<td style="padding:8px 12px;${qStyle}width:45%;border-top:1px solid #f0f0f0;font-style:italic;color:rgba(0,0,0,0.35);">Ejemplo — pregunta sin respuesta</td>` : ''}<td style="padding:8px 12px;font-size:${c.answerSize}px;font-style:italic;color:rgba(0,0,0,0.35);border-top:1px solid #f0f0f0;">Sin respuesta</td></tr>`
+          ? `<tr>${c.showQuestion ? `<td style="padding:8px 12px;${qStyle}width:45%;border-top:${tableBorder};font-style:italic;color:rgba(0,0,0,0.35);">Ejemplo — pregunta sin respuesta</td>` : ''}<td style="padding:8px 12px;font-size:${c.answerSize}px;font-style:italic;color:rgba(0,0,0,0.35);border-top:${tableBorder};">Sin respuesta</td></tr>`
           : '';
-        return `<div style="${style}">${containerOpen}${label}<table role="presentation" width="100%" style="border-collapse:collapse;border:1px solid #f0f0f0;font-size:12.5px;">${rows}${emptyExampleRow}</table></div></div>`;
+        return `<div style="${style}">${containerOpen}${label}<table role="presentation" width="100%" style="border-collapse:collapse;border:${tableBorder};font-size:12.5px;">${rows}${emptyExampleRow}</table></div></div>`;
       }
       const items = included.map(q => {
         const qLabel = !c.showQuestion ? '' : c.displayStyle === 'bold-indented'
@@ -498,20 +500,21 @@ function renderComponentContent(component: Component): React.ReactNode {
     };
     const containerStyle: React.CSSProperties = { width: `${component.containerWidth}%`, margin: '0 auto', borderRadius: component.containerBorderRadius, overflow: 'hidden' };
     if (component.displayStyle === 'table') {
+      const tableBorder = `${component.tableBorderWidth}px solid ${component.tableBorderColor}`;
       return (
         <div style={{ margin: '0 32px' }}>
           <div style={containerStyle}>
             {label}
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, border: '1px solid #f0f0f0' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, border: tableBorder }}>
               <tbody>
                 {included.map((q, i) => (
-                  <tr key={q.id} style={{ borderTop: i > 0 ? '1px solid #f0f0f0' : undefined }}>
+                  <tr key={q.id} style={{ borderTop: i > 0 ? tableBorder : undefined }}>
                     {component.showQuestion && <td style={{ padding: '12px 16px', width: '45%', ...questionStyle }}>{q.texto}</td>}
                     <td style={{ padding: '12px 16px', fontSize: component.answerSize, fontWeight: Number(component.answerWeight), color: component.answerColor }}>{mockAnswerFor(q)}</td>
                   </tr>
                 ))}
                 {component.includeEmptyAnswers && (
-                  <tr style={{ borderTop: included.length > 0 ? '1px solid #f0f0f0' : undefined }}>
+                  <tr style={{ borderTop: included.length > 0 ? tableBorder : undefined }}>
                     {component.showQuestion && <td style={{ padding: '12px 16px', width: '45%', ...questionStyle, fontStyle: 'italic', color: 'rgba(0,0,0,0.35)' }}>Ejemplo — pregunta sin respuesta</td>}
                     <td style={{ padding: '12px 16px', fontSize: component.answerSize, fontStyle: 'italic', color: 'rgba(0,0,0,0.35)' }}>Sin respuesta</td>
                   </tr>
@@ -1577,6 +1580,22 @@ function ResponsesContentFields({ block, onUpdate }: { block: ResponsesBlock; on
             <div>
               <FieldLabel icon={<BiVerticalCenter />}>Grosor del acento</FieldLabel>
               <InputNumber min={0} max={8} value={block.accentWidth} onChange={v => onUpdate({ ...block, accentWidth: v ?? 0 })} style={{ width: '100%' }} addonAfter="px" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {block.displayStyle === 'table' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <GroupHeading>Detalle de tabla</GroupHeading>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
+            <div>
+              <FieldLabel icon={<BiColorFill />}>Color de bordes</FieldLabel>
+              <ColorPickerField value={block.tableBorderColor} onChange={c => onUpdate({ ...block, tableBorderColor: c })} />
+            </div>
+            <div>
+              <FieldLabel icon={<BiVerticalCenter />}>Grosor de bordes</FieldLabel>
+              <InputNumber min={0} max={8} value={block.tableBorderWidth} onChange={v => onUpdate({ ...block, tableBorderWidth: v ?? 0 })} style={{ width: '100%' }} addonAfter="px" />
             </div>
           </div>
         </div>

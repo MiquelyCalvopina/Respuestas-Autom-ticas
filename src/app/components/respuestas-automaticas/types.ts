@@ -55,6 +55,8 @@ export interface ResponsesBlock {
   answerWeight: '400' | '600' | '700';
   accentColor: string;
   accentWidth: number;
+  tableBorderColor: string;
+  tableBorderWidth: number;
   includeEmptyAnswers: boolean; // incluir preguntas sin respuesta (no se distingue el motivo: abandono, lógica, etc.)
   design: ComponentDesign;
 }
