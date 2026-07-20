@@ -24,7 +24,7 @@ import {
   TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, Pregunta,
   ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey,
 } from './types';
-import { VARIABLES, PREGUNTAS_EJEMPLO, mockAnswerFor, HEADER_COLORS, countComponents } from './data';
+import { VARIABLES, VARIABLES_META, PREGUNTAS_EJEMPLO, mockAnswerFor, HEADER_COLORS, countComponents } from './data';
 import { cuid } from './cuid';
 import TestModal from './TestModal';
 
@@ -1670,33 +1670,91 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
     </div>
   );
 }
+// Modal buscable para insertar una variable en un campo de texto (ej. la URL de un botón).
+// Un estudio puede tener decenas de variables — listarlas todas como pills (el patrón que
+// usa VariableList/TextContentFields) deja de ser usable a esa escala; este modal las busca
+// por nombre legible o clave técnica, y una sola vez que se elige una, inserta y cierra.
+function VariablePickerModal({ open, onClose, onPick }: { open: boolean; onClose: () => void; onPick: (key: string) => void }) {
+  const [search, setSearch] = useState('');
+  const term = search.trim().toLowerCase();
+  const results = VARIABLES_META.filter(v => !term || v.label.toLowerCase().includes(term) || v.key.toLowerCase().includes(term));
+
+  return (
+    <Modal
+      open={open}
+      onCancel={onClose}
+      afterClose={() => setSearch('')}
+      footer={null}
+      width={480}
+      title={
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 600 }}>
+          <BiPlus /> Agregar variable
+        </span>
+      }
+      styles={{ content: { borderRadius: 20 } }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 4 }}>
+        <Text type="secondary" style={{ fontSize: 13 }}>
+          Elige la variable que quieres insertar en la URL. Al hacer clic se agregará automáticamente y cerraremos esta ventana.
+        </Text>
+        <Input
+          autoFocus allowClear value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar por nombre..." prefix={<BiSearch style={{ color: 'rgba(0,0,0,0.25)' }} />}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 360, overflowY: 'auto' }}>
+          {results.length === 0 && (
+            <Text type="secondary" style={{ fontSize: 12, padding: '12px 0' }}>Sin resultados para "{search}".</Text>
+          )}
+          {results.map(v => (
+            <button
+              key={v.key} type="button"
+              onClick={() => { onPick(v.key); onClose(); }}
+              style={{
+                textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer',
+                padding: '8px 4px', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 2,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#fafafa'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
+            >
+              <span style={{ fontSize: 14, color: 'rgba(0,0,0,0.85)' }}>@{v.label}</span>
+              <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)', fontFamily: "'JetBrains Mono', monospace" }}>{v.key}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </Modal>
+  );
+}
 function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUpdate: (b: Component) => void }) {
   const urlRef = useRef<InputRef>(null);
+  const [varPickerOpen, setVarPickerOpen] = useState(false);
+
+  function insertVariable(key: string) {
+    const input = urlRef.current?.input;
+    const tag = `{{${key}}}`;
+    if (!input) { onUpdate({ ...block, url: block.url + tag }); return; }
+    const s = input.selectionStart ?? block.url.length, e2 = input.selectionEnd ?? block.url.length;
+    const next = block.url.slice(0, s) + tag + block.url.slice(e2);
+    onUpdate({ ...block, url: next });
+    setTimeout(() => { input.focus(); input.selectionStart = input.selectionEnd = s + tag.length; }, 0);
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div><FieldLabel icon={<BiText />}>Texto del botón</FieldLabel><Input value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} /></div>
       <div>
         <FieldLabel icon={<BiLink />}>URL de destino</FieldLabel>
-        <Input ref={urlRef} value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })} placeholder="https://.../{{variable}}" />
-      </div>
-      <div>
-        <FieldLabel icon={<BiCodeCurly />}>Insertar variable</FieldLabel>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {VARIABLES.map(v => (
-            <Tag key={v} style={{ cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }} color="blue" onClick={() => {
-              const input = urlRef.current?.input;
-              const tag = `{{${v}}}`;
-              if (!input) { onUpdate({ ...block, url: block.url + tag }); return; }
-              const s = input.selectionStart ?? block.url.length, e2 = input.selectionEnd ?? block.url.length;
-              const next = block.url.slice(0, s) + tag + block.url.slice(e2);
-              onUpdate({ ...block, url: next });
-              setTimeout(() => { input.focus(); input.selectionStart = input.selectionEnd = s + tag.length; }, 0);
-            }}>
-              {`{{${v}}}`}
-            </Tag>
-          ))}
+        <Input ref={urlRef} value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })} placeholder="Ingrese la url" maxLength={2048} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+          <button
+            type="button" onClick={() => setVarPickerOpen(true)}
+            style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: '#1890ff', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+          >
+            <BiPlus style={{ fontSize: 14 }} /> variable
+          </button>
+          <Text type="secondary" style={{ fontSize: 12 }}>{block.url.length}/2048</Text>
         </div>
-        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>El enlace puede incluir una variable para llevar a una URL distinta por destinatario.</Text>
+        <VariablePickerModal open={varPickerOpen} onClose={() => setVarPickerOpen(false)} onPick={insertVariable} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
         <div><FieldLabel icon={<BiColorFill />}>Color de fondo</FieldLabel><ColorPickerField value={block.bgColor} onChange={c => onUpdate({ ...block, bgColor: c })} /></div>

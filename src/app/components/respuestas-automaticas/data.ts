@@ -21,17 +21,18 @@ export function makeTemplate(name: string, overrides?: Partial<EmailTemplate>): 
   };
 }
 
-export interface VariableMeta { key: string; type: 'texto' | 'correo' | 'telefono' | 'numero'; }
+export interface VariableMeta { key: string; label: string; type: 'texto' | 'correo' | 'telefono' | 'numero'; }
 
-// Variables mapeadas del estudio (contacto + sistema), con su tipo de dato.
+// Variables mapeadas del estudio (contacto + sistema), con su tipo de dato y su nombre
+// legible — el picker de variables busca/lista por `label`, no por `key`.
 export const VARIABLES_META: VariableMeta[] = [
-  { key: 'nombre_preferido', type: 'texto' },
-  { key: 'correo_electronico', type: 'correo' },
-  { key: 'sucursal', type: 'texto' },
-  { key: 'canal', type: 'texto' },
-  { key: 'telefono', type: 'telefono' },
-  { key: 'identificador', type: 'texto' },
-  { key: 'numero_credito', type: 'numero' },
+  { key: 'nombre_preferido', label: 'Nombre preferido', type: 'texto' },
+  { key: 'correo_electronico', label: 'Correo electrónico', type: 'correo' },
+  { key: 'sucursal', label: 'Sucursal', type: 'texto' },
+  { key: 'canal', label: 'Canal', type: 'texto' },
+  { key: 'telefono', label: 'Teléfono', type: 'telefono' },
+  { key: 'identificador', label: 'Identificador', type: 'texto' },
+  { key: 'numero_credito', label: 'Número de crédito', type: 'numero' },
 ];
 
 export const VARIABLES = VARIABLES_META.map(v => v.key);
