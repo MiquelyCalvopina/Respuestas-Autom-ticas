@@ -13,6 +13,7 @@ import {
   BiBold, BiItalic, BiSmile, BiCodeCurly,
   BiColorFill, BiVerticalCenter, BiPen, BiMoveHorizontal, BiBorderRadius,
   BiArrowToTop, BiArrowToBottom, BiArrowToLeft, BiArrowToRight, BiLink, BiPalette,
+  BiCheckDouble,
 } from 'react-icons/bi';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -50,9 +51,9 @@ const EDITOR_THEME = {
 // Ícono circular usado en los modales de decisión (confirmar/advertir), siguiendo
 // las reglas visuales de Estudios: círculo de color suave + ícono, sin el ícono
 // grande por defecto de AntD.
-function decisionIcon(tone: 'info' | 'warning') {
-  const palette = tone === 'info' ? { bg: '#e6f4ff', fg: '#1890ff' } : { bg: '#fffbe6', fg: '#faad14' };
-  const Icon = tone === 'info' ? BiInfoCircle : BiErrorCircle;
+function decisionIcon(tone: 'info' | 'warning' | 'success') {
+  const palette = tone === 'info' ? { bg: '#e6f4ff', fg: '#1890ff' } : tone === 'warning' ? { bg: '#fffbe6', fg: '#faad14' } : { bg: '#f6ffed', fg: '#52c41a' };
+  const Icon = tone === 'info' ? BiInfoCircle : tone === 'warning' ? BiErrorCircle : BiCheckDouble;
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: palette.bg, marginRight: 8 }}>
       <Icon style={{ color: palette.fg, fontSize: 14 }} />
@@ -1895,11 +1896,11 @@ export default function EditorView({ template, onChange, onBack }: Props) {
   function handleExit() {
     if (!dirty) { onBack(); return; }
     Modal.confirm({
-      title: '¿Salir sin guardar?',
-      content: 'Tienes cambios sin guardar en la plantilla de correo. Si sales ahora, se perderán.',
+      title: '¿Estás seguro de salir?',
+      content: 'Si abandona la edición del estudio, se perderá el diseño del correo hasta dónde lo ha configurado.',
       icon: decisionIcon('info'),
-      okText: 'Salir sin guardar',
-      okButtonProps: { danger: true, ...ROUND_BTN },
+      okText: 'Sí, quiero salir',
+      okButtonProps: ROUND_BTN,
       cancelText: 'Seguir editando',
       cancelButtonProps: ROUND_BTN,
       getContainer: () => rootRef.current || document.body,
@@ -1923,7 +1924,18 @@ export default function EditorView({ template, onChange, onBack }: Props) {
       });
       return;
     }
-    commitSaveDesign();
+    Modal.confirm({
+      title: '¿Guardar esta plantilla?',
+      content: 'Estás a punto de guardar los cambios realizados en esta plantilla de correo. Asegúrate de haber verificado que todo se ve como esperas.',
+      icon: decisionIcon('success'),
+      okText: 'Guardar plantilla',
+      okButtonProps: ROUND_BTN,
+      cancelText: 'Cancelar',
+      cancelButtonProps: ROUND_BTN,
+      getContainer: () => rootRef.current || document.body,
+      styles: { content: { borderRadius: 20 } },
+      onOk: () => commitSaveDesign(),
+    });
   }
   function handleModeChange(next: 'visual' | 'html') {
     if (next === 'visual' && draft.customHtml != null) {
