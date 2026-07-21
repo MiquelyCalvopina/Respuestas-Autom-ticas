@@ -95,7 +95,7 @@ function makeComponent(type: ComponentType): Component {
       design,
     };
     case 'divider':   return { id, type, color: '#d9d9d9', widthPercent: 90, thickness: 2, lineStyle: 'solid', design };
-    case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, link: '', design };
+    case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, altTextSize: 14, link: '', design };
     case 'button':    return { id, type, text: 'Responder estudio', url: '', bgColor: '#1890ff', textColor: '#ffffff', design };
     case 'spacer':    return { id, type, height: 24, design };
     case 'social':    return { id, type, style: 'negro', size: 26, gap: 12, shape: 'square', networks: SOCIAL_KEYS.map(k => ({ network: k, included: false, url: '' })), design };
@@ -225,7 +225,7 @@ function componentToHtml(c: Component): string {
     }
     case 'divider':   return `<div style="${style}text-align:center;"><div style="display:inline-block;width:${c.widthPercent}%;border-top:${c.thickness}px ${c.lineStyle} ${c.color};font-size:0;line-height:0;">&nbsp;</div></div>`;
     case 'image': {
-      const img = c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : '';
+      const img = c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;font-size:${c.altTextSize}px;" />` : '';
       return `<div style="${style}text-align:center;">${c.link ? `<a href="${c.link}" style="text-decoration:none;">${img}</a>` : img}</div>`;
     }
     case 'button':    return `<div style="${style}text-align:center;"><a href="${c.url}" style="display:inline-block;padding:10px 24px;border-radius:6px;background:${c.bgColor};color:${c.textColor};font-weight:600;text-decoration:none;">${c.text}</a></div>`;
@@ -585,7 +585,7 @@ function renderComponentContent(component: Component): React.ReactNode {
     );
   }
   if (component.type === 'image') {
-    const img = <img src={component.src} alt={component.alt} style={{ width: `${component.widthPercent}%`, display: 'inline-block' }} />;
+    const img = <img src={component.src} alt={component.alt} style={{ width: `${component.widthPercent}%`, display: 'inline-block', fontSize: component.altTextSize }} />;
     return component.src ? (
       <div style={{ padding: '0 32px', textAlign: 'center' }}>
         {component.link ? <a href={component.link} onClick={e => e.preventDefault()} style={{ display: 'inline-block' }}>{img}</a> : img}
@@ -1692,13 +1692,19 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <GroupHeading>Carga de imagen</GroupHeading>
-        <div>
-          <FieldLabel icon={<BiTargetLock />}>Origen</FieldLabel>
-          <Segmented
-            block value={block.dynamic ? 'url' : 'upload'}
-            onChange={v => onUpdate({ ...block, dynamic: v === 'url' })}
-            options={[{ label: 'Subir imagen', value: 'upload' }, { label: 'URL dinámico', value: 'url' }]}
-          />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
+          <div style={{ gridColumn: 'span 2' }}>
+            <FieldLabel icon={<BiTargetLock />}>Origen</FieldLabel>
+            <Segmented
+              block value={block.dynamic ? 'url' : 'upload'}
+              onChange={v => onUpdate({ ...block, dynamic: v === 'url' })}
+              options={[{ label: 'Subir imagen', value: 'upload' }, { label: 'URL dinámico', value: 'url' }]}
+            />
+          </div>
+          <div>
+            <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
+            <InputNumber min={8} max={32} value={block.altTextSize} addonAfter="px" onChange={v => onUpdate({ ...block, altTextSize: v ?? 14 })} style={{ width: '100%' }} />
+          </div>
         </div>
         <div>
           <FieldLabel icon={<BiImageAlt />}>Imagen</FieldLabel>
