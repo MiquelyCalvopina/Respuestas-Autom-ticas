@@ -95,7 +95,7 @@ function makeComponent(type: ComponentType): Component {
       design,
     };
     case 'divider':   return { id, type, color: '#d9d9d9', widthPercent: 90, thickness: 2, lineStyle: 'solid', design };
-    case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, altTextSize: 14, link: '', design };
+    case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, link: '', design };
     case 'button':    return { id, type, text: 'Responder estudio', url: '', bgColor: '#1890ff', textColor: '#ffffff', design };
     case 'spacer':    return { id, type, height: 24, design };
     case 'social':    return { id, type, style: 'negro', size: 26, gap: 12, shape: 'square', networks: SOCIAL_KEYS.map(k => ({ network: k, included: false, url: '' })), design };
@@ -224,7 +224,7 @@ function componentToHtml(c: Component): string {
     }
     case 'divider':   return `<div style="${style}text-align:center;"><div style="display:inline-block;width:${c.widthPercent}%;border-top:${c.thickness}px ${c.lineStyle} ${c.color};font-size:0;line-height:0;">&nbsp;</div></div>`;
     case 'image': {
-      const img = c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;font-size:${c.altTextSize}px;" />` : '';
+      const img = c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : '';
       return `<div style="${style}text-align:center;">${c.link ? `<a href="${c.link}" style="text-decoration:none;">${img}</a>` : img}</div>`;
     }
     case 'button':    return `<div style="${style}text-align:center;"><a href="${c.url}" style="display:inline-block;padding:10px 24px;border-radius:6px;background:${c.bgColor};color:${c.textColor};font-weight:600;text-decoration:none;">${c.text}</a></div>`;
@@ -584,7 +584,7 @@ function renderComponentContent(component: Component): React.ReactNode {
     );
   }
   if (component.type === 'image') {
-    const img = <img src={component.src} alt={component.alt} style={{ width: `${component.widthPercent}%`, display: 'inline-block', fontSize: component.altTextSize }} />;
+    const img = <img src={component.src} alt={component.alt} style={{ width: `${component.widthPercent}%`, display: 'inline-block' }} />;
     return component.src ? (
       <div style={{ padding: '0 32px', textAlign: 'center' }}>
         {component.link ? <a href={component.link} onClick={e => e.preventDefault()} style={{ display: 'inline-block' }}>{img}</a> : img}
@@ -1688,68 +1688,62 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <GroupHeading>Carga de imagen</GroupHeading>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
-          <div style={{ gridColumn: 'span 2' }}>
-            <FieldLabel icon={<BiTargetLock />}>Origen</FieldLabel>
-            <Segmented
-              block value={block.dynamic ? 'url' : 'upload'}
-              onChange={v => onUpdate({ ...block, dynamic: v === 'url' })}
-              options={[{ label: 'Subir imagen', value: 'upload' }, { label: 'URL dinámico', value: 'url' }]}
-            />
-          </div>
-          <div>
-            <FieldLabel icon={<BiText />}>Tamaño del texto</FieldLabel>
-            <InputNumber min={8} max={32} value={block.altTextSize} addonAfter="px" onChange={v => onUpdate({ ...block, altTextSize: v ?? 14 })} style={{ width: '100%' }} />
-          </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <GroupHeading>Carga de imagen</GroupHeading>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
+        <div style={{ gridColumn: 'span 2' }}>
+          <FieldLabel icon={<BiTargetLock />}>Origen</FieldLabel>
+          <Segmented
+            block value={block.dynamic ? 'url' : 'upload'}
+            onChange={v => onUpdate({ ...block, dynamic: v === 'url' })}
+            options={[{ label: 'Subir imagen', value: 'upload' }, { label: 'URL dinámico', value: 'url' }]}
+          />
         </div>
         <div>
-          <FieldLabel icon={<BiImageAlt />}>Imagen</FieldLabel>
-          <div style={{ display: 'flex', gap: 8, alignItems: block.dynamic ? 'center' : 'flex-start' }}>
-            <ImagePreviewThumb key={block.src} src={block.src} />
-            {block.dynamic ? (
-              <Input
-                ref={urlRef} value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })}
-                placeholder="https://" maxLength={250} style={{ flex: 1 }}
-              />
-            ) : (
-              <>
-                <input ref={fileInputRef} type="file" accept="image/jpeg,image/jpg" style={{ display: 'none' }} onChange={handleFileChange} />
-                <button
-                  type="button" onClick={() => fileInputRef.current?.click()}
-                  onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-                  onDragLeave={() => setDragOver(false)}
-                  onDrop={handleDrop}
-                  style={{
-                    flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 9px', cursor: 'pointer',
-                    border: `1px solid ${dragOver ? '#1890ff' : '#f0f0f0'}`, borderRadius: 8, background: '#fff', textAlign: 'left',
-                  }}
-                >
-                  <BiUpload style={{ fontSize: 14, flexShrink: 0 }} />
-                  <span style={{ fontSize: 14, color: 'rgba(0,0,0,0.85)' }}>Sube o arrastra una imagen en formato .jpg o .jpeg. Máx 20MB</span>
-                </button>
-              </>
-            )}
-          </div>
-          {block.dynamic && <VariableCounterRow length={block.src.length} max={250} onAddVariable={() => setVarTarget('src')} />}
-        </div>
-        <div>
-          <FieldLabel icon={<BiLink />}>Enlace</FieldLabel>
-          <Input ref={linkRef} value={block.link} onChange={e => onUpdate({ ...block, link: e.target.value })} placeholder="https://" maxLength={250} />
-          <VariableCounterRow length={block.link.length} max={250} onAddVariable={() => setVarTarget('link')} />
-        </div>
-        <VariablePickerModal open={varTarget !== null} onClose={() => setVarTarget(null)} onPick={insertVariable} />
-        <div>
-          <FieldLabel icon={<BiText />}>Texto alternativo</FieldLabel>
-          <Input value={block.alt} onChange={e => onUpdate({ ...block, alt: e.target.value })} placeholder="Ej: Detalle de la imagen" maxLength={124} />
-          <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'right', marginTop: 4 }}>{block.alt.length}/124</Text>
+          <FieldLabel icon={<BiMoveHorizontal />}>Tamaño de la imagen</FieldLabel>
+          <InputNumber min={10} max={100} value={block.widthPercent} addonAfter="%" onChange={v => onUpdate({ ...block, widthPercent: v ?? 100 })} style={{ width: '100%' }} />
         </div>
       </div>
       <div>
-        <FieldLabel icon={<BiMoveHorizontal />}>Tamaño</FieldLabel>
-        <InputNumber min={10} max={100} value={block.widthPercent} addonAfter="%" onChange={v => onUpdate({ ...block, widthPercent: v ?? 100 })} style={{ width: '100%' }} />
+        <FieldLabel icon={<BiImageAlt />}>Imagen</FieldLabel>
+        <div style={{ display: 'flex', gap: 8, alignItems: block.dynamic ? 'center' : 'flex-start' }}>
+          <ImagePreviewThumb key={block.src} src={block.src} />
+          {block.dynamic ? (
+            <Input
+              ref={urlRef} value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })}
+              placeholder="https://" maxLength={250} style={{ flex: 1 }}
+            />
+          ) : (
+            <>
+              <input ref={fileInputRef} type="file" accept="image/jpeg,image/jpg" style={{ display: 'none' }} onChange={handleFileChange} />
+              <button
+                type="button" onClick={() => fileInputRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                style={{
+                  flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 9px', cursor: 'pointer',
+                  border: `1px solid ${dragOver ? '#1890ff' : '#f0f0f0'}`, borderRadius: 8, background: '#fff', textAlign: 'left',
+                }}
+              >
+                <BiUpload style={{ fontSize: 14, flexShrink: 0 }} />
+                <span style={{ fontSize: 14, color: 'rgba(0,0,0,0.85)' }}>Sube o arrastra una imagen en formato .jpg o .jpeg. Máx 20MB</span>
+              </button>
+            </>
+          )}
+        </div>
+        {block.dynamic && <VariableCounterRow length={block.src.length} max={250} onAddVariable={() => setVarTarget('src')} />}
+      </div>
+      <div>
+        <FieldLabel icon={<BiLink />}>Enlace</FieldLabel>
+        <Input ref={linkRef} value={block.link} onChange={e => onUpdate({ ...block, link: e.target.value })} placeholder="https://" maxLength={250} />
+        <VariableCounterRow length={block.link.length} max={250} onAddVariable={() => setVarTarget('link')} />
+      </div>
+      <VariablePickerModal open={varTarget !== null} onClose={() => setVarTarget(null)} onPick={insertVariable} />
+      <div>
+        <FieldLabel icon={<BiText />}>Texto alternativo</FieldLabel>
+        <Input value={block.alt} onChange={e => onUpdate({ ...block, alt: e.target.value })} placeholder="Ej: Detalle de la imagen" maxLength={124} />
+        <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'right', marginTop: 4 }}>{block.alt.length}/124</Text>
       </div>
     </div>
   );

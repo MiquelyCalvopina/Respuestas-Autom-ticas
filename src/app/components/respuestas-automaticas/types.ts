@@ -71,7 +71,6 @@ export interface DividerBlock {
 export interface ImageComponent {
   id: string; type: 'image';
   src: string; alt: string; dynamic: boolean; widthPercent: number;
-  altTextSize: number; // tamaño del texto alternativo cuando el cliente de correo bloquea la imagen
   link: string; // URL opcional — si no está vacía, la imagen se envuelve en un enlace
   design: ComponentDesign;
 }
