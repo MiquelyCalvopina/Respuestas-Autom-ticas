@@ -345,25 +345,25 @@ function FloatingTextToolbar({ onBold, onItalic, color, onColor, fontSize, onFon
   onEmoji: (e: string) => void; onVariable: (v: string) => void;
 }) {
   const btn: React.CSSProperties = {
-    background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer',
+    background: 'transparent', border: 'none', color: 'rgba(0,0,0,0.65)', cursor: 'pointer',
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
     width: 28, height: 28, borderRadius: 6, flexShrink: 0,
   };
   const prevent = (e: React.MouseEvent) => e.preventDefault();
-  const sep = <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />;
+  const sep = <div style={{ width: 1, height: 20, background: '#f0f0f0', flexShrink: 0 }} />;
 
   return (
     <div style={{
       position: 'absolute', bottom: '100%', left: 0, marginBottom: 8, zIndex: 20,
-      background: '#1890ff', borderRadius: 8, padding: '4px 6px', display: 'flex', alignItems: 'center', gap: 4,
-      boxShadow: '0 4px 14px rgba(24,144,255,0.4)', pointerEvents: 'auto', whiteSpace: 'nowrap',
+      background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, padding: '4px 6px', display: 'flex', alignItems: 'center', gap: 4,
+      boxShadow: '0 4px 14px rgba(0,0,0,0.12)', pointerEvents: 'auto', whiteSpace: 'nowrap',
     }}>
       <button title="Negrita" style={btn} onMouseDown={prevent} onClick={onBold}><BiBold style={{ fontSize: 16 }} /></button>
       <button title="Itálica" style={btn} onMouseDown={prevent} onClick={onItalic}><BiItalic style={{ fontSize: 16 }} /></button>
       {sep}
       <ColorPicker value={color} disabledAlpha onChange={c => onColor(c.toHexString())}>
         <button title="Color de texto" style={{ ...btn, width: 24 }} onMouseDown={prevent}>
-          <span style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.7)', background: color, display: 'block' }} />
+          <span style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid rgba(0,0,0,0.15)', background: color, display: 'block' }} />
         </button>
       </ColorPicker>
       {sep}
