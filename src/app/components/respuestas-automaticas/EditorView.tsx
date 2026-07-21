@@ -13,7 +13,7 @@ import {
   BiBold, BiItalic, BiSmile, BiCodeCurly,
   BiColorFill, BiVerticalCenter, BiPen, BiMoveHorizontal, BiBorderRadius,
   BiArrowToTop, BiArrowToBottom, BiArrowToLeft, BiArrowToRight, BiLink, BiPalette,
-  BiCheckDouble, BiBlock,
+  BiCheckDouble, BiBlock, BiTargetLock, BiImageAlt,
 } from 'react-icons/bi';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -1634,19 +1634,44 @@ function ImagePreviewThumb({ src }: { src: string }) {
     </div>
   );
 }
+// Fila compartida "+ Variable" + contador de caracteres, debajo de un campo de URL —
+// mismo patrón para "Imagen" (URL dinámico) y "Enlace" (Figma Ajustes 121-151, nodes
+// 1595-16677 / 1597-16838: ambos campos usan maxLength 250 con este mismo pie).
+function VariableCounterRow({ length, max, onAddVariable }: { length: number; max: number; onAddVariable: () => void }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+      <button
+        type="button" onClick={onAddVariable}
+        style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: '#1890ff', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+      >
+        <BiPlus style={{ fontSize: 14 }} /> Variable
+      </button>
+      <Text type="secondary" style={{ fontSize: 12 }}>{length}/{max}</Text>
+    </div>
+  );
+}
 function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpdate: (b: Component) => void }) {
   const urlRef = useRef<InputRef>(null);
   const linkRef = useRef<InputRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [varTarget, setVarTarget] = useState<'src' | 'link' | null>(null);
+  const [dragOver, setDragOver] = useState(false);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function loadFile(file: File) {
     // Prototipo sin backend: el "upload" genera una URL local de vista previa
     // (URL.createObjectURL), no sube el archivo a ningún servidor.
     onUpdate({ ...block, src: URL.createObjectURL(file), alt: block.alt || file.name.replace(/\.[^.]+$/, '') });
+  }
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) loadFile(file);
     e.target.value = '';
+  }
+  function handleDrop(e: React.DragEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) loadFile(file);
   }
 
   function insertVariable(key: string) {
@@ -1665,57 +1690,57 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div>
-        <FieldLabel icon={<BiImage />}>Origen</FieldLabel>
-        <Radio.Group value={block.dynamic} onChange={e => onUpdate({ ...block, dynamic: e.target.value })}>
-          <Radio value={false}>Imagen estática</Radio>
-          <Radio value={true}>Imagen dinámica</Radio>
-        </Radio.Group>
-      </div>
-      <div>
-        <FieldLabel icon={<BiImage />}>Imagen</FieldLabel>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <ImagePreviewThumb key={block.src} src={block.src} />
-          <Input
-            ref={urlRef} value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })}
-            placeholder={block.dynamic ? 'https://.../{{variable}}.png' : 'https://...'}
-            style={{ flex: 1 }}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <GroupHeading>Carga de imagen</GroupHeading>
+        <div>
+          <FieldLabel icon={<BiTargetLock />}>Origen</FieldLabel>
+          <Segmented
+            block value={block.dynamic ? 'url' : 'upload'}
+            onChange={v => onUpdate({ ...block, dynamic: v === 'url' })}
+            options={[{ label: 'Subir imagen', value: 'upload' }, { label: 'URL dinámico', value: 'url' }]}
           />
-          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
-          <Button icon={<BiUpload />} onClick={() => fileInputRef.current?.click()}>Subir</Button>
         </div>
-        {block.dynamic ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
-            <button
-              type="button" onClick={() => setVarTarget('src')}
-              style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: '#1890ff', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4 }}
-            >
-              <BiPlus style={{ fontSize: 14 }} /> variable
-            </button>
-            <Text type="secondary" style={{ fontSize: 12 }}>La URL puede mostrar una imagen distinta por destinatario.</Text>
+        <div>
+          <FieldLabel icon={<BiImageAlt />}>Imagen</FieldLabel>
+          <div style={{ display: 'flex', gap: 8, alignItems: block.dynamic ? 'center' : 'flex-start' }}>
+            <ImagePreviewThumb key={block.src} src={block.src} />
+            {block.dynamic ? (
+              <Input
+                ref={urlRef} value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })}
+                placeholder="https://" maxLength={250} style={{ flex: 1 }}
+              />
+            ) : (
+              <>
+                <input ref={fileInputRef} type="file" accept="image/jpeg,image/jpg" style={{ display: 'none' }} onChange={handleFileChange} />
+                <button
+                  type="button" onClick={() => fileInputRef.current?.click()}
+                  onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                  style={{
+                    flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 9px', cursor: 'pointer',
+                    border: `1px solid ${dragOver ? '#1890ff' : '#f0f0f0'}`, borderRadius: 8, background: '#fff', textAlign: 'left',
+                  }}
+                >
+                  <BiUpload style={{ fontSize: 14, flexShrink: 0 }} />
+                  <span style={{ fontSize: 14, color: 'rgba(0,0,0,0.85)' }}>Sube o arrastra una imagen en formato .jpg o .jpeg. Máx 20MB</span>
+                </button>
+              </>
+            )}
           </div>
-        ) : (
-          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>Sube un archivo o pega el enlace de una imagen.</Text>
-        )}
-      </div>
-      <div>
-        <FieldLabel icon={<BiLink />}>Enlace</FieldLabel>
-        <Input ref={linkRef} value={block.link} onChange={e => onUpdate({ ...block, link: e.target.value })} placeholder="https://..." />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
-          <button
-            type="button" onClick={() => setVarTarget('link')}
-            style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: '#1890ff', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4 }}
-          >
-            <BiPlus style={{ fontSize: 14 }} /> variable
-          </button>
-          <Text type="secondary" style={{ fontSize: 12 }}>Opcional — al hacer clic en la imagen se abrirá esta URL.</Text>
+          {block.dynamic && <VariableCounterRow length={block.src.length} max={250} onAddVariable={() => setVarTarget('src')} />}
         </div>
-      </div>
-      <VariablePickerModal open={varTarget !== null} onClose={() => setVarTarget(null)} onPick={insertVariable} />
-      <div>
-        <FieldLabel icon={<BiText />}>Texto alternativo</FieldLabel>
-        <Input value={block.alt} onChange={e => onUpdate({ ...block, alt: e.target.value })} maxLength={124} />
-        <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'right', marginTop: 4 }}>{block.alt.length}/124</Text>
+        <div>
+          <FieldLabel icon={<BiLink />}>Enlace</FieldLabel>
+          <Input ref={linkRef} value={block.link} onChange={e => onUpdate({ ...block, link: e.target.value })} placeholder="https://" maxLength={250} />
+          <VariableCounterRow length={block.link.length} max={250} onAddVariable={() => setVarTarget('link')} />
+        </div>
+        <VariablePickerModal open={varTarget !== null} onClose={() => setVarTarget(null)} onPick={insertVariable} />
+        <div>
+          <FieldLabel icon={<BiText />}>Texto alternativo</FieldLabel>
+          <Input value={block.alt} onChange={e => onUpdate({ ...block, alt: e.target.value })} placeholder="Ej: Detalle de la imagen" maxLength={124} />
+          <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'right', marginTop: 4 }}>{block.alt.length}/124</Text>
+        </div>
       </div>
       <div>
         <FieldLabel icon={<BiMoveHorizontal />}>Tamaño</FieldLabel>
