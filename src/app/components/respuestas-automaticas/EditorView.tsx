@@ -1978,7 +1978,6 @@ type Selection =
 export default function EditorView({ template, onChange, onBack }: Props) {
   const { message } = App.useApp();
   const [draft, setDraft] = useState<EmailTemplate>(template);
-  const [testValidated, setTestValidated] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   const [mode, setMode] = useState<'visual' | 'html'>(template.customHtml ? 'html' : 'visual');
   const [activeTab, setActiveTab] = useState<'elementos' | 'configuracion' | 'diseno'>('elementos');
@@ -1990,8 +1989,6 @@ export default function EditorView({ template, onChange, onBack }: Props) {
 
   function updateDraft(patch: Partial<EmailTemplate>) {
     setDraft(d => ({ ...d, ...patch }));
-    setDirty(true);
-    setTestValidated(false);
   }
   function updateRows(nextRows: Row[]) { updateDraft({ rows: nextRows }); }
   function scrollToBottom() {
@@ -2157,7 +2154,6 @@ export default function EditorView({ template, onChange, onBack }: Props) {
     setMode(next);
   }
   function handleTestSent(email: string) {
-    setTestValidated(true);
     setShowTestModal(false);
     message.success(`Correo de prueba enviado a ${email} ✓`);
   }
@@ -2217,9 +2213,7 @@ export default function EditorView({ template, onChange, onBack }: Props) {
         />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <Button icon={<BiSend />} onClick={() => setShowTestModal(true)}>Enviar prueba</Button>
-          <Tooltip title={!testValidated ? 'Envía una prueba con el diseño actual antes de guardar' : ''}>
-            <Button type="primary" disabled={!testValidated} onClick={handleSaveDesign}>Guardar diseño</Button>
-          </Tooltip>
+          <Button type="primary" onClick={handleSaveDesign}>Guardar diseño</Button>
         </div>
       </div>
 
