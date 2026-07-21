@@ -48,17 +48,18 @@ function rangesOverlap(a: Window, b: Window): boolean {
 }
 
 // ¿Programar `candidate` con sus fechas actuales se cruza con alguna otra plantilla de la
-// misma regla? Recalcula la cadena de "sin fin" INCLUYENDO al candidato — así una nueva
-// permanente recorta correctamente a la anterior sin que eso cuente como "cruce" — y solo
-// compara contra plantillas que involucren una ventana temporal (dos permanentes nunca se
-// cruzan entre sí, se ceden el paso por construcción).
+// misma regla? Solo hay choque genuino entre dos TEMPORALES cuyas ventanas se superponen
+// (ahí sí es ambiguo cuál debería regir esos días). Una permanente nunca choca con nada:
+// dos permanentes se ceden el paso por construcción (encadenadas por fecha de inicio), y una
+// temporal siempre le gana a una permanente durante su ventana — eclipsarla temporalmente es
+// el comportamiento esperado, no un conflicto (la permanente vuelve a regir sola después).
 export function findConflict(candidate: EmailTemplate, others: EmailTemplate[]): EmailTemplate | null {
-  if (!candidate.startDate) return null;
+  if (!candidate.startDate || !candidate.endDate) return null;
   const rest = others.filter(t => t.id !== candidate.id);
   const windows = effectiveWindows([...rest, candidate]);
   const mine = windows.find(w => w.template.id === candidate.id);
   if (!mine) return null;
-  const rivals = windows.filter(w => w.template.id !== candidate.id && (w.template.endDate || candidate.endDate));
+  const rivals = windows.filter(w => w.template.id !== candidate.id && w.template.endDate);
   const conflict = rivals.find(w => rangesOverlap(mine, w));
   return conflict?.template ?? null;
 }

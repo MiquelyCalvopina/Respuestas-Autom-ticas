@@ -121,7 +121,6 @@ function TemplateRow({ template, rule, onChange, onEditTemplate }: {
   const isActiveToday = activeTemplate.id === template.id;
   const chip = STATE_CHIP[kind];
   const canDelete = !isOnlyPermanent(template, rule.templates);
-  const activateNowConflict = findConflict({ ...template, startDate: today, endDate: null }, others);
 
   function patchTemplate(patch: Partial<EmailTemplate>) {
     onChange({ ...rule, templates: rule.templates.map(t => t.id === template.id ? { ...t, ...patch } : t) });
@@ -169,17 +168,14 @@ function TemplateRow({ template, rule, onChange, onEditTemplate }: {
             <SchedulePopover template={template} others={others} onSave={patch => patchTemplate(patch)}>
               <Button type="link">Reprogramar</Button>
             </SchedulePopover>
-            <Tooltip title={activateNowConflict ? `Se cruza con "${activateNowConflict.name}"` : ''}>
-              <Popconfirm
-                title={`¿Usar "${template.name}" ahora?`}
-                description={`Reemplaza a "${activeTemplate.name}" de inmediato.`}
-                okText="Sí, usar ahora" cancelText="Cancelar"
-                disabled={!!activateNowConflict}
-                onConfirm={() => patchTemplate({ startDate: today, endDate: null })}
-              >
-                <Button type="link" disabled={!!activateNowConflict}>Hacer principal</Button>
-              </Popconfirm>
-            </Tooltip>
+            <Popconfirm
+              title={`¿Usar "${template.name}" ahora?`}
+              description={`Reemplaza a "${activeTemplate.name}" de inmediato.`}
+              okText="Sí, usar ahora" cancelText="Cancelar"
+              onConfirm={() => patchTemplate({ startDate: today, endDate: null })}
+            >
+              <Button type="link">Hacer principal</Button>
+            </Popconfirm>
             <Popconfirm title="¿Eliminar esta plantilla?" description="Se perderá su diseño." okText="Sí, eliminar" cancelText="Cancelar" okButtonProps={{ danger: true }} onConfirm={deleteTemplate}>
               <Button danger icon={<BiTrash style={{ fontSize: 16 }} />} aria-label="Eliminar" title="Eliminar" style={ACTION_BTN} />
             </Popconfirm>
