@@ -138,7 +138,6 @@ const COMPONENT_PALETTE: { type: ComponentType; label: string; sub: string; icon
   { type: 'button', label: 'Botón', sub: 'Llamado a la acción', icon: <BiPointer /> },
 ];
 
-const SOCIAL_ICONS: Record<SocialNetworkKey, string> = { facebook: '📘', instagram: '📷', linkedin: '💼', youtube: '▶️', x: '✖️', pinterest: '📌' };
 const SOCIAL_LABELS: Record<SocialNetworkKey, string> = { facebook: 'Facebook', instagram: 'Instagram', linkedin: 'Linkedin', youtube: 'Youtube', x: 'X (Twitter)', pinterest: 'Pinterest' };
 const SOCIAL_KEYS: SocialNetworkKey[] = ['facebook', 'instagram', 'linkedin', 'youtube', 'x', 'pinterest'];
 
@@ -1894,6 +1893,11 @@ function ShapeSwatch({ shape }: { shape: 'square' | 'rounded' | 'circle' }) {
   const radius = shape === 'circle' ? '50%' : shape === 'rounded' ? 4 : 0;
   return <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid currentColor', borderRadius: radius, verticalAlign: 'middle' }} />;
 }
+const SHAPE_OPTIONS: { value: 'square' | 'rounded' | 'circle'; icon: React.ReactNode; title: string }[] = [
+  { value: 'square', icon: <ShapeSwatch shape="square" />, title: 'Cuadrado' },
+  { value: 'rounded', icon: <ShapeSwatch shape="rounded" />, title: 'Redondeado' },
+  { value: 'circle', icon: <ShapeSwatch shape="circle" />, title: 'Círculo' },
+];
 function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUpdate: (b: Component) => void }) {
   function setEntry(network: SocialNetworkKey, patch: { included?: boolean; url?: string }) {
     onUpdate({ ...block, networks: block.networks.map(n => n.network === network ? { ...n, ...patch } : n) });
@@ -1902,13 +1906,17 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <FieldLabel icon={<BiPalette />}>Tipo</FieldLabel>
-        <Radio.Group value={block.style} onChange={e => onUpdate({ ...block, style: e.target.value })} style={{ width: '100%', display: 'flex' }}>
-          <Radio.Button value="negro" style={{ flex: 1, textAlign: 'center' }}>Negro</Radio.Button>
-          <Radio.Button value="blanco" style={{ flex: 1, textAlign: 'center' }}>Blanco</Radio.Button>
-          <Radio.Button value="color" style={{ flex: 1, textAlign: 'center' }}>Color</Radio.Button>
-        </Radio.Group>
+        <Select
+          style={{ width: '100%' }} value={block.style}
+          onChange={v => onUpdate({ ...block, style: v as SocialComponent['style'] })}
+          options={[
+            { value: 'negro', label: 'Negro' },
+            { value: 'blanco', label: 'Blanco' },
+            { value: 'color', label: 'Color' },
+          ]}
+        />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
         <div>
           <FieldLabel icon={<BiMoveHorizontal />}>Tamaño</FieldLabel>
           <InputNumber min={12} max={64} value={block.size} addonAfter="px" onChange={v => onUpdate({ ...block, size: v ?? 26 })} style={{ width: '100%' }} />
@@ -1917,27 +1925,24 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
           <FieldLabel icon={<BiMoveHorizontal />}>Espacio entre íconos</FieldLabel>
           <InputNumber min={0} max={40} value={block.gap} addonAfter="px" onChange={v => onUpdate({ ...block, gap: v ?? 8 })} style={{ width: '100%' }} />
         </div>
+        <div>
+          <FieldLabel icon={<BiPen />}>Estilo del borde</FieldLabel>
+          <IconSegmented value={block.shape} options={SHAPE_OPTIONS} onChange={v => onUpdate({ ...block, shape: v })} />
+        </div>
       </div>
-      <div>
-        <FieldLabel icon={<BiPen />}>Estilo del borde</FieldLabel>
-        <Radio.Group value={block.shape} onChange={e => onUpdate({ ...block, shape: e.target.value })} style={{ display: 'flex' }}>
-          <Radio.Button value="square" style={{ flex: 1, textAlign: 'center' }}><ShapeSwatch shape="square" /></Radio.Button>
-          <Radio.Button value="rounded" style={{ flex: 1, textAlign: 'center' }}><ShapeSwatch shape="rounded" /></Radio.Button>
-          <Radio.Button value="circle" style={{ flex: 1, textAlign: 'center' }}><ShapeSwatch shape="circle" /></Radio.Button>
-        </Radio.Group>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
         {block.networks.map(entry => (
           <div key={entry.network}>
             <Checkbox checked={entry.included} onChange={e => setEntry(entry.network, { included: e.target.checked })}>
-              <Text style={{ fontSize: 12 }}>{SOCIAL_ICONS[entry.network]} {SOCIAL_LABELS[entry.network]}</Text>
+              <Text style={{ fontSize: 14, color: 'rgba(0,0,0,0.85)' }}>{SOCIAL_LABELS[entry.network]}</Text>
             </Checkbox>
             <Input
-              addonBefore="https://" maxLength={300}
+              addonBefore="https://" maxLength={2048}
               value={entry.url} onChange={e => setEntry(entry.network, { url: e.target.value })}
-              placeholder={`www.${SOCIAL_LABELS[entry.network].toLowerCase()}.com/hircasa`}
+              placeholder={`https://www.${SOCIAL_LABELS[entry.network]}.com`}
               style={{ marginTop: 8 }}
             />
+            <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'right', marginTop: 4 }}>{entry.url.length}/2048</Text>
           </div>
         ))}
       </div>
