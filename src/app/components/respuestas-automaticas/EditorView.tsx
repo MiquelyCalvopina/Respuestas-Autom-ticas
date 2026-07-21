@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  App, Button, Input, Card, Typography, Divider, Switch, Tag,
+  App, Button, Input, Card, Typography, Switch, Tag,
   InputNumber, Radio, Checkbox, Tooltip, Segmented, Modal, ConfigProvider, Select, Slider, ColorPicker, Popover,
 } from 'antd';
 import type { InputRef } from 'antd';
@@ -21,7 +21,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { html as htmlLang } from '@codemirror/lang-html';
 import {
   EmailTemplate, Row, Column, RowDesign, Component, ComponentType, ComponentDesign, EmailLayoutConfig, TextAlign,
-  TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, Pregunta,
+  TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, Pregunta, DividerBlock,
   ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey,
 } from './types';
 import { VARIABLES, VARIABLES_META, PREGUNTAS_EJEMPLO, mockAnswerFor, HEADER_COLORS, countComponents } from './data';
@@ -94,12 +94,12 @@ function makeComponent(type: ComponentType): Component {
       includeEmptyAnswers: false,
       design,
     };
-    case 'divider':   return { id, type, design };
+    case 'divider':   return { id, type, color: '#d9d9d9', widthPercent: 90, thickness: 2, lineStyle: 'solid', design };
     case 'image':     return { id, type, src: '', alt: '', dynamic: false, widthPercent: 100, link: '', design };
     case 'button':    return { id, type, text: 'Responder estudio', url: '', bgColor: '#1890ff', textColor: '#ffffff', design };
     case 'spacer':    return { id, type, height: 24, design };
     case 'social':    return { id, type, style: 'negro', size: 26, gap: 12, shape: 'square', networks: SOCIAL_KEYS.map(k => ({ network: k, included: false, url: '' })), design };
-    default: return { id, type: 'divider', design };
+    default: return { id, type: 'divider', color: '#d9d9d9', widthPercent: 90, thickness: 2, lineStyle: 'solid', design };
   }
 }
 
@@ -223,7 +223,7 @@ function componentToHtml(c: Component): string {
       })() : '';
       return `<div style="${style}">${containerOpen}${label}${items}${emptyExampleItem}</div></div>`;
     }
-    case 'divider':   return `<hr style="margin:${d.paddingTop}px 26px ${d.paddingBottom}px;" />`;
+    case 'divider':   return `<div style="${style}text-align:center;"><div style="display:inline-block;width:${c.widthPercent}%;border-top:${c.thickness}px ${c.lineStyle} ${c.color};font-size:0;line-height:0;">&nbsp;</div></div>`;
     case 'image': {
       const img = c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : '';
       return `<div style="${style}text-align:center;">${c.link ? `<a href="${c.link}" style="text-decoration:none;">${img}</a>` : img}</div>`;
@@ -577,7 +577,13 @@ function renderComponentContent(component: Component): React.ReactNode {
       </div>
     );
   }
-  if (component.type === 'divider') return <Divider style={{ margin: '0 24px', minWidth: 'auto', width: 'auto' }} />;
+  if (component.type === 'divider') {
+    return (
+      <div style={{ padding: '0 24px', textAlign: 'center' }}>
+        <div style={{ display: 'inline-block', width: `${component.widthPercent}%`, borderTop: `${component.thickness}px ${component.lineStyle} ${component.color}` }} />
+      </div>
+    );
+  }
   if (component.type === 'image') {
     const img = <img src={component.src} alt={component.alt} style={{ width: `${component.widthPercent}%`, display: 'inline-block' }} />;
     return component.src ? (
@@ -1819,6 +1825,38 @@ function SpacerContentFields({ block, onUpdate }: { block: SpacerComponent; onUp
     </div>
   );
 }
+function DividerLineIcon({ variant }: { variant: 'solid' | 'dashed' | 'dotted' }) {
+  return <span style={{ display: 'block', width: 18, height: 0, borderTop: `2px ${variant} currentColor` }} />;
+}
+const DIVIDER_STYLE_OPTIONS: { value: DividerBlock['lineStyle']; icon: React.ReactNode; title: string }[] = [
+  { value: 'solid', icon: <DividerLineIcon variant="solid" />, title: 'Sólido' },
+  { value: 'dashed', icon: <DividerLineIcon variant="dashed" />, title: 'Guiones' },
+  { value: 'dotted', icon: <DividerLineIcon variant="dotted" />, title: 'Punteado' },
+];
+function DividerContentFields({ block, onUpdate }: { block: DividerBlock; onUpdate: (b: Component) => void }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div>
+        <FieldLabel icon={<BiColorFill />}>Color</FieldLabel>
+        <ColorPickerField value={block.color} onChange={c => onUpdate({ ...block, color: c })} />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
+        <div>
+          <FieldLabel icon={<BiMoveHorizontal />}>Tamaño</FieldLabel>
+          <InputNumber min={10} max={100} value={block.widthPercent} addonAfter="%" onChange={v => onUpdate({ ...block, widthPercent: v ?? 100 })} style={{ width: '100%' }} />
+        </div>
+        <div>
+          <FieldLabel icon={<BiVerticalCenter />}>Grosor</FieldLabel>
+          <InputNumber min={1} max={12} value={block.thickness} addonAfter="px" onChange={v => onUpdate({ ...block, thickness: v ?? 1 })} style={{ width: '100%' }} />
+        </div>
+        <div>
+          <FieldLabel icon={<BiPen />}>Tipo</FieldLabel>
+          <IconSegmented value={block.lineStyle} options={DIVIDER_STYLE_OPTIONS} onChange={v => onUpdate({ ...block, lineStyle: v })} />
+        </div>
+      </div>
+    </div>
+  );
+}
 // Swatch real (no un glifo de texto) para que cada opción muestre el radio que en verdad
 // va a aplicar — "square" y "rounded" se veían idénticos como caracteres Unicode.
 function ShapeSwatch({ shape }: { shape: 'square' | 'rounded' | 'circle' }) {
@@ -1878,7 +1916,7 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
 
 const TYPE_SECTION_TITLE: Partial<Record<ComponentType, string>> = {
   header: 'Encabezado', title: 'Título', text: 'Texto', responses: 'Bloque de respuestas',
-  image: 'Imagen', button: 'Botón', spacer: 'Espaciador', social: 'Redes Sociales',
+  image: 'Imagen', button: 'Botón', spacer: 'Espaciador', social: 'Redes Sociales', divider: 'Divisor',
 };
 
 function ComponentTypeFields({ component, onUpdate }: { component: Component; onUpdate: (c: Component) => void }) {
@@ -1890,6 +1928,7 @@ function ComponentTypeFields({ component, onUpdate }: { component: Component; on
   if (component.type === 'button')    return <ButtonContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'spacer')    return <SpacerContentFields block={component} onUpdate={onUpdate} />;
   if (component.type === 'social')    return <SocialContentFields block={component} onUpdate={onUpdate} />;
+  if (component.type === 'divider')   return <DividerContentFields block={component} onUpdate={onUpdate} />;
   return <Text type="secondary" style={{ fontSize: 12 }}>Este componente no tiene contenido configurable.</Text>;
 }
 

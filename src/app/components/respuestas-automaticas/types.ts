@@ -62,6 +62,10 @@ export interface ResponsesBlock {
 }
 export interface DividerBlock {
   id: string; type: 'divider';
+  color: string;
+  widthPercent: number;
+  thickness: number;
+  lineStyle: 'solid' | 'dashed' | 'dotted';
   design: ComponentDesign;
 }
 export interface ImageComponent {
