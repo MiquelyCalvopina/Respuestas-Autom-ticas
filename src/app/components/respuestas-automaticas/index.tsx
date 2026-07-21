@@ -11,7 +11,6 @@ import WizardView from './WizardView';
 import EditorView from './EditorView';
 import TemplatesManagerView from './TemplatesManagerView';
 import LogView from './LogView';
-import { ImportRulesModal, ExportRulesModal } from './RuleJsonModals';
 
 interface Props {
   onBack: () => void;
@@ -85,8 +84,6 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
   const [currentRule, setCurrentRule] = useState<AutoResponse>(emptyRule());
   const [wizardStep, setWizardStep] = useState(0);
   const [logRule, setLogRule] = useState<AutoResponse | null>(null);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [showExportModal, setShowExportModal] = useState(false);
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
 
   // Abre el editor de correo sobre una plantilla puntual de la regla en curso. Al volver
@@ -123,15 +120,6 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
     if (!r) return;
     setRules(prev => [...prev, cloneRule(r, `${r.name} (copia)`)]);
     message.success('Regla duplicada como borrador');
-  }
-
-  function importRules(imported: AutoResponse[]) {
-    // Normaliza cada regla contra los defaults (por si el JSON viene de una versión
-    // anterior sin algún campo) y le asigna IDs nuevos como borrador de este estudio.
-    const drafts = imported.map(r => cloneRule({ ...emptyRule(), ...r }, r.name));
-    setRules(prev => [...prev, ...drafts]);
-    setShowImportModal(false);
-    message.success(`${drafts.length} ${drafts.length === 1 ? 'regla importada' : 'reglas importadas'} como borrador`);
   }
 
   function toggleRule(id: string) {
@@ -253,8 +241,6 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
         onSchedule={scheduleRule}
         onCancelSchedule={cancelSchedule}
         onBack={onBack}
-        onImportJson={() => setShowImportModal(true)}
-        onExportJson={() => setShowExportModal(true)}
       />
     );
   }
@@ -262,18 +248,6 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
   return (
     <ConfigProvider theme={MODULE_THEME}>
       {content}
-      {showImportModal && (
-        <ImportRulesModal
-          onCancel={() => setShowImportModal(false)}
-          onImport={importRules}
-        />
-      )}
-      {showExportModal && (
-        <ExportRulesModal
-          rules={rules}
-          onClose={() => setShowExportModal(false)}
-        />
-      )}
     </ConfigProvider>
   );
 }
