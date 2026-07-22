@@ -43,13 +43,21 @@ export function containsVariable(text: string): boolean {
   return /\{\{[a-zA-Z0-9_]+\}\}/.test(text);
 }
 
-export function isHttpsUrl(url: string): boolean {
-  return /^https:\/\/\S+$/i.test(url.trim());
-}
-
 // Ignora el query string/hash al revisar la extensión (ej. ".../foto.jpg?v=2" es válido).
 export function hasImageExtension(url: string): boolean {
   return /\.(jpe?g|png)$/i.test(url.trim().split(/[?#]/)[0]);
+}
+
+// Los campos de URL (Imagen → Origen/Enlace, Botón, Redes Sociales) muestran "https://" fijo
+// como addonBefore y el usuario solo escribe el resto — así es estructuralmente imposible
+// olvidar el esquema. `stripScheme` normaliza lo tipeado (por si pega la URL completa) y
+// `withHttps` reconstruye la URL real para usarla en un render o export.
+export function stripScheme(value: string): string {
+  return value.replace(/^https?:\/\//i, '');
+}
+
+export function withHttps(value: string): string {
+  return value.trim() ? `https://${value.trim()}` : '';
 }
 
 // Variables usadas dentro de los campos que ya soportan inserción de variables en una URL

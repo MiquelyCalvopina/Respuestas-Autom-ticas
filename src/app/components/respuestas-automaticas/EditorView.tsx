@@ -24,7 +24,7 @@ import {
   TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, Pregunta, DividerBlock,
   ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey, SocialNetworkEntry,
 } from './types';
-import { VARIABLES, VARIABLES_META, PREGUNTAS_EJEMPLO, mockAnswerFor, HEADER_COLORS, countComponents, containsVariable, collectUrlVariableKeys, resolveRowsVariables, isHttpsUrl, hasImageExtension } from './data';
+import { VARIABLES, VARIABLES_META, PREGUNTAS_EJEMPLO, mockAnswerFor, HEADER_COLORS, countComponents, containsVariable, collectUrlVariableKeys, resolveRowsVariables, hasImageExtension, stripScheme, withHttps } from './data';
 import { cuid } from './cuid';
 import TestModal from './TestModal';
 
@@ -228,10 +228,14 @@ function componentToHtml(c: Component): string {
         const placeholder = `<div style="width:${c.widthPercent}%;height:200px;margin:0 auto;background:#f5f5f5;border:1px dashed #d9d9d9;border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0.35);font-size:12px;">Imagen dinámica — se resuelve al enviar</div>`;
         return `<div style="${style}text-align:center;">${placeholder}</div>`;
       }
-      const img = c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : '';
-      return `<div style="${style}text-align:center;">${c.link ? `<a href="${c.link}" style="text-decoration:none;">${img}</a>` : img}</div>`;
+      // El campo de Origen/Enlace ya tiene "https://" fijo como addonBefore visual — no se
+      // guarda en el valor, hay que reconstruirlo acá para que src/href sean absolutos.
+      const realSrc = c.dynamic ? withHttps(c.src) : c.src;
+      const img = realSrc ? `<img src="${realSrc}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : '';
+      const realLink = withHttps(c.link);
+      return `<div style="${style}text-align:center;">${realLink ? `<a href="${realLink}" style="text-decoration:none;">${img}</a>` : img}</div>`;
     }
-    case 'button':    return `<div style="${style}text-align:center;"><a href="${c.url}" style="display:inline-block;padding:10px 24px;border-radius:6px;background:${c.bgColor};color:${c.textColor};font-weight:600;text-decoration:none;">${c.text}</a></div>`;
+    case 'button':    return `<div style="${style}text-align:center;"><a href="${withHttps(c.url)}" style="display:inline-block;padding:10px 24px;border-radius:6px;background:${c.bgColor};color:${c.textColor};font-weight:600;text-decoration:none;">${c.text}</a></div>`;
     case 'spacer':    return `<div style="${style}height:${c.height}px;"></div>`;
     case 'social': {
       const radius = c.shape === 'circle' ? '50%' : c.shape === 'rounded' ? '6px' : '0';
@@ -240,7 +244,7 @@ function componentToHtml(c: Component): string {
       const icons = c.networks.filter(n => n.included).map(n =>
         // El campo de URL ya tiene "https://" fijo como addonBefore visual — no se guarda en
         // el valor, hay que anteponerlo acá para que el href sea absoluto.
-        `<a href="https://${n.url}" style="display:inline-flex;align-items:center;justify-content:center;width:${c.size}px;height:${c.size}px;background:${iconBg};color:${iconColor};border-radius:${radius};margin:0 ${c.gap / 2}px;text-decoration:none;">${socialGlyphHtml(n.network, iconColor)}</a>`
+        `<a href="${withHttps(n.url)}" style="display:inline-flex;align-items:center;justify-content:center;width:${c.size}px;height:${c.size}px;background:${iconBg};color:${iconColor};border-radius:${radius};margin:0 ${c.gap / 2}px;text-decoration:none;">${socialGlyphHtml(n.network, iconColor)}</a>`
       ).join('');
       return `<div style="${style}text-align:center;">${icons}</div>`;
     }
@@ -266,17 +270,11 @@ function collectContentIssues(rows: Row[]): ContentIssue[] {
   for (const row of rows) {
     for (const col of row.columns) {
       for (const comp of col.components) {
-        if (comp.type === 'image') {
-          if (comp.dynamic && comp.src.trim() && !containsVariable(comp.src)) {
-            if (!isHttpsUrl(comp.src)) issues.push({ label: 'Imagen', reason: 'la URL debe empezar con https://' });
-            else if (!hasImageExtension(comp.src)) issues.push({ label: 'Imagen', reason: 'la URL debe terminar en .jpg, .jpeg o .png' });
-          }
-          if (comp.link.trim() && !containsVariable(comp.link) && !isHttpsUrl(comp.link)) {
-            issues.push({ label: 'Imagen', reason: 'el enlace debe empezar con https://' });
-          }
-        }
-        if (comp.type === 'button' && comp.url.trim() && !containsVariable(comp.url) && !isHttpsUrl(comp.url)) {
-          issues.push({ label: 'Botón', reason: 'la URL debe empezar con https://' });
+        // El "https://" ya es fijo (addonBefore) en estos 3 campos — estructuralmente no se
+        // puede omitir, así que lo único que queda por validar es la extensión de la imagen
+        // y que las redes marcadas realmente tengan una URL.
+        if (comp.type === 'image' && comp.dynamic && comp.src.trim() && !containsVariable(comp.src) && !hasImageExtension(comp.src)) {
+          issues.push({ label: 'Imagen', reason: 'la URL debe terminar en .jpg, .jpeg o .png' });
         }
         if (comp.type === 'social') {
           for (const n of comp.networks) {
@@ -693,15 +691,20 @@ function CanvasImage({ component }: { component: ImageComponent }) {
       </div>
     );
   }
+  // El "Origen" (URL dinámica) y el "Enlace" guardan solo lo que va después de "https://"
+  // (mostrado fijo como addonBefore) — al subir un archivo, en cambio, `src` ya es la URL de
+  // vista previa completa (blob:...), no lleva ese tratamiento.
+  const realSrc = component.dynamic ? withHttps(component.src) : component.src;
+  const realLink = withHttps(component.link);
   const img = (
     <img
-      src={component.src} alt={component.alt} onError={() => setBroken(true)}
+      src={realSrc} alt={component.alt} onError={() => setBroken(true)}
       style={{ width: `${component.widthPercent}%`, display: 'inline-block' }}
     />
   );
   return (
     <div style={{ padding: '0 32px', textAlign: 'center' }}>
-      {component.link ? <a href={component.link} onClick={e => e.preventDefault()} style={{ display: 'inline-block' }}>{img}</a> : img}
+      {realLink ? <a href={realLink} onClick={e => e.preventDefault()} style={{ display: 'inline-block' }}>{img}</a> : img}
     </div>
   );
 }
@@ -1762,13 +1765,11 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
     setTimeout(() => { input.focus(); input.selectionStart = input.selectionEnd = s + tag.length; }, 0);
   }
 
-  // Sin variable no hay forma de validar el string tal cual se escribió — se resuelve recién
+  // El "https://" ya es fijo (addonBefore) — estructuralmente no se puede omitir. Sin
+  // variable no hay forma de validar la extensión tal cual se escribió; se resuelve recién
   // al enviar, así que se deja pasar hasta ese momento.
-  const srcError = block.dynamic && block.src.trim() && !containsVariable(block.src)
-    ? !isHttpsUrl(block.src) ? 'Debe empezar con https://' : !hasImageExtension(block.src) ? 'Debe terminar en .jpg, .jpeg o .png' : null
-    : null;
-  const linkError = block.link.trim() && !containsVariable(block.link) && !isHttpsUrl(block.link)
-    ? 'Debe empezar con https://'
+  const srcError = block.dynamic && block.src.trim() && !containsVariable(block.src) && !hasImageExtension(block.src)
+    ? 'Debe terminar en .jpg, .jpeg o .png'
     : null;
 
   return (
@@ -1791,11 +1792,12 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
       <div>
         <FieldLabel icon={<BiImageAlt />}>Imagen</FieldLabel>
         <div style={{ display: 'flex', gap: 8, alignItems: block.dynamic ? 'center' : 'flex-start' }}>
-          <ImagePreviewThumb key={block.src} src={block.src} />
+          <ImagePreviewThumb key={block.src} src={block.dynamic ? withHttps(block.src) : block.src} />
           {block.dynamic ? (
             <Input
-              ref={urlRef} value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })}
-              placeholder="https://" maxLength={250} style={{ flex: 1 }} status={srcError ? 'error' : undefined}
+              addonBefore="https://"
+              ref={urlRef} value={block.src} onChange={e => onUpdate({ ...block, src: stripScheme(e.target.value) })}
+              placeholder="www.miempresa.com/foto.jpg" maxLength={250} style={{ flex: 1 }} status={srcError ? 'error' : undefined}
             />
           ) : (
             <>
@@ -1822,11 +1824,11 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
       <div>
         <FieldLabel icon={<BiLink />}>Enlace</FieldLabel>
         <Input
-          ref={linkRef} value={block.link} onChange={e => onUpdate({ ...block, link: e.target.value })}
-          placeholder="https://" maxLength={250} status={linkError ? 'error' : undefined}
+          addonBefore="https://"
+          ref={linkRef} value={block.link} onChange={e => onUpdate({ ...block, link: stripScheme(e.target.value) })}
+          placeholder="www.miempresa.com" maxLength={250}
         />
         <VariableCounterRow length={block.link.length} max={250} onAddVariable={() => setVarTarget('link')} />
-        {linkError && <p style={{ color: '#ff4d4f', fontSize: 12, margin: '4px 0 0' }}>{linkError}</p>}
       </div>
       <VariablePickerModal open={varTarget !== null} onClose={() => setVarTarget(null)} onPick={insertVariable} />
       <div>
@@ -1906,20 +1908,16 @@ function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUp
     setTimeout(() => { input.focus(); input.selectionStart = input.selectionEnd = s + tag.length; }, 0);
   }
 
-  const urlError = block.url.trim() && !containsVariable(block.url) && !isHttpsUrl(block.url)
-    ? 'Debe empezar con https://'
-    : null;
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div><FieldLabel icon={<BiText />}>Texto del botón</FieldLabel><Input value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} /></div>
       <div>
         <FieldLabel icon={<BiLink />}>URL de destino</FieldLabel>
         <Input
-          ref={urlRef} value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })}
-          placeholder="Ingrese la url" maxLength={2048} status={urlError ? 'error' : undefined}
+          addonBefore="https://"
+          ref={urlRef} value={block.url} onChange={e => onUpdate({ ...block, url: stripScheme(e.target.value) })}
+          placeholder="www.miempresa.com/formulario" maxLength={2048}
         />
-        {urlError && <p style={{ color: '#ff4d4f', fontSize: 12, margin: '4px 0 0' }}>{urlError}</p>}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
           <button
             type="button" onClick={() => setVarPickerOpen(true)}
@@ -1994,7 +1992,6 @@ const SHAPE_OPTIONS: { value: 'square' | 'rounded' | 'circle'; icon: React.React
 function socialUrlError(entry: SocialNetworkEntry): string | null {
   if (!entry.included) return null;
   if (!entry.url.trim()) return 'Falta la URL';
-  if (/^https?:\/\//i.test(entry.url)) return 'No repitas https:// — ya está incluido antes del campo';
   return null;
 }
 
@@ -2040,8 +2037,8 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
               </Checkbox>
               <Input
                 addonBefore="https://" maxLength={2048}
-                value={entry.url} onChange={e => setEntry(entry.network, { url: e.target.value })}
-                placeholder={`https://www.${SOCIAL_LABELS[entry.network]}.com`}
+                value={entry.url} onChange={e => setEntry(entry.network, { url: stripScheme(e.target.value) })}
+                placeholder={`www.${SOCIAL_LABELS[entry.network]}.com`}
                 style={{ marginTop: 8 }} status={error ? 'error' : undefined}
               />
               <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'right', marginTop: 4 }}>{entry.url.length}/2048</Text>
