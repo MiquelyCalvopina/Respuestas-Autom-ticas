@@ -24,7 +24,7 @@ import {
   TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, Pregunta, DividerBlock,
   ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey,
 } from './types';
-import { VARIABLES, VARIABLES_META, PREGUNTAS_EJEMPLO, mockAnswerFor, HEADER_COLORS, countComponents } from './data';
+import { VARIABLES, VARIABLES_META, PREGUNTAS_EJEMPLO, mockAnswerFor, HEADER_COLORS, countComponents, containsVariable, collectUrlVariableKeys, resolveRowsVariables } from './data';
 import { cuid } from './cuid';
 import TestModal from './TestModal';
 
@@ -224,6 +224,10 @@ function componentToHtml(c: Component): string {
     }
     case 'divider':   return `<div style="${style}text-align:center;"><div style="display:inline-block;width:${c.widthPercent}%;border-top:${c.thickness}px ${c.lineStyle} ${c.color};font-size:0;line-height:0;">&nbsp;</div></div>`;
     case 'image': {
+      if (c.dynamic && containsVariable(c.src)) {
+        const placeholder = `<div style="width:${c.widthPercent}%;height:200px;margin:0 auto;background:#f5f5f5;border:1px dashed #d9d9d9;border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0.35);font-size:12px;">Imagen dinámica — se resuelve al enviar</div>`;
+        return `<div style="${style}text-align:center;">${placeholder}</div>`;
+      }
       const img = c.src ? `<img src="${c.src}" alt="${c.alt}" style="width:${c.widthPercent}%;" />` : '';
       return `<div style="${style}text-align:center;">${c.link ? `<a href="${c.link}" style="text-decoration:none;">${img}</a>` : img}</div>`;
     }
@@ -584,17 +588,7 @@ function renderComponentContent(component: Component): React.ReactNode {
     );
   }
   if (component.type === 'image') {
-    const img = <img src={component.src} alt={component.alt} style={{ width: `${component.widthPercent}%`, display: 'inline-block' }} />;
-    return component.src ? (
-      <div style={{ padding: '0 32px', textAlign: 'center' }}>
-        {component.link ? <a href={component.link} onClick={e => e.preventDefault()} style={{ display: 'inline-block' }}>{img}</a> : img}
-      </div>
-    ) : (
-      <div style={{ margin: '0 32px', padding: '32px', textAlign: 'center', color: '#bfbfbf', border: '1px dashed #d9d9d9', borderRadius: 8 }}>
-        <BiImage style={{ fontSize: 24 }} />
-        <div style={{ fontSize: 12, lineHeight: 'normal', marginTop: 8 }}>Sin imagen — selecciónala y define la URL en Diseño</div>
-      </div>
-    );
+    return <CanvasImage key={component.src} component={component} />;
   }
   if (component.type === 'button') {
     return (
@@ -629,6 +623,52 @@ function renderComponentContent(component: Component): React.ReactNode {
     );
   }
   return null;
+}
+
+// Imagen del canvas — separado en su propio componente para poder llevar el estado de
+// "la URL no cargó" (onError) sin romper las reglas de hooks dentro de renderComponentContent,
+// que es una función plana, no un componente. Cubre 3 estados: sin URL todavía, URL dinámica
+// con una variable sin resolver (no tiene sentido intentar cargarla, siempre va a fallar — se
+// muestra un placeholder con una dimensión de ejemplo en vez del ícono roto del navegador), y
+// URL real que falló al cargar.
+function CanvasImage({ component }: { component: ImageComponent }) {
+  const [broken, setBroken] = useState(false);
+  if (!component.src) {
+    return (
+      <div style={{ margin: '0 32px', padding: '32px', textAlign: 'center', color: '#bfbfbf', border: '1px dashed #d9d9d9', borderRadius: 8 }}>
+        <BiImage style={{ fontSize: 24 }} />
+        <div style={{ fontSize: 12, lineHeight: 'normal', marginTop: 8 }}>Sin imagen — selecciónala y define la URL en Diseño</div>
+      </div>
+    );
+  }
+  const unresolvedVariable = component.dynamic && containsVariable(component.src);
+  if (unresolvedVariable || broken) {
+    return (
+      <div style={{ padding: '0 32px', textAlign: 'center' }}>
+        <div style={{
+          width: `${component.widthPercent}%`, height: 200, margin: '0 auto',
+          background: '#f5f5f5', border: '1px dashed #d9d9d9', borderRadius: 8,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+        }}>
+          <BiImage style={{ fontSize: 28, color: '#bfbfbf' }} />
+          <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.35)', padding: '0 16px', textAlign: 'center' }}>
+            {unresolvedVariable ? 'Imagen dinámica — se resuelve al enviar' : 'No se pudo cargar la imagen'}
+          </span>
+        </div>
+      </div>
+    );
+  }
+  const img = (
+    <img
+      src={component.src} alt={component.alt} onError={() => setBroken(true)}
+      style={{ width: `${component.widthPercent}%`, display: 'inline-block' }}
+    />
+  );
+  return (
+    <div style={{ padding: '0 32px', textAlign: 'center' }}>
+      {component.link ? <a href={component.link} onClick={e => e.preventDefault()} style={{ display: 'inline-block' }}>{img}</a> : img}
+    </div>
+  );
 }
 
 function ComponentBox({ component, index, columnId, selected, onSelect, onRemove, onDuplicate, onInsertAfter, moveComponent, onUpdate }: {
@@ -1973,6 +2013,7 @@ export default function EditorView({ template, onChange, onBack }: Props) {
   const { message } = App.useApp();
   const [draft, setDraft] = useState<EmailTemplate>(template);
   const [showTestModal, setShowTestModal] = useState(false);
+  const [sentPreview, setSentPreview] = useState<{ email: string; html: string } | null>(null);
   const [mode, setMode] = useState<'visual' | 'html'>(template.customHtml ? 'html' : 'visual');
   const [activeTab, setActiveTab] = useState<'elementos' | 'configuracion' | 'diseno'>('elementos');
   const [selection, setSelection] = useState<Selection>(null);
@@ -2147,9 +2188,11 @@ export default function EditorView({ template, onChange, onBack }: Props) {
     }
     setMode(next);
   }
-  function handleTestSent(email: string) {
+  function handleTestSent(email: string, values: Record<string, string>) {
     setShowTestModal(false);
     message.success(`Correo de prueba enviado a ${email} ✓`);
+    const resolvedHtml = renderRowsToHtml(resolveRowsVariables(draft.rows, values));
+    setSentPreview({ email, html: resolvedHtml });
   }
 
   const htmlValue = draft.customHtml ?? renderRowsToHtml(draft.rows);
@@ -2344,9 +2387,28 @@ export default function EditorView({ template, onChange, onBack }: Props) {
 
       {showTestModal && (
         <TestModal
+          variableKeys={collectUrlVariableKeys(draft.rows)}
           onClose={() => setShowTestModal(false)}
           onSend={handleTestSent}
         />
+      )}
+
+      {sentPreview && (
+        <Modal
+          open
+          onCancel={() => setSentPreview(null)}
+          footer={null}
+          width={640}
+          title={`Correo de prueba enviado a ${sentPreview.email}`}
+          styles={{ content: { borderRadius: 20 } }}
+        >
+          <div className="rf-scroll-hidden" style={{ background: '#f5f5f5', borderRadius: 12, padding: 20, maxHeight: '70vh', overflowY: 'auto' }}>
+            <div
+              style={{ maxWidth: 580, margin: '0 auto', background: '#fff', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', overflow: 'hidden' }}
+              dangerouslySetInnerHTML={{ __html: sentPreview.html }}
+            />
+          </div>
+        </Modal>
       )}
     </div>
     </ConfigProvider>

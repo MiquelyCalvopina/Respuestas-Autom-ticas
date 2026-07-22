@@ -37,6 +37,49 @@ export const VARIABLES_META: VariableMeta[] = [
 
 export const VARIABLES = VARIABLES_META.map(v => v.key);
 
+const VARIABLE_TAG_RE = /\{\{([a-zA-Z0-9_]+)\}\}/g;
+
+export function containsVariable(text: string): boolean {
+  return /\{\{[a-zA-Z0-9_]+\}\}/.test(text);
+}
+
+// Variables usadas dentro de los campos que ya soportan inserción de variables en una URL
+// (Imagen → Origen dinámico / Enlace, Botón → URL) — el resto del contenido (texto, redes
+// sociales) queda fuera porque hoy no ofrece el picker de variables en esos campos.
+export function collectUrlVariableKeys(rows: Row[]): string[] {
+  const keys = new Set<string>();
+  const scan = (text: string) => { for (const m of text.matchAll(VARIABLE_TAG_RE)) keys.add(m[1]); };
+  for (const row of rows) {
+    for (const col of row.columns) {
+      for (const comp of col.components) {
+        if (comp.type === 'image') {
+          if (comp.dynamic) scan(comp.src);
+          scan(comp.link);
+        }
+        if (comp.type === 'button') scan(comp.url);
+      }
+    }
+  }
+  return [...keys];
+}
+
+// Sustituye {{variable}} por el valor de ejemplo escrito para la prueba, solo en los mismos
+// campos de URL de `collectUrlVariableKeys` — deja el tag tal cual si no se completó un valor.
+export function resolveRowsVariables(rows: Row[], values: Record<string, string>): Row[] {
+  const sub = (text: string) => text.replace(VARIABLE_TAG_RE, (tag, key) => (values[key]?.trim() ? values[key] : tag));
+  return rows.map(row => ({
+    ...row,
+    columns: row.columns.map(col => ({
+      ...col,
+      components: col.components.map(comp => {
+        if (comp.type === 'image') return { ...comp, src: comp.dynamic ? sub(comp.src) : comp.src, link: sub(comp.link) };
+        if (comp.type === 'button') return { ...comp, url: sub(comp.url) };
+        return comp;
+      }),
+    })),
+  }));
+}
+
 // Decodifica el valor de AutoResponse.recipientVariable, que puede ser una variable plana
 // (ej. "correo_electronico") o una referencia a una pregunta del estudio: "pregunta:{id}"
 // (respuesta abierta que valida correo) o "pregunta:{id}:campo:{nombre}" (campo tipo correo
