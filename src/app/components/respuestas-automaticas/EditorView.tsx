@@ -22,9 +22,9 @@ import { html as htmlLang } from '@codemirror/lang-html';
 import {
   EmailTemplate, Row, Column, RowDesign, Component, ComponentType, ComponentDesign, EmailLayoutConfig, TextAlign,
   TextBlock, TitleBlock, HeaderBlock, ResponsesBlock, Pregunta, DividerBlock,
-  ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey,
+  ImageComponent, ButtonComponent, SpacerComponent, SocialComponent, SocialNetworkKey, SocialNetworkEntry,
 } from './types';
-import { VARIABLES, VARIABLES_META, PREGUNTAS_EJEMPLO, mockAnswerFor, HEADER_COLORS, countComponents, containsVariable, collectUrlVariableKeys, resolveRowsVariables } from './data';
+import { VARIABLES, VARIABLES_META, PREGUNTAS_EJEMPLO, mockAnswerFor, HEADER_COLORS, countComponents, containsVariable, collectUrlVariableKeys, resolveRowsVariables, isHttpsUrl, hasImageExtension } from './data';
 import { cuid } from './cuid';
 import TestModal from './TestModal';
 
@@ -238,7 +238,9 @@ function componentToHtml(c: Component): string {
       const iconBg = c.style === 'negro' ? '#000' : c.style === 'blanco' ? '#fff' : '#1890ff';
       const iconColor = c.style === 'blanco' ? '#000' : '#fff';
       const icons = c.networks.filter(n => n.included).map(n =>
-        `<a href="${n.url}" style="display:inline-flex;align-items:center;justify-content:center;width:${c.size}px;height:${c.size}px;background:${iconBg};color:${iconColor};border-radius:${radius};margin:0 ${c.gap / 2}px;text-decoration:none;">${socialGlyphHtml(n.network, iconColor)}</a>`
+        // El campo de URL ya tiene "https://" fijo como addonBefore visual — no se guarda en
+        // el valor, hay que anteponerlo acá para que el href sea absoluto.
+        `<a href="https://${n.url}" style="display:inline-flex;align-items:center;justify-content:center;width:${c.size}px;height:${c.size}px;background:${iconBg};color:${iconColor};border-radius:${radius};margin:0 ${c.gap / 2}px;text-decoration:none;">${socialGlyphHtml(n.network, iconColor)}</a>`
       ).join('');
       return `<div style="${style}text-align:center;">${icons}</div>`;
     }
@@ -253,6 +255,39 @@ function renderRowsToHtml(rows: Row[]): string {
     const cols = r.columns.map(c => `<td style="width:${c.widthPercent}%;vertical-align:top;">${c.components.map(componentToHtml).join('')}</td>`).join('');
     return `<table role="presentation" width="100%" style="${style}"><tr>${cols}</tr></table>`;
   }).join('\n');
+}
+
+interface ContentIssue { label: string; reason: string; }
+
+// Barrido de validación de URLs previo a Guardar/Enviar prueba — un campo con una variable
+// sin resolver no se valida (se resuelve recién al enviar, ver resolveRowsVariables).
+function collectContentIssues(rows: Row[]): ContentIssue[] {
+  const issues: ContentIssue[] = [];
+  for (const row of rows) {
+    for (const col of row.columns) {
+      for (const comp of col.components) {
+        if (comp.type === 'image') {
+          if (comp.dynamic && comp.src.trim() && !containsVariable(comp.src)) {
+            if (!isHttpsUrl(comp.src)) issues.push({ label: 'Imagen', reason: 'la URL debe empezar con https://' });
+            else if (!hasImageExtension(comp.src)) issues.push({ label: 'Imagen', reason: 'la URL debe terminar en .jpg, .jpeg o .png' });
+          }
+          if (comp.link.trim() && !containsVariable(comp.link) && !isHttpsUrl(comp.link)) {
+            issues.push({ label: 'Imagen', reason: 'el enlace debe empezar con https://' });
+          }
+        }
+        if (comp.type === 'button' && comp.url.trim() && !containsVariable(comp.url) && !isHttpsUrl(comp.url)) {
+          issues.push({ label: 'Botón', reason: 'la URL debe empezar con https://' });
+        }
+        if (comp.type === 'social') {
+          for (const n of comp.networks) {
+            const err = socialUrlError(n);
+            if (err) issues.push({ label: `Redes sociales — ${SOCIAL_LABELS[n.network]}`, reason: err });
+          }
+        }
+      }
+    }
+  }
+  return issues;
 }
 
 // ─── Overlay de acciones (drag + insertar + duplicar + eliminar) ─────────────
@@ -1727,6 +1762,15 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
     setTimeout(() => { input.focus(); input.selectionStart = input.selectionEnd = s + tag.length; }, 0);
   }
 
+  // Sin variable no hay forma de validar el string tal cual se escribió — se resuelve recién
+  // al enviar, así que se deja pasar hasta ese momento.
+  const srcError = block.dynamic && block.src.trim() && !containsVariable(block.src)
+    ? !isHttpsUrl(block.src) ? 'Debe empezar con https://' : !hasImageExtension(block.src) ? 'Debe terminar en .jpg, .jpeg o .png' : null
+    : null;
+  const linkError = block.link.trim() && !containsVariable(block.link) && !isHttpsUrl(block.link)
+    ? 'Debe empezar con https://'
+    : null;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <GroupHeading>Carga de imagen</GroupHeading>
@@ -1751,7 +1795,7 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
           {block.dynamic ? (
             <Input
               ref={urlRef} value={block.src} onChange={e => onUpdate({ ...block, src: e.target.value })}
-              placeholder="https://" maxLength={250} style={{ flex: 1 }}
+              placeholder="https://" maxLength={250} style={{ flex: 1 }} status={srcError ? 'error' : undefined}
             />
           ) : (
             <>
@@ -1773,11 +1817,16 @@ function ImageContentFields({ block, onUpdate }: { block: ImageComponent; onUpda
           )}
         </div>
         {block.dynamic && <VariableCounterRow length={block.src.length} max={250} onAddVariable={() => setVarTarget('src')} />}
+        {srcError && <p style={{ color: '#ff4d4f', fontSize: 12, margin: '4px 0 0' }}>{srcError}</p>}
       </div>
       <div>
         <FieldLabel icon={<BiLink />}>Enlace</FieldLabel>
-        <Input ref={linkRef} value={block.link} onChange={e => onUpdate({ ...block, link: e.target.value })} placeholder="https://" maxLength={250} />
+        <Input
+          ref={linkRef} value={block.link} onChange={e => onUpdate({ ...block, link: e.target.value })}
+          placeholder="https://" maxLength={250} status={linkError ? 'error' : undefined}
+        />
         <VariableCounterRow length={block.link.length} max={250} onAddVariable={() => setVarTarget('link')} />
+        {linkError && <p style={{ color: '#ff4d4f', fontSize: 12, margin: '4px 0 0' }}>{linkError}</p>}
       </div>
       <VariablePickerModal open={varTarget !== null} onClose={() => setVarTarget(null)} onPick={insertVariable} />
       <div>
@@ -1857,12 +1906,20 @@ function ButtonContentFields({ block, onUpdate }: { block: ButtonComponent; onUp
     setTimeout(() => { input.focus(); input.selectionStart = input.selectionEnd = s + tag.length; }, 0);
   }
 
+  const urlError = block.url.trim() && !containsVariable(block.url) && !isHttpsUrl(block.url)
+    ? 'Debe empezar con https://'
+    : null;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div><FieldLabel icon={<BiText />}>Texto del botón</FieldLabel><Input value={block.text} onChange={e => onUpdate({ ...block, text: e.target.value })} /></div>
       <div>
         <FieldLabel icon={<BiLink />}>URL de destino</FieldLabel>
-        <Input ref={urlRef} value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })} placeholder="Ingrese la url" maxLength={2048} />
+        <Input
+          ref={urlRef} value={block.url} onChange={e => onUpdate({ ...block, url: e.target.value })}
+          placeholder="Ingrese la url" maxLength={2048} status={urlError ? 'error' : undefined}
+        />
+        {urlError && <p style={{ color: '#ff4d4f', fontSize: 12, margin: '4px 0 0' }}>{urlError}</p>}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
           <button
             type="button" onClick={() => setVarPickerOpen(true)}
@@ -1932,6 +1989,15 @@ const SHAPE_OPTIONS: { value: 'square' | 'rounded' | 'circle'; icon: React.React
   { value: 'rounded', icon: <ShapeSwatch shape="rounded" />, title: 'Redondeado' },
   { value: 'circle', icon: <ShapeSwatch shape="circle" />, title: 'Círculo' },
 ];
+// El campo ya tiene "https://" fijo como addonBefore — solo falta validar que, si la red
+// está incluida, se haya escrito algo, y que no se repita el esquema dentro del valor.
+function socialUrlError(entry: SocialNetworkEntry): string | null {
+  if (!entry.included) return null;
+  if (!entry.url.trim()) return 'Falta la URL';
+  if (/^https?:\/\//i.test(entry.url)) return 'No repitas https:// — ya está incluido antes del campo';
+  return null;
+}
+
 function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUpdate: (b: Component) => void }) {
   function setEntry(network: SocialNetworkKey, patch: { included?: boolean; url?: string }) {
     onUpdate({ ...block, networks: block.networks.map(n => n.network === network ? { ...n, ...patch } : n) });
@@ -1965,20 +2031,24 @@ function SocialContentFields({ block, onUpdate }: { block: SocialComponent; onUp
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
-        {block.networks.map(entry => (
-          <div key={entry.network}>
-            <Checkbox checked={entry.included} onChange={e => setEntry(entry.network, { included: e.target.checked })}>
-              <Text style={{ fontSize: 14, color: 'rgba(0,0,0,0.85)' }}>{SOCIAL_LABELS[entry.network]}</Text>
-            </Checkbox>
-            <Input
-              addonBefore="https://" maxLength={2048}
-              value={entry.url} onChange={e => setEntry(entry.network, { url: e.target.value })}
-              placeholder={`https://www.${SOCIAL_LABELS[entry.network]}.com`}
-              style={{ marginTop: 8 }}
-            />
-            <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'right', marginTop: 4 }}>{entry.url.length}/2048</Text>
-          </div>
-        ))}
+        {block.networks.map(entry => {
+          const error = socialUrlError(entry);
+          return (
+            <div key={entry.network}>
+              <Checkbox checked={entry.included} onChange={e => setEntry(entry.network, { included: e.target.checked })}>
+                <Text style={{ fontSize: 14, color: 'rgba(0,0,0,0.85)' }}>{SOCIAL_LABELS[entry.network]}</Text>
+              </Checkbox>
+              <Input
+                addonBefore="https://" maxLength={2048}
+                value={entry.url} onChange={e => setEntry(entry.network, { url: e.target.value })}
+                placeholder={`https://www.${SOCIAL_LABELS[entry.network]}.com`}
+                style={{ marginTop: 8 }} status={error ? 'error' : undefined}
+              />
+              <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'right', marginTop: 4 }}>{entry.url.length}/2048</Text>
+              {error && <p style={{ color: '#ff4d4f', fontSize: 12, margin: '-2px 0 0' }}>{error}</p>}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -2145,18 +2215,41 @@ export default function EditorView({ template, onChange, onBack }: Props) {
     onChange({ ...draft, blocksUpdatedAt: new Date().toISOString() });
     onBack();
   }
-  function handleSaveDesign() {
+  // Compartido entre "Guardar diseño" y "Enviar prueba": ninguna de las dos debe poder
+  // ejecutarse con el correo vacío o con un enlace/URL mal formado. Devuelve false y muestra
+  // el aviso correspondiente si algo no pasa; true si está todo en orden.
+  function validateContentOrWarn(emptyMessage: string): boolean {
     if (countComponents(draft.rows) === 0) {
       Modal.warning({
         title: 'Acción no permitida',
-        content: 'Debes agregar contenido al correo antes de guardarlo.',
+        content: emptyMessage,
         icon: decisionIcon('warning'),
         okButtonProps: ROUND_BTN,
         getContainer: () => rootRef.current || document.body,
-      styles: { content: { borderRadius: 20 } },
+        styles: { content: { borderRadius: 20 } },
       });
-      return;
+      return false;
     }
+    const issues = collectContentIssues(draft.rows);
+    if (issues.length > 0) {
+      Modal.warning({
+        title: 'Revisa los enlaces del correo',
+        content: (
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
+            {issues.map((it, i) => <li key={i}>{it.label}: {it.reason}</li>)}
+          </ul>
+        ),
+        icon: decisionIcon('warning'),
+        okButtonProps: ROUND_BTN,
+        getContainer: () => rootRef.current || document.body,
+        styles: { content: { borderRadius: 20 } },
+      });
+      return false;
+    }
+    return true;
+  }
+  function handleSaveDesign() {
+    if (!validateContentOrWarn('Debes agregar contenido al correo antes de guardarlo.')) return;
     Modal.confirm({
       title: '¿Guardar esta plantilla?',
       content: 'Estás a punto de guardar los cambios realizados en esta plantilla de correo. Asegúrate de haber verificado que todo se ve como esperas.',
@@ -2169,6 +2262,10 @@ export default function EditorView({ template, onChange, onBack }: Props) {
       styles: { content: { borderRadius: 20 } },
       onOk: () => commitSaveDesign(),
     });
+  }
+  function handleOpenTestModal() {
+    if (!validateContentOrWarn('Debes agregar contenido al correo antes de enviar una prueba.')) return;
+    setShowTestModal(true);
   }
   function handleModeChange(next: 'visual' | 'html') {
     if (next === 'visual' && draft.customHtml != null) {
@@ -2249,7 +2346,7 @@ export default function EditorView({ template, onChange, onBack }: Props) {
           style={{ flexShrink: 0 }}
         />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <Button icon={<BiSend />} onClick={() => setShowTestModal(true)}>Enviar prueba</Button>
+          <Button icon={<BiSend />} onClick={handleOpenTestModal}>Enviar prueba</Button>
           <Button type="primary" onClick={handleSaveDesign}>Guardar diseño</Button>
         </div>
       </div>

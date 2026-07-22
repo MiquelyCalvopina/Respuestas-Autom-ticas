@@ -43,6 +43,15 @@ export function containsVariable(text: string): boolean {
   return /\{\{[a-zA-Z0-9_]+\}\}/.test(text);
 }
 
+export function isHttpsUrl(url: string): boolean {
+  return /^https:\/\/\S+$/i.test(url.trim());
+}
+
+// Ignora el query string/hash al revisar la extensión (ej. ".../foto.jpg?v=2" es válido).
+export function hasImageExtension(url: string): boolean {
+  return /\.(jpe?g|png)$/i.test(url.trim().split(/[?#]/)[0]);
+}
+
 // Variables usadas dentro de los campos que ya soportan inserción de variables en una URL
 // (Imagen → Origen dinámico / Enlace, Botón → URL) — el resto del contenido (texto, redes
 // sociales) queda fuera porque hoy no ofrece el picker de variables en esos campos.
