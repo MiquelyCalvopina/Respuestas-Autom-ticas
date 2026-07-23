@@ -369,18 +369,28 @@ orden:
 
 1. **Correo vacío** (`countComponents(draft.rows) === 0`): modal "Acción no permitida — Debes
    agregar contenido al correo antes de guardarlo/enviar una prueba." — bloquea por completo.
-2. **Enlaces mal formados** (`collectContentIssues`): modal "Revisa los enlaces del correo" con
-   la lista puntual de qué falta corregir. Hoy solo puede haber un tipo real de problema
-   reportado aquí — ver el punto siguiente — porque el resto de las reglas de URL son
-   estructuralmente imposibles de violar (sección 5.7).
+2. **Contenido incompleto** (`collectContentIssues`): modal **"Revisa el contenido del correo"**
+   con la lista puntual de qué falta corregir, un ítem por problema (`{componente}: {motivo}`).
 3. Si ambas pasan: para Guardar, un `Modal.confirm` adicional ("¿Guardar esta plantilla?"); para
    Enviar prueba, se abre directo el modal de "Enviar prueba" (sección 6).
 
-**Único caso hoy detectado por `collectContentIssues`:** una Imagen en modo "URL dinámico" cuyo
-valor **no** termina en `.jpg`, `.jpeg` o `.png` (ignorando query string/hash) — salvo que ese
-campo contenga una variable sin resolver (`{{var}}`), en cuyo caso no se puede validar todavía y
-se deja pasar. También se valida que cualquier red social marcada como incluida tenga su URL
-completada (no vacía).
+**Todo lo que `collectContentIssues` detecta hoy** (no solo formato de URL — también componentes
+que el usuario agregó pero dejó vacíos, que antes se guardaban en silencio dejando un hueco visible
+en el correo real):
+
+| Componente | Problema detectado | Mensaje |
+|---|---|---|
+| Imagen | sin imagen en absoluto (ni subida, ni URL escrita) | "falta subir una imagen" / "falta escribir la URL" según el Origen elegido |
+| Imagen (URL dinámico) | tiene URL pero no termina en `.jpg`/`.jpeg`/`.png` | "la URL debe terminar en .jpg, .jpeg o .png" (se omite si el campo aún tiene una variable `{{...}}` sin resolver) |
+| Botón | sin texto | "falta el texto del botón" |
+| Botón | sin URL de destino | "falta la URL de destino" |
+| Texto | contenido vacío/solo espacios | "el contenido está vacío" |
+| Bloque de respuestas | ninguna pregunta incluida | "no hay ninguna pregunta incluida" |
+| Redes Sociales | ninguna red activada | "activa al menos una red social" |
+| Redes Sociales | una red activada pero sin URL | "Falta la URL" (por cada red, con su nombre en la etiqueta) |
+
+`header`/`title` (tipos legado sin punto de creación, sección 5.4), `divisor` y `espaciador` no
+tienen "estado vacío" posible, así que no se validan.
 
 ### 5.7 URLs con "https://" fijo — Imagen, Botón, Redes Sociales
 
@@ -456,26 +466,64 @@ selector de fecha del wizard):
   ("Se cruza con '[nombre]' (rango de fechas)").
 
 **Estados visibles por plantilla** (`templateState`, chip de color en cada fila):
-- `draft` (gris) — sin `startDate`.
-- `scheduled` (azul) — `startDate` en el futuro.
-- `now` (verde) — es la que se usaría **hoy**, incluyendo el caso sutil de una permanente que
-  hoy está meramente **eclipsada** por una temporal en curso (esa permanente sigue reportando
-  `now`, no `ended`, porque mañana sin esa temporal volvería a regir sola).
-- `ended` (gris) — una temporal cuya ventana ya pasó, o una permanente **genuinamente
-  reemplazada** por otra permanente de inicio más reciente (no solo eclipsada temporalmente).
+- `draft` (gris) — sin `startDate`. Chip: **"Sin programar"**.
+- `scheduled` (azul) — `startDate` en el futuro. Chip: **"Desde [fecha]"**.
+- `now` — es la que se usaría **hoy**, pero con **dos chips distintos** según el caso (ver nota
+  abajo): verde **"Se usa ahora"** para la que realmente se envía, gris **"De respaldo — hoy se
+  envía: [nombre]"** para una permanente meramente **eclipsada** por una temporal en curso (esa
+  permanente sigue reportando `now`, no `ended`, porque en cuanto termine la temporal vuelve a
+  regir sola).
+- `ended` (gris) — una temporal cuya ventana ya pasó (chip **"Terminó [fecha]"**), o una
+  permanente **genuinamente reemplazada** por otra permanente de inicio más reciente (chip
+  **"Reemplazada por: [nombre]"** — no muestra una fecha de fin porque nunca tuvo una).
 
-**Acciones por fila** (dependen del estado):
-- `now`/`scheduled`: Editar (→ `editor`); Eliminar (con confirmación) — **bloqueado** si es la
-  única plantilla permanente restante (`isOnlyPermanent`, siempre debe quedar un respaldo).
-- `ended`: "Reprogramar" (mismo popover de fecha), "Hacer principal" (la activa ahora mismo, sin
-  fecha de fin, reemplazando a la vigente actual — sin chequeo de conflicto porque por
-  construcción una permanente nueva nunca puede chocar), Eliminar.
+> **Nota histórica:** las dos situaciones de `now` (la que se envía vs. la que está en espera)
+> mostraban originalmente el mismo chip verde "Vigente · hoy" en ambas filas — un usuario podía
+> ver dos plantillas "vigentes" a la vez sin ninguna pista de cuál se enviaba en realidad. Se
+> corrigió separando el chip verde real de un chip gris de espera con texto explícito. Del mismo
+> modo, una permanente reemplazada por otra permanente llegó a mostrar "Terminó [fecha]" con una
+> fecha inexistente (`endDate: null`) — se corrigió para mostrar "Reemplazada por: [nombre]" en
+> ese caso.
+
+**Agrupación en 3 secciones** (no 2): "en rotación" (todo lo `now`/`scheduled`, sin encabezado,
+arriba de todo), **"Historial"** (todo lo `ended` — vencidas o reemplazadas, con su propio
+encabezado de sección, solo si hay al menos una), **"Sin programar"** (los `draft`, ídem). Una
+plantilla `ended` no se mezcla con los borradores aunque ambas se vean "grises", porque una
+`ended` sí tuvo una fecha real y conserva acciones propias (Reprogramar/Hacer principal) que un
+borrador nunca tuvo.
+
+**Acciones por fila** (dependen del estado; mismo lenguaje visual en las 4 — ícono cuadrado
+32×32 con borde, sin mezclar botones de texto con botones de ícono):
+- `now`/`scheduled`: Editar (→ `editor`); **Reprogramar** (mismo popover de fecha — permite
+  adelantar/atrasar el fin, cambiar el inicio, o quitarle la fecha de fin, sin necesidad de
+  eliminarla y perder su diseño); Eliminar (con confirmación) — **bloqueado** (ícono
+  deshabilitado + tooltip) si es la única plantilla permanente restante (`isOnlyPermanent`,
+  siempre debe quedar un respaldo).
+- `ended`: "Reprogramar", "Hacer principal" (la activa ahora mismo, sin fecha de fin,
+  reemplazando a la vigente actual — sin chequeo de conflicto porque por construcción una
+  permanente nueva nunca puede chocar), Eliminar.
 - `draft`: Editar, "Programar" (popover: fecha de inicio + checkbox "¿Tiene fecha de fin?" +
   fecha de fin opcional; el botón "Guardar" del popover se deshabilita en vivo si hay conflicto),
   Eliminar.
 
+El popover de fecha dice **"Programar"** en su título solo para una plantilla que nunca tuvo
+`startDate` (borrador); para cualquier otro estado (ya tenía fecha) dice **"Reprogramar"** —
+mismo criterio que la etiqueta del botón que lo abre.
+
+**Nombre editable**: el nombre de cada plantilla es un campo de texto en línea (subrayado
+punteado solo en hover/foco, sin ícono de lápiz propio — el lápiz de esa fila ya es el botón
+"Editar" que abre el editor de correo; agregar un segundo lápiz para renombrar generaba
+confusión sobre cuál hacía qué). Es el único lugar del módulo donde se puede renombrar una
+plantilla después de creada.
+
 "+ Nueva plantilla" agrega una plantilla en blanco (borrador, sin programar) y abre directo el
 editor para diseñarla.
+
+**Responsive**: la fila de cada plantilla se agrupa en dos bloques (identidad; chip+acciones) que
+envuelven de forma independiente en viewports angostos (~375px), en vez de comprimirse o forzar
+scroll horizontal — mismo criterio ya usado en los headers del wizard/editor. El popover de
+programar tiene un ancho máximo de seguridad (`calc(100vw - 48px)`) y sus botones usan el tamaño
+por defecto (32px), no `size="small"` (24px, por debajo del mínimo táctil recomendado).
 
 ---
 
@@ -530,3 +578,64 @@ sucursal, NPS, fecha, motivo si aplica).
 - **Borrador (draft) local del editor** — la copia de trabajo de una plantilla mientras la
   estás editando; no toca la regla real hasta "Guardar diseño".
 - **Vigencia** — el sistema de `startDate`/`endDate` que decide qué plantilla se usa cada día.
+
+---
+
+## 11. Cambios posteriores a esta guía
+
+Esta sección documenta, en un solo lugar, todo lo que cambió **después** de escribir la versión
+original de esta guía (§1-10 ya reflejan el estado más nuevo donde aplica; lo de acá es un resumen
+para quien quiera saber exactamente qué se tocó y por qué, sin tener que revisar el historial de
+git). Todo lo siguiente ya está commiteado y funcionando.
+
+**Consistencia visual del wizard**
+- El padding/ancho interior de los Pasos 1 y 2 se unificó al mismo valor que ya usaba el Paso 3
+  (900px), para que los campos no salten de posición horizontal al cambiar de paso.
+- Se corrigieron dos casos del mismo bug de alineación (un ícono puesto con `margin` en vez de
+  `flex` + `gap`, dentro de un contenedor sin `display:flex`, queda descuadrado): el "+" del
+  texto "Agregar elemento" en el editor, y el ícono de imagen del placeholder "Sin imagen".
+
+**Nombre de plantilla editable**
+- Antes el nombre de una plantilla se fijaba una sola vez al crearla, sin forma de cambiarlo.
+  Ahora es editable en línea tanto en el header del editor de correo como en cada fila del
+  gestor de plantillas (sección 7) — sin ícono de lápiz propio en la fila del gestor, para no
+  confundirlo con el lápiz de "Editar" (que abre el editor de correo).
+
+**Gestor de plantillas — corrección de ambigüedad de estado**
+- Se detectó (reportado por el usuario con capturas) que dos plantillas podían mostrar el mismo
+  chip verde "vigente" al mismo tiempo sin ninguna pista de cuál se enviaba en realidad — una
+  permanente en espera y la que de verdad se envía hoy compartían el mismo chip. Se separaron en
+  dos chips distintos (ver §7).
+- Al investigar ese caso se encontró y corrigió un bug relacionado: una plantilla permanente
+  reemplazada por otra permanente más nueva mostraba "Terminó [fecha]" con una fecha que no
+  existía (`endDate: null`) — ahora muestra "Reemplazada por: [nombre]".
+- Se verificó exhaustivamente la lógica de vigencia completa con una batería de 49 aserciones
+  (encadenamiento de permanentes, interacción temporal/permanente, conflictos incluyendo el caso
+  límite de fechas exactamente contiguas, protección de la única permanente, borradores) — todas
+  pasaron. Un caso de empate informativo (dos plantillas con la misma fecha de inicio) quedó
+  documentado pero, a pedido explícito del usuario, sin agregar una advertencia adicional en la
+  UI para ese escenario.
+
+**Rediseño completo de la fila de plantilla**
+- Se unificaron las 4 acciones posibles (Editar, Reprogramar/Programar, Hacer principal,
+  Eliminar) al mismo lenguaje visual (ícono cuadrado 32×32 con borde) — antes algunas eran
+  botones de texto sin borde mezclados con botones de ícono.
+- Se agregó el botón **Reprogramar** a las plantillas vigentes/programadas (`now`/`scheduled`),
+  que antes solo podían editarse en contenido o eliminarse, sin forma de ajustar sus fechas
+  (adelantar/atrasar el fin, cambiar el inicio) sin borrarlas y perder su diseño.
+- Se agrupó la lista en 3 secciones (en rotación / Historial / Sin programar) en vez de una lista
+  plana, con encabezados de sección — antes todo se veía junto y sin un criterio de orden claro.
+
+**Validaciones de contenido antes de guardar/enviar**
+- `collectContentIssues` solo validaba el formato de URLs ya escritas (extensión de imagen, URL
+  de red social). Un componente agregado pero dejado vacío (imagen sin imagen, botón sin texto o
+  sin URL, redes sociales sin ninguna red activada, texto en blanco, bloque de respuestas con
+  todas sus preguntas desmarcadas) pasaba sin ningún aviso y se guardaba dejando un hueco visible
+  en el correo real. Ahora los 8 casos de la tabla en la sección 5.6 se detectan y bloquean.
+
+**Responsive**
+- La fila de cada plantilla en el gestor y el popover de programar/reprogramar se revisaron
+  específicamente para viewports angostos (~375px): la fila se agrupa en dos bloques que
+  envuelven de forma independiente en vez de desbordar, y el popover tiene un ancho máximo de
+  seguridad y botones de tamaño normal (32px) en vez de `size="small"` (24px, por debajo del
+  mínimo táctil recomendado).
