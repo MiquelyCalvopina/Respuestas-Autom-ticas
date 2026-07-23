@@ -124,7 +124,7 @@ function SchedulePopover({ template, others, onSave, children }: {
       trigger="click" placement="bottomRight" open={open} onOpenChange={setOpen}
       content={
         <div style={{ width: 280, fontFamily: "'Roboto', sans-serif" }}>
-          <p style={{ margin: '0 0 3px', fontSize: 14, fontWeight: 500, color: 'rgba(0,0,0,0.85)' }}>Programar "{template.name}"</p>
+          <p style={{ margin: '0 0 3px', fontSize: 14, fontWeight: 500, color: 'rgba(0,0,0,0.85)' }}>{template.startDate ? 'Reprogramar' : 'Programar'} "{template.name}"</p>
           <p style={{ margin: '0 0 14px', fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>Define cuándo se usa esta plantilla.</p>
 
           <div style={{ marginBottom: 12 }}>
