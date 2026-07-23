@@ -77,10 +77,20 @@ const STANDBY_CHIP = { bg: '#f5f5f5', fg: 'rgba(0,0,0,0.65)' };
 
 // `isActiveToday` distingue la vigente real de una permanente que sigue de respaldo pero hoy
 // está tapada por una temporal en curso — ambas son `kind === 'now'`, pero solo una se envía.
-function stateChipText(t: EmailTemplate, kind: TemplateStateKind, isActiveToday: boolean, activeName: string): string {
+// `templates` solo hace falta para el caso "ended" de una permanente (no tiene su propia
+// fecha de fin — hay que encontrar qué otra permanente la reemplazó para explicarlo).
+function stateChipText(t: EmailTemplate, templates: EmailTemplate[], kind: TemplateStateKind, isActiveToday: boolean, activeName: string): string {
   if (kind === 'now') return isActiveToday ? 'Se usa ahora' : `De respaldo — hoy se envía: ${activeName}`;
   if (kind === 'scheduled') return `Desde ${fmt(t.startDate!)}`;
-  if (kind === 'ended') return `Terminó ${fmt(t.endDate!)}`;
+  if (kind === 'ended') {
+    if (t.endDate) return `Terminó ${fmt(t.endDate)}`;
+    // Permanente reemplazada por otra de inicio más reciente — no tiene fecha de fin propia,
+    // así que no hay "Terminó [fecha]" que mostrar; se explica con el nombre de la que la reemplazó.
+    const successor = templates
+      .filter(x => x.id !== t.id && x.startDate && !x.endDate && x.startDate! > t.startDate!)
+      .sort((a, b) => a.startDate!.localeCompare(b.startDate!))[0];
+    return successor ? `Reemplazada por: ${successor.name}` : 'Reemplazada';
+  }
   return 'Sin programar';
 }
 
@@ -188,7 +198,7 @@ function TemplateRow({ template, rule, onChange, onEditTemplate }: {
 
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: chip.bg, color: chip.fg, borderRadius: 16, padding: '4px 8px', fontSize: 12, flexShrink: 0, whiteSpace: 'nowrap' }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: chip.fg, flexShrink: 0 }} />
-        {stateChipText(template, kind, isActiveToday, activeTemplate.name)}
+        {stateChipText(template, rule.templates, kind, isActiveToday, activeTemplate.name)}
       </span>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
