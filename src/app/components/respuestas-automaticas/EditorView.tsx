@@ -263,20 +263,39 @@ function renderRowsToHtml(rows: Row[]): string {
 
 interface ContentIssue { label: string; reason: string; }
 
-// Barrido de validación de URLs previo a Guardar/Enviar prueba — un campo con una variable
-// sin resolver no se valida (se resuelve recién al enviar, ver resolveRowsVariables).
+// Barrido de validación previo a Guardar/Enviar prueba — cubre tanto formato (URLs mal
+// escritas) como contenido faltante: un componente que el usuario agregó pero dejó vacío
+// (imagen sin imagen, botón sin destino, redes sociales sin ninguna activada, texto en
+// blanco, bloque de respuestas sin preguntas incluidas) se renderiza como un hueco visible
+// en el correo — no debe poder guardarse ni enviarse así. Un campo con una variable sin
+// resolver no se valida (se resuelve recién al enviar, ver resolveRowsVariables).
 function collectContentIssues(rows: Row[]): ContentIssue[] {
   const issues: ContentIssue[] = [];
   for (const row of rows) {
     for (const col of row.columns) {
       for (const comp of col.components) {
-        // El "https://" ya es fijo (addonBefore) en estos 3 campos — estructuralmente no se
-        // puede omitir, así que lo único que queda por validar es la extensión de la imagen
-        // y que las redes marcadas realmente tengan una URL.
-        if (comp.type === 'image' && comp.dynamic && comp.src.trim() && !containsVariable(comp.src) && !hasImageExtension(comp.src)) {
-          issues.push({ label: 'Imagen', reason: 'la URL debe terminar en .jpg, .jpeg o .png' });
+        if (comp.type === 'image') {
+          if (!comp.src.trim()) {
+            issues.push({ label: 'Imagen', reason: comp.dynamic ? 'falta escribir la URL' : 'falta subir una imagen' });
+          } else if (comp.dynamic && !containsVariable(comp.src) && !hasImageExtension(comp.src)) {
+            // El "https://" ya es fijo (addonBefore) — estructuralmente no se puede omitir.
+            issues.push({ label: 'Imagen', reason: 'la URL debe terminar en .jpg, .jpeg o .png' });
+          }
+        }
+        if (comp.type === 'button') {
+          if (!comp.text.trim()) issues.push({ label: 'Botón', reason: 'falta el texto del botón' });
+          if (!comp.url.trim()) issues.push({ label: 'Botón', reason: 'falta la URL de destino' });
+        }
+        if (comp.type === 'text' && !comp.content.trim()) {
+          issues.push({ label: 'Texto', reason: 'el contenido está vacío' });
+        }
+        if (comp.type === 'responses' && comp.questions.every(q => !q.included)) {
+          issues.push({ label: 'Bloque de respuestas', reason: 'no hay ninguna pregunta incluida' });
         }
         if (comp.type === 'social') {
+          if (comp.networks.every(n => !n.included)) {
+            issues.push({ label: 'Redes sociales', reason: 'activa al menos una red social' });
+          }
           for (const n of comp.networks) {
             const err = socialUrlError(n);
             if (err) issues.push({ label: `Redes sociales — ${SOCIAL_LABELS[n.network]}`, reason: err });
@@ -2233,7 +2252,7 @@ export default function EditorView({ template, onChange, onBack }: Props) {
     const issues = collectContentIssues(draft.rows);
     if (issues.length > 0) {
       Modal.warning({
-        title: 'Revisa los enlaces del correo',
+        title: 'Revisa el contenido del correo',
         content: (
           <ul style={{ margin: 0, paddingLeft: 18 }}>
             {issues.map((it, i) => <li key={i}>{it.label}: {it.reason}</li>)}
