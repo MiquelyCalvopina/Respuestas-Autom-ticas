@@ -185,89 +185,100 @@ function TemplateRow({ template, rule, onChange, onEditTemplate }: {
 
   return (
     <div
-      style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 16, borderStyle: kind === 'draft' ? 'dashed' : 'solid' }}
+      style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 16, rowGap: 10, padding: 16, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 16, borderStyle: kind === 'draft' ? 'dashed' : 'solid' }}
       onMouseEnter={e => (e.currentTarget.style.boxShadow = '0px 2px 8px 0px rgba(0,0,0,0.06)')}
       onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
     >
-      <div style={{
-        width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        background: kind === 'ended' ? '#f5f5f5' : kind === 'draft' ? 'transparent' : '#e6f7ff',
-        border: kind === 'draft' ? '1px dashed #d9d9d9' : `1px solid ${kind === 'ended' ? '#d9d9d9' : '#91d5ff'}`,
-        color: kind === 'ended' ? 'rgba(0,0,0,0.45)' : kind === 'draft' ? 'rgba(0,0,0,0.25)' : '#1890ff',
-      }}>
-        <BiEnvelope style={{ fontSize: 18 }} />
-      </div>
+      {/* Bloque de identidad (ícono + nombre + meta) — flex-basis propio para que, en
+          viewports angostos, el resto de la fila (chip + acciones) baje a su propia línea
+          en vez de comprimirse hasta desbordar (mismo criterio ya usado para los headers
+          del wizard/editor: flexWrap + rowGap en vez de recortar contenido). */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: '1 1 200px', minWidth: 0 }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          background: kind === 'ended' ? '#f5f5f5' : kind === 'draft' ? 'transparent' : '#e6f7ff',
+          border: kind === 'draft' ? '1px dashed #d9d9d9' : `1px solid ${kind === 'ended' ? '#d9d9d9' : '#91d5ff'}`,
+          color: kind === 'ended' ? 'rgba(0,0,0,0.45)' : kind === 'draft' ? 'rgba(0,0,0,0.25)' : '#1890ff',
+        }}>
+          <BiEnvelope style={{ fontSize: 18 }} />
+        </div>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <EditableTemplateName value={template.name} onChange={name => patchTemplate({ name })} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', marginTop: 2 }}>
-          {template.startDate && <BiCalendar style={{ fontSize: 12, flexShrink: 0 }} />}
-          {describeMeta(template, rule.templates)}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <EditableTemplateName value={template.name} onChange={name => patchTemplate({ name })} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', marginTop: 2 }}>
+            {template.startDate && <BiCalendar style={{ fontSize: 12, flexShrink: 0 }} />}
+            {describeMeta(template, rule.templates)}
+          </div>
         </div>
       </div>
 
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: chip.bg, color: chip.fg, borderRadius: 16, padding: '4px 8px', fontSize: 12, flexShrink: 0, whiteSpace: 'nowrap' }}>
-        <span style={{ width: 6, height: 6, borderRadius: '50%', background: chip.fg, flexShrink: 0 }} />
-        {stateChipText(template, rule.templates, kind, isActiveToday, activeTemplate.name)}
-      </span>
+      {/* Chip + acciones — bloque propio que envuelve como unidad debajo del anterior en
+          mobile, y a la vez puede envolver internamente (chip arriba, acciones abajo) si
+          hace falta, para no forzar scroll horizontal en ~375px. */}
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12, rowGap: 8 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: chip.bg, color: chip.fg, borderRadius: 16, padding: '4px 8px', fontSize: 12, flexShrink: 0 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: chip.fg, flexShrink: 0 }} />
+          {stateChipText(template, rule.templates, kind, isActiveToday, activeTemplate.name)}
+        </span>
 
-      <div style={{ width: 1, height: 24, background: '#f0f0f0', flexShrink: 0 }} />
+        <div style={{ width: 1, height: 24, background: '#f0f0f0', flexShrink: 0 }} />
 
-      {/* Un solo lenguaje visual para toda acción de esta fila: ícono cuadrado 32×32 con
-          borde + title/aria-label nativos (mismo patrón, ya sea Editar/Reprogramar/Hacer
-          principal/Eliminar) — antes Reprogramar/Hacer principal eran links de texto sin
-          borde mezclados con botones de ícono, lo que se veía inconsistente. */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-        {(kind === 'now' || kind === 'scheduled') && (
-          <>
-            <Button icon={<BiEditAlt style={{ fontSize: 16 }} />} onClick={() => onEditTemplate(template.id)} aria-label="Editar" title="Editar" style={ACTION_BTN} />
-            {/* Antes solo se podía reprogramar una plantilla ended/borrador — una vigente o
-                programada no tenía forma de ajustar sus fechas (adelantar/atrasar el fin,
-                cambiar el inicio) sin eliminarla y perder su diseño. */}
-            <SchedulePopover template={template} others={others} onSave={patch => patchTemplate(patch)}>
-              <Button icon={<BiCalendar style={{ fontSize: 16 }} />} aria-label="Reprogramar" title="Reprogramar" style={ACTION_BTN} />
-            </SchedulePopover>
-          </>
-        )}
-        {kind === 'ended' && (
-          <>
-            <SchedulePopover template={template} others={others} onSave={patch => patchTemplate(patch)}>
-              <Button icon={<BiCalendar style={{ fontSize: 16 }} />} aria-label="Reprogramar" title="Reprogramar" style={ACTION_BTN} />
-            </SchedulePopover>
-            <Popconfirm
-              title={`¿Usar "${template.name}" ahora?`}
-              description={`Reemplaza a "${activeTemplate.name}" de inmediato.`}
-              okText="Sí, usar ahora" cancelText="Cancelar"
-              onConfirm={() => patchTemplate({ startDate: today, endDate: null })}
-            >
-              <Button icon={<BiCheckCircle style={{ fontSize: 16 }} />} aria-label="Hacer principal" title="Hacer principal" style={ACTION_BTN} />
-            </Popconfirm>
+        {/* Un solo lenguaje visual para toda acción de esta fila: ícono cuadrado 32×32 con
+            borde + title/aria-label nativos (mismo patrón, ya sea Editar/Reprogramar/Hacer
+            principal/Eliminar) — antes Reprogramar/Hacer principal eran links de texto sin
+            borde mezclados con botones de ícono, lo que se veía inconsistente. */}
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, flexShrink: 0 }}>
+          {(kind === 'now' || kind === 'scheduled') && (
+            <>
+              <Button icon={<BiEditAlt style={{ fontSize: 16 }} />} onClick={() => onEditTemplate(template.id)} aria-label="Editar" title="Editar" style={ACTION_BTN} />
+              {/* Antes solo se podía reprogramar una plantilla ended/borrador — una vigente o
+                  programada no tenía forma de ajustar sus fechas (adelantar/atrasar el fin,
+                  cambiar el inicio) sin eliminarla y perder su diseño. */}
+              <SchedulePopover template={template} others={others} onSave={patch => patchTemplate(patch)}>
+                <Button icon={<BiCalendar style={{ fontSize: 16 }} />} aria-label="Reprogramar" title="Reprogramar" style={ACTION_BTN} />
+              </SchedulePopover>
+            </>
+          )}
+          {kind === 'ended' && (
+            <>
+              <SchedulePopover template={template} others={others} onSave={patch => patchTemplate(patch)}>
+                <Button icon={<BiCalendar style={{ fontSize: 16 }} />} aria-label="Reprogramar" title="Reprogramar" style={ACTION_BTN} />
+              </SchedulePopover>
+              <Popconfirm
+                title={`¿Usar "${template.name}" ahora?`}
+                description={`Reemplaza a "${activeTemplate.name}" de inmediato.`}
+                okText="Sí, usar ahora" cancelText="Cancelar"
+                onConfirm={() => patchTemplate({ startDate: today, endDate: null })}
+              >
+                <Button icon={<BiCheckCircle style={{ fontSize: 16 }} />} aria-label="Hacer principal" title="Hacer principal" style={ACTION_BTN} />
+              </Popconfirm>
+              <Popconfirm title="¿Eliminar esta plantilla?" description="Se perderá su diseño." okText="Sí, eliminar" cancelText="Cancelar" okButtonProps={{ danger: true }} onConfirm={deleteTemplate}>
+                <Button danger icon={<BiTrash style={{ fontSize: 16 }} />} aria-label="Eliminar" title="Eliminar" style={ACTION_BTN} />
+              </Popconfirm>
+            </>
+          )}
+          {kind === 'draft' && (
+            <>
+              <Button icon={<BiEditAlt style={{ fontSize: 16 }} />} onClick={() => onEditTemplate(template.id)} aria-label="Editar" title="Editar" style={ACTION_BTN} />
+              <SchedulePopover template={template} others={others} onSave={patch => patchTemplate(patch)}>
+                <Button icon={<BiCalendar style={{ fontSize: 16 }} />} aria-label="Programar" title="Programar" style={ACTION_BTN} />
+              </SchedulePopover>
+              <Popconfirm title="¿Eliminar esta plantilla?" description="Se perderá su diseño." okText="Sí, eliminar" cancelText="Cancelar" okButtonProps={{ danger: true }} onConfirm={deleteTemplate}>
+                <Button danger icon={<BiTrash style={{ fontSize: 16 }} />} aria-label="Eliminar" title="Eliminar" style={ACTION_BTN} />
+              </Popconfirm>
+            </>
+          )}
+          {(kind === 'now' || kind === 'scheduled') && canDelete && (
             <Popconfirm title="¿Eliminar esta plantilla?" description="Se perderá su diseño." okText="Sí, eliminar" cancelText="Cancelar" okButtonProps={{ danger: true }} onConfirm={deleteTemplate}>
               <Button danger icon={<BiTrash style={{ fontSize: 16 }} />} aria-label="Eliminar" title="Eliminar" style={ACTION_BTN} />
             </Popconfirm>
-          </>
-        )}
-        {kind === 'draft' && (
-          <>
-            <Button icon={<BiEditAlt style={{ fontSize: 16 }} />} onClick={() => onEditTemplate(template.id)} aria-label="Editar" title="Editar" style={ACTION_BTN} />
-            <SchedulePopover template={template} others={others} onSave={patch => patchTemplate(patch)}>
-              <Button icon={<BiCalendar style={{ fontSize: 16 }} />} aria-label="Programar" title="Programar" style={ACTION_BTN} />
-            </SchedulePopover>
-            <Popconfirm title="¿Eliminar esta plantilla?" description="Se perderá su diseño." okText="Sí, eliminar" cancelText="Cancelar" okButtonProps={{ danger: true }} onConfirm={deleteTemplate}>
-              <Button danger icon={<BiTrash style={{ fontSize: 16 }} />} aria-label="Eliminar" title="Eliminar" style={ACTION_BTN} />
-            </Popconfirm>
-          </>
-        )}
-        {(kind === 'now' || kind === 'scheduled') && canDelete && (
-          <Popconfirm title="¿Eliminar esta plantilla?" description="Se perderá su diseño." okText="Sí, eliminar" cancelText="Cancelar" okButtonProps={{ danger: true }} onConfirm={deleteTemplate}>
-            <Button danger icon={<BiTrash style={{ fontSize: 16 }} />} aria-label="Eliminar" title="Eliminar" style={ACTION_BTN} />
-          </Popconfirm>
-        )}
-        {(kind === 'now' || kind === 'scheduled') && !canDelete && (
-          <Tooltip title="No se puede eliminar la única plantilla permanente.">
-            <Button danger disabled icon={<BiTrash style={{ fontSize: 16 }} />} aria-label="Eliminar" style={ACTION_BTN} />
-          </Tooltip>
-        )}
+          )}
+          {(kind === 'now' || kind === 'scheduled') && !canDelete && (
+            <Tooltip title="No se puede eliminar la única plantilla permanente.">
+              <Button danger disabled icon={<BiTrash style={{ fontSize: 16 }} />} aria-label="Eliminar" style={ACTION_BTN} />
+            </Tooltip>
+          )}
+        </div>
       </div>
     </div>
   );
