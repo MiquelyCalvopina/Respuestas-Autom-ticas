@@ -2412,7 +2412,9 @@ export default function EditorView({ template, onChange, onBack }: Props) {
                         onClick={() => { setActiveTab('elementos'); requestAnimationFrame(() => document.getElementById('palette-section')?.scrollIntoView({ behavior: 'smooth' })); }}
                         style={{ padding: 16, textAlign: 'center', cursor: 'pointer', borderTop: '1px dashed #d9d9d9' }}
                       >
-                        <Text type="secondary" style={{ fontSize: 12 }}><BiPlus style={{ marginRight: 8 }} />Agregar elemento, o arrastra uno aquí</Text>
+                        <Text type="secondary" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                          <BiPlus />Agregar elemento, o arrastra uno aquí
+                        </Text>
                       </div>
                     </AddElementDropZone>
                   </div>
