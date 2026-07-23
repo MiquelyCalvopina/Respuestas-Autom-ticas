@@ -668,9 +668,12 @@ function CanvasImage({ component }: { component: ImageComponent }) {
   const [broken, setBroken] = useState(false);
   if (!component.src) {
     return (
-      <div style={{ margin: '0 32px', padding: '32px', textAlign: 'center', color: '#bfbfbf', border: '1px dashed #d9d9d9', borderRadius: 8 }}>
+      <div style={{
+        margin: '0 32px', padding: '32px', color: '#bfbfbf', border: '1px dashed #d9d9d9', borderRadius: 8,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, textAlign: 'center',
+      }}>
         <BiImage style={{ fontSize: 24 }} />
-        <div style={{ fontSize: 12, lineHeight: 'normal', marginTop: 8 }}>Sin imagen — selecciónala y define la URL en Diseño</div>
+        <div style={{ fontSize: 12, lineHeight: 'normal' }}>Sin imagen — selecciónala y define la URL en Diseño</div>
       </div>
     );
   }
