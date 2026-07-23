@@ -40,6 +40,17 @@ function EditableTemplateName({ value, onChange }: { value: string; onChange: (v
 
 const ACTION_BTN: React.CSSProperties = { width: 32, height: 32, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 };
 
+// Encabezado de sección chico (label uppercase + línea) — mismo patrón para agrupar
+// "Historial" (plantillas ended: vencidas o reemplazadas) y "Sin programar" (borradores).
+function SectionHeader({ label }: { label: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '18px 0 10px' }}>
+      <span style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: 0.04, textTransform: 'uppercase', color: 'rgba(0,0,0,0.25)' }}>{label}</span>
+      <div style={{ flex: 1, height: 1, background: '#f0f0f0' }} />
+    </div>
+  );
+}
+
 function fmt(iso: string): string {
   return dayjs(iso).format('D MMM YYYY');
 }
@@ -256,7 +267,14 @@ function TemplateRow({ template, rule, onChange, onEditTemplate }: {
 
 export default function TemplatesManagerView({ rule, onChange, onBack, onEditTemplate }: Props) {
   const today = todayISO();
-  const active = rule.templates.filter(t => t.startDate);
+  // Tres grupos, no dos: una plantilla "ended" (vencida o reemplazada) ya tuvo fecha de inicio
+  // real y sigue teniendo acciones propias (Reprogramar/Hacer principal), así que NO es lo
+  // mismo que un borrador "Sin programar" (nunca tuvo fecha) — pero tampoco debería mezclarse
+  // sin distinción con lo que sí está en rotación hoy (vigente/programada), o parece que todas
+  // compiten por ser "la que se envía".
+  const scheduled = rule.templates.filter(t => t.startDate);
+  const inRotation = scheduled.filter(t => templateState(t, rule.templates, today) !== 'ended');
+  const historial = scheduled.filter(t => templateState(t, rule.templates, today) === 'ended');
   const drafts = rule.templates.filter(t => !t.startDate);
   const activeTemplate = templateForDate(rule.templates, today);
 
@@ -284,17 +302,25 @@ export default function TemplatesManagerView({ rule, onChange, onBack, onEditTem
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {active.map(t => (
+          {inRotation.map(t => (
             <TemplateRow key={t.id} template={t} rule={rule} onChange={onChange} onEditTemplate={onEditTemplate} />
           ))}
         </div>
 
+        {historial.length > 0 && (
+          <>
+            <SectionHeader label="Historial" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {historial.map(t => (
+                <TemplateRow key={t.id} template={t} rule={rule} onChange={onChange} onEditTemplate={onEditTemplate} />
+              ))}
+            </div>
+          </>
+        )}
+
         {drafts.length > 0 && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '18px 0 10px' }}>
-              <span style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: 0.04, textTransform: 'uppercase', color: 'rgba(0,0,0,0.25)' }}>Sin programar</span>
-              <div style={{ flex: 1, height: 1, background: '#f0f0f0' }} />
-            </div>
+            <SectionHeader label="Sin programar" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {drafts.map(t => (
                 <TemplateRow key={t.id} template={t} rule={rule} onChange={onChange} onEditTemplate={onEditTemplate} />
