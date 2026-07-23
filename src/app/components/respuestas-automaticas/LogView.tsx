@@ -6,18 +6,39 @@ import { describeRecipientSource } from './data';
 
 // ─── Modelo de una ejecución del potenciador ─────────────────────────────────
 type LogStatus = 'enviado' | 'no_enviado' | 'error';
+interface NpsScore { label: string; value: number }
 interface Execution {
-  id: string;          // ID de la respuesta (#4xxx)
+  id: string;          // ID de interacción — lo único garantizado en cualquier estudio, sin importar su estructura
   ts: number;          // epoch ms
   status: LogStatus;
   motivo: string;      // solo para no_enviado / error
-  nombre: string;
+  nombre: string;       // '—' (→ "Anónimo") si el estudio no recolecta nombre, o si no se pudo enviar
   correo: string;
-  sucursal: string;
+  sucursal: string | null; // null si el estudio no tiene el concepto de sucursal
   canal: string;
-  nps: number;
+  npsScores: NpsScore[]; // 0, 1 o varias — un estudio puede no tener ninguna pregunta NPS, o tener más de una
   ruleId: string;       // de qué regla vino — necesario en la vista agregada (todas las reglas)
   ruleName: string;
+}
+
+// Forma del estudio detrás de una regla — determina qué campos de la ejecución tienen sentido
+// mostrar. No todo estudio tiene sucursales, recolecta el nombre del encuestado, o incluye
+// alguna pregunta de tipo NPS (y puede tener más de una). Lo único universal es el ID de
+// interacción, que siempre se muestra. Semilla propia (distinta a la de las ejecuciones) para
+// que la forma sea estable por regla sin acoplarse al PRNG de cada ejecución individual.
+interface StudyShape { hasSucursal: boolean; hasRespondentName: boolean; npsQuestions: string[] }
+const NPS_LABELS = ['NPS General', 'NPS Atención al cliente', 'NPS Producto', 'NPS Proceso de compra'];
+function studyShapeFor(rule: AutoResponse): StudyShape {
+  const rand = mulberry32(hashStr(`${rule.id}:shape`));
+  const hasSucursal = rand() > 0.2;
+  const hasRespondentName = rand() > 0.15;
+  const npsCount = Math.floor(rand() * 3); // 0, 1 o 2 preguntas NPS — nunca asumir exactamente 1
+  const pool = [...NPS_LABELS];
+  const npsQuestions: string[] = [];
+  for (let i = 0; i < npsCount && pool.length; i++) {
+    npsQuestions.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]);
+  }
+  return { hasSucursal, hasRespondentName, npsQuestions };
 }
 
 const MOTIVOS_ERROR = [
@@ -52,6 +73,7 @@ function mulberry32(seed: number): () => number {
 function generateLogs(rule: AutoResponse, now: number): Execution[] {
   // Una regla que nunca se ha activado no tiene ejecuciones.
   if (!rule.active && !rule.published) return [];
+  const shape = studyShapeFor(rule);
   const rand = mulberry32(hashStr(rule.id));
   const total = 20 + Math.floor(rand() * 70);
   const logs: Execution[] = [];
@@ -62,15 +84,15 @@ function generateLogs(rule: AutoResponse, now: number): Execution[] {
     let motivo = '';
     if (r >= 0.82 && r < 0.94) { status = 'no_enviado'; motivo = `${describeRecipientSource(rule.recipientVariable)} sin valor en la respuesta`; }
     else if (r >= 0.94) { status = 'error'; motivo = MOTIVOS_ERROR[Math.floor(rand() * MOTIVOS_ERROR.length)]; }
-    const nombre = NOMBRES[Math.floor(rand() * NOMBRES.length)];
+    const nombreReal = NOMBRES[Math.floor(rand() * NOMBRES.length)];
     logs.push({
       id: `#${4500 + Math.floor(rand() * 1000)}`,
       ts, status, motivo,
-      nombre: status === 'enviado' ? nombre : '—',
-      correo: status === 'enviado' ? `${nombre.toLowerCase().replace(/[^a-z]/g, '')}.${Math.floor(rand() * 99)}@email.com` : '',
-      sucursal: SUCURSALES[Math.floor(rand() * SUCURSALES.length)],
+      nombre: status === 'enviado' && shape.hasRespondentName ? nombreReal : '—',
+      correo: status === 'enviado' ? `${nombreReal.toLowerCase().replace(/[^a-z]/g, '')}.${Math.floor(rand() * 99)}@email.com` : '',
+      sucursal: shape.hasSucursal ? SUCURSALES[Math.floor(rand() * SUCURSALES.length)] : null,
       canal: CANALES[Math.floor(rand() * CANALES.length)],
-      nps: Math.floor(rand() * 11),
+      npsScores: shape.npsQuestions.map(label => ({ label, value: Math.floor(rand() * 11) })),
       ruleId: rule.id,
       ruleName: rule.name,
     });
@@ -116,13 +138,17 @@ function StatusBadge({ status }: { status: LogStatus }) {
 
 function LogRow({ exec, now, expanded, onToggle, showRule }: { exec: Execution; now: number; expanded: boolean; onToggle: () => void; showRule: boolean }) {
   const detail = exec.status === 'enviado' ? `Enviado a ${exec.correo} · ${exec.canal}` : exec.motivo;
+  // El único dato garantizado en cualquier estudio es el ID de interacción — el resto depende de
+  // cómo esté armado ESE estudio en particular: no todos tienen sucursal, recolectan el nombre
+  // del encuestado, o incluyen alguna pregunta NPS (y puede haber más de una).
   const rows: [string, string][] = [
+    ['ID de interacción', exec.id],
     ...(showRule ? ([['Regla', exec.ruleName]] as [string, string][]) : []),
     ['Encuestado', exec.nombre !== '—' ? exec.nombre : 'Anónimo'],
     ['Correo destino', exec.correo || '—'],
     ['Canal de respuesta', exec.canal],
-    ['Sucursal', exec.sucursal],
-    ['NPS registrado', `${exec.nps} de 10`],
+    ...(exec.sucursal ? ([['Sucursal', exec.sucursal]] as [string, string][]) : []),
+    ...exec.npsScores.map(n => [n.label, `${n.value} de 10`] as [string, string]),
     ['Fecha y hora', new Date(exec.ts).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })],
   ];
   if (exec.motivo) rows.push(['Motivo', exec.motivo]);
@@ -135,7 +161,7 @@ function LogRow({ exec, now, expanded, onToggle, showRule }: { exec: Execution; 
           {showRule && (
             <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 8px', borderRadius: 1000, background: '#f0f5ff', color: '#1890ff' }}>{exec.ruleName}</span>
           )}
-          <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>{exec.sucursal} · {relativeTime(exec.ts, now)}</span>
+          <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>{exec.sucursal ? `${exec.sucursal} · ` : ''}{relativeTime(exec.ts, now)}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <StatusBadge status={exec.status} />
