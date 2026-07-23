@@ -125,7 +125,7 @@ function SchedulePopover({ template, others, onSave, children }: {
       content={
         <div style={{ width: 280, fontFamily: "'Roboto', sans-serif" }}>
           <p style={{ margin: '0 0 3px', fontSize: 14, fontWeight: 500, color: 'rgba(0,0,0,0.85)' }}>Programar "{template.name}"</p>
-          <p style={{ margin: '0 0 14px', fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>¿Cuándo se usa en vez de la principal?</p>
+          <p style={{ margin: '0 0 14px', fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>Define cuándo se usa esta plantilla.</p>
 
           <div style={{ marginBottom: 12 }}>
             <label style={{ display: 'block', fontSize: 12, color: 'rgba(0,0,0,0.45)', marginBottom: 4 }}>Empieza el</label>
@@ -219,7 +219,15 @@ function TemplateRow({ template, rule, onChange, onEditTemplate }: {
           borde mezclados con botones de ícono, lo que se veía inconsistente. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
         {(kind === 'now' || kind === 'scheduled') && (
-          <Button icon={<BiEditAlt style={{ fontSize: 16 }} />} onClick={() => onEditTemplate(template.id)} aria-label="Editar" title="Editar" style={ACTION_BTN} />
+          <>
+            <Button icon={<BiEditAlt style={{ fontSize: 16 }} />} onClick={() => onEditTemplate(template.id)} aria-label="Editar" title="Editar" style={ACTION_BTN} />
+            {/* Antes solo se podía reprogramar una plantilla ended/borrador — una vigente o
+                programada no tenía forma de ajustar sus fechas (adelantar/atrasar el fin,
+                cambiar el inicio) sin eliminarla y perder su diseño. */}
+            <SchedulePopover template={template} others={others} onSave={patch => patchTemplate(patch)}>
+              <Button icon={<BiCalendar style={{ fontSize: 16 }} />} aria-label="Reprogramar" title="Reprogramar" style={ACTION_BTN} />
+            </SchedulePopover>
+          </>
         )}
         {kind === 'ended' && (
           <>
