@@ -69,11 +69,16 @@ const STATE_CHIP: Record<TemplateStateKind, { bg: string; fg: string }> = {
   ended: { bg: '#f5f5f5', fg: 'rgba(0,0,0,0.45)' },
   draft: { bg: '#f5f5f5', fg: 'rgba(0,0,0,0.45)' },
 };
+// Chip separado (no verde) para la permanente que hoy está tapada por una temporal en curso —
+// sigue siendo `kind === 'now'` porque retoma sola apenas la temporal termine, pero NO es la
+// que se envía hoy. Compartir el verde de "now" con la que sí se envía hacía parecer que había
+// dos plantillas vigentes al mismo tiempo.
+const STANDBY_CHIP = { bg: '#f5f5f5', fg: 'rgba(0,0,0,0.65)' };
 
 // `isActiveToday` distingue la vigente real de una permanente que sigue de respaldo pero hoy
 // está tapada por una temporal en curso — ambas son `kind === 'now'`, pero solo una se envía.
 function stateChipText(t: EmailTemplate, kind: TemplateStateKind, isActiveToday: boolean, activeName: string): string {
-  if (kind === 'now') return isActiveToday ? 'Se usa ahora' : `Vigente · hoy: ${activeName}`;
+  if (kind === 'now') return isActiveToday ? 'Se usa ahora' : `De respaldo — hoy se envía: ${activeName}`;
   if (kind === 'scheduled') return `Desde ${fmt(t.startDate!)}`;
   if (kind === 'ended') return `Terminó ${fmt(t.endDate!)}`;
   return 'Sin programar';
@@ -148,7 +153,7 @@ function TemplateRow({ template, rule, onChange, onEditTemplate }: {
   const kind = templateState(template, rule.templates, today);
   const activeTemplate = templateForDate(rule.templates, today);
   const isActiveToday = activeTemplate.id === template.id;
-  const chip = STATE_CHIP[kind];
+  const chip = kind === 'now' && !isActiveToday ? STANDBY_CHIP : STATE_CHIP[kind];
   const canDelete = !isOnlyPermanent(template, rule.templates);
 
   function patchTemplate(patch: Partial<EmailTemplate>) {
