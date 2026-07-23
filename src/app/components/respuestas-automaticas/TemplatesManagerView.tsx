@@ -123,7 +123,7 @@ function SchedulePopover({ template, others, onSave, children }: {
     <Popover
       trigger="click" placement="bottomRight" open={open} onOpenChange={setOpen}
       content={
-        <div style={{ width: 280, fontFamily: "'Roboto', sans-serif" }}>
+        <div style={{ width: 280, maxWidth: 'calc(100vw - 48px)', fontFamily: "'Roboto', sans-serif" }}>
           <p style={{ margin: '0 0 3px', fontSize: 14, fontWeight: 500, color: 'rgba(0,0,0,0.85)' }}>{template.startDate ? 'Reprogramar' : 'Programar'} "{template.name}"</p>
           <p style={{ margin: '0 0 14px', fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>Define cuándo se usa esta plantilla.</p>
 
@@ -148,10 +148,14 @@ function SchedulePopover({ template, others, onSave, children }: {
             />
           )}
 
+          {/* Sin size="small": esos botones quedan en 24px de alto, por debajo del mínimo
+              táctil recomendado (y fuera de los 4 casos de densidad que el sistema de diseño
+              permite comprimir) — el tamaño por defecto (32px) iguala al resto de botones de
+              acción de esta pantalla y es más usable con el dedo en mobile. */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 14 }}>
-            <Button size="small" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={() => setOpen(false)}>Cancelar</Button>
             <Button
-              type="primary" size="small" disabled={!canSave}
+              type="primary" disabled={!canSave}
               onClick={() => { onSave({ startDate: start!.toISOString(), endDate: hasEnd ? (end?.toISOString() ?? null) : null }); setOpen(false); }}
             >
               Guardar
