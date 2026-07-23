@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, DatePicker, Checkbox, Popover, Popconfirm, Alert, Tooltip } from 'antd';
-import { BiChevronLeft, BiEnvelope, BiEditAlt, BiTrash, BiPlus, BiCalendar, BiErrorCircle } from 'react-icons/bi';
+import { BiChevronLeft, BiEnvelope, BiEditAlt, BiTrash, BiPlus, BiCalendar, BiErrorCircle, BiCheckCircle } from 'react-icons/bi';
 import dayjs, { Dayjs } from 'dayjs';
 import { AutoResponse, EmailTemplate } from './types';
 import { makeTemplate } from './data';
@@ -13,33 +13,28 @@ interface Props {
   onEditTemplate: (templateId: string) => void;
 }
 
-const MetaDot = () => <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(0,0,0,0.25)', display: 'inline-block', flexShrink: 0 }} />;
-
 // Nombre de la plantilla — editable en línea, único lugar del módulo donde se puede
 // renombrar una plantilla (antes solo se fijaba una vez al crearla, sin forma de cambiarla).
+// Sin ícono de lápiz propio a propósito: la fila ya tiene un botón "Editar" (lápiz) que abre
+// el editor de correo — poner un segundo lápiz acá para renombrar generaba confusión sobre
+// cuál hacía qué. En su lugar, un subrayado punteado en hover/foco indica que es editable.
 function EditableTemplateName({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [focused, setFocused] = useState(false);
+  const [active, setActive] = useState(false);
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 6, minWidth: 0,
-      border: `1px solid ${focused ? '#40a9ff' : 'transparent'}`, borderRadius: 6,
-      padding: '2px 6px', margin: '-2px -6px',
-      boxShadow: focused ? '0 0 0 2px rgba(24,144,255,0.2)' : undefined,
-    }}>
-      <input
-        value={value}
-        onChange={e => onChange(e.target.value.slice(0, 60))}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        maxLength={60}
-        style={{
-          flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', padding: 0,
-          fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)',
-          overflow: 'hidden', textOverflow: 'ellipsis',
-        }}
-      />
-      {!focused && <BiEditAlt style={{ fontSize: 12, color: 'rgba(0,0,0,0.25)', flexShrink: 0 }} />}
-    </div>
+    <input
+      value={value}
+      onChange={e => onChange(e.target.value.slice(0, 60))}
+      onFocus={() => setActive(true)}
+      onBlur={() => setActive(false)}
+      onMouseEnter={() => setActive(true)}
+      onMouseLeave={() => setActive(false)}
+      maxLength={60}
+      style={{
+        display: 'block', maxWidth: 280, border: 'none', outline: 'none', background: 'transparent', padding: 0,
+        fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)',
+        borderBottom: `1px dashed ${active ? '#bfbfbf' : 'transparent'}`, cursor: 'text',
+      }}
+    />
   );
 }
 
@@ -51,16 +46,20 @@ function fmt(iso: string): string {
 
 // Línea de metadatos de una fila — describe la vigencia en una sola frase, sin nombrar
 // ningún "rol" (predeterminada/temporal); la sucesión entre permanentes se explica sola.
+// Devuelve un único <span> (no un Fragment) para que, si el contenedor flex de la fila
+// necesita envolver la línea, lo haga como una sola unidad de texto — un Fragment deja cada
+// hijo (ej. el punto separador) como su propio ítem de flex, capaz de quedar huérfano en su
+// propia línea al envolver.
 function describeMeta(t: EmailTemplate, templates: EmailTemplate[]): React.ReactNode {
   if (!t.startDate) return 'Sin fecha — no se envía a nadie';
   if (!t.endDate) {
     const nextPermanent = templates
       .filter(x => x.id !== t.id && x.startDate && !x.endDate && x.startDate > t.startDate!)
       .sort((a, b) => a.startDate!.localeCompare(b.startDate!))[0];
-    if (nextPermanent) return <>Hasta {fmt(nextPermanent.startDate!)} <MetaDot /> luego: <b>{nextPermanent.name}</b></>;
+    if (nextPermanent) return <span>Hasta {fmt(nextPermanent.startDate!)} · luego: <b>{nextPermanent.name}</b></span>;
     return 'Sin fecha de fin';
   }
-  return <>{fmt(t.startDate)} → {fmt(t.endDate)}</>;
+  return <span>{fmt(t.startDate)} → {fmt(t.endDate)}</span>;
 }
 
 const STATE_CHIP: Record<TemplateStateKind, { bg: string; fg: string }> = {
@@ -201,6 +200,12 @@ function TemplateRow({ template, rule, onChange, onEditTemplate }: {
         {stateChipText(template, rule.templates, kind, isActiveToday, activeTemplate.name)}
       </span>
 
+      <div style={{ width: 1, height: 24, background: '#f0f0f0', flexShrink: 0 }} />
+
+      {/* Un solo lenguaje visual para toda acción de esta fila: ícono cuadrado 32×32 con
+          borde + title/aria-label nativos (mismo patrón, ya sea Editar/Reprogramar/Hacer
+          principal/Eliminar) — antes Reprogramar/Hacer principal eran links de texto sin
+          borde mezclados con botones de ícono, lo que se veía inconsistente. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
         {(kind === 'now' || kind === 'scheduled') && (
           <Button icon={<BiEditAlt style={{ fontSize: 16 }} />} onClick={() => onEditTemplate(template.id)} aria-label="Editar" title="Editar" style={ACTION_BTN} />
@@ -208,7 +213,7 @@ function TemplateRow({ template, rule, onChange, onEditTemplate }: {
         {kind === 'ended' && (
           <>
             <SchedulePopover template={template} others={others} onSave={patch => patchTemplate(patch)}>
-              <Button type="link">Reprogramar</Button>
+              <Button icon={<BiCalendar style={{ fontSize: 16 }} />} aria-label="Reprogramar" title="Reprogramar" style={ACTION_BTN} />
             </SchedulePopover>
             <Popconfirm
               title={`¿Usar "${template.name}" ahora?`}
@@ -216,7 +221,7 @@ function TemplateRow({ template, rule, onChange, onEditTemplate }: {
               okText="Sí, usar ahora" cancelText="Cancelar"
               onConfirm={() => patchTemplate({ startDate: today, endDate: null })}
             >
-              <Button type="link">Hacer principal</Button>
+              <Button icon={<BiCheckCircle style={{ fontSize: 16 }} />} aria-label="Hacer principal" title="Hacer principal" style={ACTION_BTN} />
             </Popconfirm>
             <Popconfirm title="¿Eliminar esta plantilla?" description="Se perderá su diseño." okText="Sí, eliminar" cancelText="Cancelar" okButtonProps={{ danger: true }} onConfirm={deleteTemplate}>
               <Button danger icon={<BiTrash style={{ fontSize: 16 }} />} aria-label="Eliminar" title="Eliminar" style={ACTION_BTN} />
@@ -227,7 +232,7 @@ function TemplateRow({ template, rule, onChange, onEditTemplate }: {
           <>
             <Button icon={<BiEditAlt style={{ fontSize: 16 }} />} onClick={() => onEditTemplate(template.id)} aria-label="Editar" title="Editar" style={ACTION_BTN} />
             <SchedulePopover template={template} others={others} onSave={patch => patchTemplate(patch)}>
-              <Button type="link">Programar</Button>
+              <Button icon={<BiCalendar style={{ fontSize: 16 }} />} aria-label="Programar" title="Programar" style={ACTION_BTN} />
             </SchedulePopover>
             <Popconfirm title="¿Eliminar esta plantilla?" description="Se perderá su diseño." okText="Sí, eliminar" cancelText="Cancelar" okButtonProps={{ danger: true }} onConfirm={deleteTemplate}>
               <Button danger icon={<BiTrash style={{ fontSize: 16 }} />} aria-label="Eliminar" title="Eliminar" style={ACTION_BTN} />
