@@ -2335,6 +2335,14 @@ export default function EditorView({ template, onChange, onBack }: Props) {
             <BiChevronLeft style={{ fontSize: 16 }} /> Volver al wizard
           </button>
           <div style={{ width: 1, height: 20, background: '#f0f0f0' }} />
+          <Input
+            value={draft.name}
+            onChange={e => updateDraft({ name: e.target.value.slice(0, 60) })}
+            placeholder="Nombre de la plantilla"
+            maxLength={60}
+            style={{ width: 200, borderRadius: 8, fontFamily: "'Roboto', sans-serif", fontSize: 14, flexShrink: 0 }}
+          />
+          <div style={{ width: 1, height: 20, background: '#f0f0f0' }} />
           <Text type="secondary" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
             Últ. actualización: {formatDate(draft.blocksUpdatedAt)}
           </Text>

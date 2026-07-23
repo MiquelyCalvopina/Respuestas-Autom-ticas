@@ -14,6 +14,35 @@ interface Props {
 }
 
 const MetaDot = () => <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(0,0,0,0.25)', display: 'inline-block', flexShrink: 0 }} />;
+
+// Nombre de la plantilla — editable en línea, único lugar del módulo donde se puede
+// renombrar una plantilla (antes solo se fijaba una vez al crearla, sin forma de cambiarla).
+function EditableTemplateName({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 6, minWidth: 0,
+      border: `1px solid ${focused ? '#40a9ff' : 'transparent'}`, borderRadius: 6,
+      padding: '2px 6px', margin: '-2px -6px',
+      boxShadow: focused ? '0 0 0 2px rgba(24,144,255,0.2)' : undefined,
+    }}>
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value.slice(0, 60))}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        maxLength={60}
+        style={{
+          flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', padding: 0,
+          fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)',
+          overflow: 'hidden', textOverflow: 'ellipsis',
+        }}
+      />
+      {!focused && <BiEditAlt style={{ fontSize: 12, color: 'rgba(0,0,0,0.25)', flexShrink: 0 }} />}
+    </div>
+  );
+}
+
 const ACTION_BTN: React.CSSProperties = { width: 32, height: 32, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 };
 
 function fmt(iso: string): string {
@@ -145,9 +174,7 @@ function TemplateRow({ template, rule, onChange, onEditTemplate }: {
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {template.name}
-        </div>
+        <EditableTemplateName value={template.name} onChange={name => patchTemplate({ name })} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontFamily: "'Roboto', sans-serif", fontSize: 12, color: 'rgba(0,0,0,0.45)', marginTop: 2 }}>
           {template.startDate && <BiCalendar style={{ fontSize: 12, flexShrink: 0 }} />}
           {describeMeta(template, rule.templates)}
