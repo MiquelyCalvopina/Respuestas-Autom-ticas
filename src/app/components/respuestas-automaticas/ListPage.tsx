@@ -17,6 +17,7 @@ interface Props {
   onNew: () => void;
   onEdit: (id: string) => void;
   onLog: (id: string) => void;
+  onLogAll: () => void;
   onDelete: (id: string) => void;
   onToggle: (id: string) => void;
   onDuplicate: (id: string) => void;
@@ -177,9 +178,7 @@ function RuleCard({ rule, onEdit, onLog, onDelete, onToggle, onDuplicate }: {
 
 // ─── ListPage ─────────────────────────────────────────────────────────────────
 
-export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onToggle, onDuplicate, onBack }: Props) {
-  const goToFirstRuleLog = () => { if (rules[0]) onLog(rules[0].id); };
-
+export default function ListPage({ rules, onNew, onEdit, onLog, onLogAll, onDelete, onToggle, onDuplicate, onBack }: Props) {
   return (
     <div className="bg-white flex-[1_0_0] min-h-px relative w-full z-[1]">
       <div className="content-stretch flex flex-col gap-[32px] isolate items-start pb-[24px] pt-[32px] px-[32px] relative size-full">
@@ -229,7 +228,7 @@ export default function ListPage({ rules, onNew, onEdit, onLog, onDelete, onTogg
             {rules.length > 0 && (
               <AgregarReglaButton onNew={onNew} />
             )}
-            <Button icon={<BiHistory />} onClick={goToFirstRuleLog}>Ver logs</Button>
+            <Button icon={<BiHistory />} onClick={onLogAll}>Ver logs</Button>
           </div>
         </div>
 

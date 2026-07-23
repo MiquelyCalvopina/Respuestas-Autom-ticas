@@ -83,7 +83,7 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
   const [rules, setRules] = useState<AutoResponse[]>([]);
   const [currentRule, setCurrentRule] = useState<AutoResponse>(emptyRule());
   const [wizardStep, setWizardStep] = useState(0);
-  const [logRule, setLogRule] = useState<AutoResponse | null>(null);
+  const [logRules, setLogRules] = useState<AutoResponse[]>([]);
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
 
   // Abre el editor de correo sobre una plantilla puntual de la regla en curso. Al volver
@@ -107,7 +107,14 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
 
   function openLog(id: string) {
     const r = rules.find(r => r.id === id);
-    if (r) { setLogRule(r); setView('log'); }
+    if (r) { setLogRules([r]); setView('log'); }
+  }
+
+  // "Ver logs" del header general (fuera de cada regla) — antes abría por error el log de
+  // `rules[0]` nada más; ahora combina las ejecuciones de todas las reglas en una sola vista.
+  function openLogAll() {
+    setLogRules(rules);
+    setView('log');
   }
 
   function deleteRule(id: string) {
@@ -194,8 +201,7 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
 
   let content: ReactNode;
   if (view === 'log') {
-    const ruleForLog = logRule ?? rules[0] ?? emptyRule();
-    content = <LogView rule={ruleForLog} onBack={backToList} />;
+    content = <LogView rules={logRules} onBack={backToList} />;
   } else if (view === 'editor') {
     const editingTemplate = currentRule.templates.find(t => t.id === editingTemplateId) ?? currentRule.templates[0];
     content = (
@@ -235,6 +241,7 @@ export default function RespuestasAutomaticas({ onBack }: Props) {
         onNew={openNew}
         onEdit={openEdit}
         onLog={openLog}
+        onLogAll={openLogAll}
         onDelete={deleteRule}
         onToggle={toggleRule}
         onDuplicate={duplicateRule}

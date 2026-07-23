@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Button, Empty, Alert } from 'antd';
+import { Button, Empty, Alert, Select } from 'antd';
 import { BiArrowBack, BiInfoCircle, BiChevronDown } from 'react-icons/bi';
 import { AutoResponse } from './types';
 import { describeRecipientSource } from './data';
@@ -16,6 +16,8 @@ interface Execution {
   sucursal: string;
   canal: string;
   nps: number;
+  ruleId: string;       // de qué regla vino — necesario en la vista agregada (todas las reglas)
+  ruleName: string;
 }
 
 const MOTIVOS_ERROR = [
@@ -69,6 +71,8 @@ function generateLogs(rule: AutoResponse, now: number): Execution[] {
       sucursal: SUCURSALES[Math.floor(rand() * SUCURSALES.length)],
       canal: CANALES[Math.floor(rand() * CANALES.length)],
       nps: Math.floor(rand() * 11),
+      ruleId: rule.id,
+      ruleName: rule.name,
     });
   }
   return logs.sort((a, b) => b.ts - a.ts);
@@ -110,9 +114,10 @@ function StatusBadge({ status }: { status: LogStatus }) {
   );
 }
 
-function LogRow({ exec, now, expanded, onToggle }: { exec: Execution; now: number; expanded: boolean; onToggle: () => void }) {
+function LogRow({ exec, now, expanded, onToggle, showRule }: { exec: Execution; now: number; expanded: boolean; onToggle: () => void; showRule: boolean }) {
   const detail = exec.status === 'enviado' ? `Enviado a ${exec.correo} · ${exec.canal}` : exec.motivo;
   const rows: [string, string][] = [
+    ...(showRule ? ([['Regla', exec.ruleName]] as [string, string][]) : []),
     ['Encuestado', exec.nombre !== '—' ? exec.nombre : 'Anónimo'],
     ['Correo destino', exec.correo || '—'],
     ['Canal de respuesta', exec.canal],
@@ -125,8 +130,11 @@ function LogRow({ exec, now, expanded, onToggle }: { exec: Execution; now: numbe
   return (
     <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, background: '#fff', padding: '10px 13px', display: 'flex', flexDirection: 'column', gap: 4 }}>
       <div onClick={onToggle} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexWrap: 'wrap' }}>
           <code style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(0,0,0,0.85)' }}>{exec.id}</code>
+          {showRule && (
+            <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 8px', borderRadius: 1000, background: '#f0f5ff', color: '#1890ff' }}>{exec.ruleName}</span>
+          )}
           <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>{exec.sucursal} · {relativeTime(exec.ts, now)}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -149,26 +157,36 @@ function LogRow({ exec, now, expanded, onToggle }: { exec: Execution; now: numbe
   );
 }
 
-export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: () => void }) {
+// `rules` siempre es un array: 1 elemento para "Ver ejecuciones" de una regla puntual (desde su
+// card), 2+ para el "Ver logs" general del header de la lista — que antes, por error, abría el
+// log de la primera regla nada más en vez de combinar todas. La columna/chip de regla y el
+// selector de regla solo aparecen cuando hay más de una (en el caso de 1 sola no aportan nada).
+export default function LogView({ rules, onBack }: { rules: AutoResponse[]; onBack: () => void }) {
   const now = useMemo(() => Date.now(), []);
+  const showRule = rules.length > 1;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const all = useMemo(() => generateLogs(rule, now), [rule.id, rule.active, rule.published, now]);
+  const all = useMemo(
+    () => rules.flatMap(r => generateLogs(r, now)).sort((a, b) => b.ts - a.ts),
+    [rules.map(r => `${r.id}:${r.active}:${r.published}`).join('|'), now],
+  );
+  const [ruleFilter, setRuleFilter] = useState<string>('all');
   const [filter, setFilter] = useState<Filter>('all');
   const [page, setPage] = useState(0);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  const enviados = all.filter(e => e.status === 'enviado');
-  const noEnviados = all.filter(e => e.status === 'no_enviado');
-  const errores = all.filter(e => e.status === 'error');
+  const byRule = ruleFilter === 'all' ? all : all.filter(e => e.ruleId === ruleFilter);
+  const enviados = byRule.filter(e => e.status === 'enviado');
+  const noEnviados = byRule.filter(e => e.status === 'no_enviado');
+  const errores = byRule.filter(e => e.status === 'error');
 
-  const filtered = filter === 'all' ? all : all.filter(e => e.status === filter);
+  const filtered = filter === 'all' ? byRule : byRule.filter(e => e.status === filter);
   const paged = filtered.slice(0, PAGE_SIZE * (page + 1));
   const hasMore = filtered.length > paged.length;
 
-  const ultima = all.length ? relativeTime(all[0].ts, now) : '—';
+  const ultima = byRule.length ? relativeTime(byRule[0].ts, now) : '—';
 
   const filterChips: { key: Filter; label: string; count: number }[] = [
-    { key: 'all', label: 'Todos', count: all.length },
+    { key: 'all', label: 'Todos', count: byRule.length },
     { key: 'enviado', label: 'Enviados', count: enviados.length },
     { key: 'no_enviado', label: 'No enviados', count: noEnviados.length },
     { key: 'error', label: 'Errores', count: errores.length },
@@ -182,25 +200,45 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
     });
   }
 
+  const title = showRule ? 'Ejecuciones — Todas las reglas' : `Ejecuciones — ${rules[0]?.name ?? ''}`;
+
   return (
     <div style={{ padding: '32px 24px', maxWidth: 760, margin: '0 auto', width: '100%', boxSizing: 'border-box', fontFamily: "'Roboto', sans-serif" }}>
       <Button type="text" icon={<BiArrowBack />} onClick={onBack} style={{ marginBottom: 16, color: 'rgba(0,0,0,0.45)', paddingLeft: 0 }}>
         Volver
       </Button>
 
-      <div style={{ marginBottom: 24 }}>
-        <p style={{ margin: 0, fontSize: 20, fontWeight: 500, color: 'rgba(0,0,0,0.85)' }}>Ejecuciones — {rule.name}</p>
-        <p style={{ margin: '4px 0 0', fontSize: 14, color: 'rgba(0,0,0,0.45)' }}>
-          {all.length} {all.length === 1 ? 'ejecución' : 'ejecuciones'}{all.length > 0 ? ` · Última ${ultima}` : ''}
-        </p>
+      <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        <div>
+          <p style={{ margin: 0, fontSize: 20, fontWeight: 500, color: 'rgba(0,0,0,0.85)' }}>{title}</p>
+          <p style={{ margin: '4px 0 0', fontSize: 14, color: 'rgba(0,0,0,0.45)' }}>
+            {byRule.length} {byRule.length === 1 ? 'ejecución' : 'ejecuciones'}{byRule.length > 0 ? ` · Última ${ultima}` : ''}
+          </p>
+        </div>
+        {showRule && rules.length > 0 && (
+          <Select
+            value={ruleFilter}
+            onChange={v => { setRuleFilter(v); setPage(0); }}
+            style={{ minWidth: 200 }}
+            options={[{ value: 'all', label: 'Todas las reglas' }, ...rules.map(r => ({ value: r.id, label: r.name }))]}
+          />
+        )}
       </div>
 
-      {all.length === 0 ? (
+      {rules.length === 0 ? (
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={<span style={{ fontSize: 13, color: 'rgba(0,0,0,0.45)' }}>Todavía no has creado ninguna regla.</span>}
+          style={{ padding: '48px 0' }}
+        />
+      ) : byRule.length === 0 ? (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description={
             <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.45)' }}>
-              Esta regla aún no tiene ejecuciones. Aparecerán aquí una vez que esté activa y lleguen respuestas que la disparen.
+              {showRule && ruleFilter === 'all'
+                ? 'Ninguna regla tiene ejecuciones todavía. Aparecerán aquí una vez que estén activas y lleguen respuestas que las disparen.'
+                : 'Esta regla aún no tiene ejecuciones. Aparecerán aquí una vez que esté activa y lleguen respuestas que la disparen.'}
             </span>
           }
           style={{ padding: '48px 0' }}
@@ -209,7 +247,7 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
         <>
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
-            <StatCard label="Total" value={all.length} color="rgba(0,0,0,0.85)" />
+            <StatCard label="Total" value={byRule.length} color="rgba(0,0,0,0.85)" />
             <StatCard label="Enviados" value={enviados.length} color="#389e0d" />
             <StatCard label="No enviados" value={noEnviados.length} color="#d48806" />
             <StatCard label="Errores" value={errores.length} color="#cf1322" />
@@ -237,7 +275,12 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {paged.map(exec => (
-                <LogRow key={exec.id + exec.ts} exec={exec} now={now} expanded={expanded.has(exec.id + exec.ts)} onToggle={() => toggle(exec.id + exec.ts)} />
+                <LogRow
+                  key={exec.ruleId + exec.id + exec.ts}
+                  exec={exec} now={now} showRule={showRule}
+                  expanded={expanded.has(exec.ruleId + exec.id + exec.ts)}
+                  onToggle={() => toggle(exec.ruleId + exec.id + exec.ts)}
+                />
               ))}
             </div>
           )}
