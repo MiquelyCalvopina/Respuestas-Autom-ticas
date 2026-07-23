@@ -804,8 +804,15 @@ function EmptyColumnSlot({ onAdd }: { onAdd: (type: ComponentType) => void }) {
   }, [open]);
   return (
     <div ref={wrapRef} style={{ position: 'relative', margin: '8px 12px' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', border: '1px dashed #d9d9d9', borderRadius: 8, padding: '16px 0', background: '#fafafa', cursor: 'pointer', color: '#8c8c8c', fontSize: 12, lineHeight: 'normal' }}>
-        <BiPlus style={{ marginRight: 8 }} /> Agregar
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', border: '1px dashed #d9d9d9', borderRadius: 8, padding: '16px 0', background: '#fafafa', cursor: 'pointer',
+          color: '#8c8c8c', fontSize: 12, lineHeight: 'normal',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}
+      >
+        <BiPlus style={{ fontSize: 14, flexShrink: 0 }} /> Agregar
       </button>
       {open && (
         <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 25, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 8, width: 190, display: 'flex', flexDirection: 'column', gap: 4 }}>
