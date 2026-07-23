@@ -126,7 +126,7 @@ const RECIPIENT_EMAIL_QUESTIONS = PREGUNTAS_EJEMPLO.flatMap(q => {
 
 function Step1({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoResponse) => void }) {
   return (
-    <div style={{ maxWidth: 760, margin: '0 auto', width: '100%', boxSizing: 'border-box', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
+    <div style={{ maxWidth: 900, margin: '0 auto', width: '100%', boxSizing: 'border-box', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
 
       {/* Section title */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1100,7 +1100,7 @@ function Step2({ rule, onChange }: { rule: AutoResponse; onChange: (r: AutoRespo
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div style={{ maxWidth: 760, margin: '0 auto', width: '100%', boxSizing: 'border-box', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', width: '100%', boxSizing: 'border-box', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24, background: '#fff' }}>
 
         {/* Section title */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
