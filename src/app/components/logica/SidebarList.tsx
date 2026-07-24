@@ -144,7 +144,7 @@ export default function SidebarList({ reglas, seleccion, onCrear, onEditar, onEl
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       {/* Encabezado + botón */}
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
+      <div style={{ padding: '12px 24px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, justifyContent: 'space-between' }}>
           <div style={{ minWidth: 0 }}>
             <p style={{ fontFamily: FONT, fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: 0, lineHeight: '20px' }}>{titulo}</p>
@@ -162,7 +162,7 @@ export default function SidebarList({ reglas, seleccion, onCrear, onEditar, onEl
         </div>
       </div>
       {/* Cuerpo scrolleable */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column' }}>
         {cuerpo}
       </div>
     </div>

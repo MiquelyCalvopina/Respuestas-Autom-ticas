@@ -32,7 +32,7 @@ const EJEMPLOS = [
 export default function SidebarExamples({ onVolver }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
+      <div style={{ padding: '12px 24px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
         <button
           type="button" onClick={onVolver}
           style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', cursor: 'pointer', color: '#1890ff', padding: 0, marginBottom: 8 }}
@@ -45,7 +45,7 @@ export default function SidebarExamples({ onVolver }: Props) {
           Estos ejemplos son solo referencia. Arma tu propia regla usándolos como inspiración.
         </p>
       </div>
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {EJEMPLOS.map((e, i) => (
           <div key={i} style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 12, background: '#fff' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
