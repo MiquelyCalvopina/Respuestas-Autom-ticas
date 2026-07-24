@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { FLUJO, FlujoNodo } from '@/app/data/estudio';
 import { BoxIcon } from './boxicons';
 import { Regla, Seleccion } from './types';
@@ -25,6 +26,7 @@ function estaSeleccionado(n: FlujoNodo, sel: Seleccion): boolean {
 }
 
 export default function Canvas({ reglas, seleccion, onSelect, preguntasSinAcceso }: Props) {
+  const [hovered, setHovered] = useState<string | null>(null);
   const dimmed = reglas.length === 0;
   const conLogica = nodosConLogica(reglas);
   const huerfanas = despedidasHuerfanas(reglas);
@@ -85,20 +87,30 @@ export default function Canvas({ reglas, seleccion, onSelect, preguntasSinAcceso
             : n.tipo === 'despedida' ? '#ECFDF5'
             : '#fff';
 
+          // Feedback de hover en nodos clickeables (requisito de micro-interacción del
+          // sistema): eleva la sombra y azulea el borde sin pelear con el color base.
+          const isHover = clickable && !sel && !orphan && hovered === key;
+          const border2 = isHover ? '1px solid #69c0ff' : border;
+          const shadow = sel ? '0 2px 8px rgba(24,144,255,0.15)'
+            : isHover ? '0 4px 10px rgba(15,23,42,.10)'
+            : '0 1px 2px rgba(15,23,42,.05)';
+
           return (
             <div key={n.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div
                 onClick={clickable ? () => onSelect(selDe(n)) : undefined}
+                onMouseEnter={clickable ? () => setHovered(key) : undefined}
+                onMouseLeave={clickable ? () => setHovered(h => (h === key ? null : h)) : undefined}
                 role={clickable ? 'button' : undefined}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   maxWidth: 260, minWidth: 160, boxSizing: 'border-box',
                   padding: '8px 16px', borderRadius: 8,
-                  border, background: bg,
+                  border: border2, background: bg,
                   opacity: orphan ? 0.55 : 1,
-                  boxShadow: sel ? '0 2px 8px rgba(24,144,255,0.15)' : '0 1px 2px rgba(15,23,42,.05)',
+                  boxShadow: shadow,
                   cursor: clickable ? 'pointer' : 'default',
-                  transition: 'background .15s ease, border-color .15s ease',
+                  transition: 'background .15s ease, border-color .15s ease, box-shadow .15s ease',
                 }}
               >
                 {tieneLogica && <BoxIcon name="bx-git-branch" size={16} color="#1890ff" />}
