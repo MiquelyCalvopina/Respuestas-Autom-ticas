@@ -111,9 +111,14 @@ function SchedulePopover({ template, others, onSave, children }: {
   template: EmailTemplate; others: EmailTemplate[]; onSave: (patch: { startDate: string; endDate: string | null }) => void; children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const [start, setStart] = useState<Dayjs | null>(template.startDate ? dayjs(template.startDate) : dayjs());
+  // Por defecto el inicio cae en el primer minuto del día (00:00) y el fin en el último
+  // (23:59) — la hora es editable (el DatePicker incluye selector de hora), pero una plantilla
+  // nueva no debería depender de a qué hora del día se la programó para saber si ya rige.
+  const [start, setStart] = useState<Dayjs | null>(template.startDate ? dayjs(template.startDate) : dayjs().startOf('day'));
   const [hasEnd, setHasEnd] = useState(!!template.endDate);
   const [end, setEnd] = useState<Dayjs | null>(template.endDate ? dayjs(template.endDate) : null);
+  const START_OF_DAY = dayjs().startOf('day');
+  const END_OF_DAY = dayjs().hour(23).minute(59).second(0).millisecond(0);
 
   const candidate: EmailTemplate = { ...template, startDate: start?.toISOString() ?? null, endDate: hasEnd ? (end?.toISOString() ?? null) : null };
   const conflict = start ? findConflict(candidate, others) : null;
@@ -129,7 +134,12 @@ function SchedulePopover({ template, others, onSave, children }: {
 
           <div style={{ marginBottom: 12 }}>
             <label style={{ display: 'block', fontSize: 12, color: 'rgba(0,0,0,0.45)', marginBottom: 4 }}>Empieza el</label>
-            <DatePicker value={start} onChange={setStart} style={{ width: '100%' }} format="D MMM YYYY" allowClear={false} suffixIcon={<BiCalendar />} />
+            <DatePicker
+              value={start} onChange={setStart} style={{ width: '100%' }}
+              format="D MMM YYYY HH:mm" allowClear={false} suffixIcon={<BiCalendar />}
+              showTime={{ format: 'HH:mm', defaultValue: START_OF_DAY }}
+            />
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: 'rgba(0,0,0,0.35)' }}>Por defecto, 00:00 — puedes elegir otra hora.</p>
           </div>
 
           <Checkbox checked={hasEnd} onChange={e => setHasEnd(e.target.checked)}>¿Tiene fecha de fin?</Checkbox>
@@ -137,7 +147,13 @@ function SchedulePopover({ template, others, onSave, children }: {
           {hasEnd && (
             <div style={{ marginTop: 12 }}>
               <label style={{ display: 'block', fontSize: 12, color: 'rgba(0,0,0,0.45)', marginBottom: 4 }}>Termina el</label>
-              <DatePicker value={end} onChange={setEnd} style={{ width: '100%' }} format="D MMM YYYY" allowClear={false} suffixIcon={<BiCalendar />} disabledDate={d => !!start && d.isBefore(start, 'day')} />
+              <DatePicker
+                value={end} onChange={setEnd} style={{ width: '100%' }}
+                format="D MMM YYYY HH:mm" allowClear={false} suffixIcon={<BiCalendar />}
+                showTime={{ format: 'HH:mm', defaultValue: END_OF_DAY }}
+                disabledDate={d => !!start && d.isBefore(start, 'day')}
+              />
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'rgba(0,0,0,0.35)' }}>Por defecto, 23:59 — puedes elegir otra hora.</p>
             </div>
           )}
 
