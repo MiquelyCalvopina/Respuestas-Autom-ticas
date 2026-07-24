@@ -44,9 +44,9 @@ function Icon() {
 
 function Home() {
   return (
-    <div className="content-stretch flex h-[38px] items-center justify-center px-[10px] relative rounded-[8px] shrink-0 w-[40px]" data-name="Home">
+    <button type="button" className="content-stretch flex h-[38px] items-center justify-center px-[10px] relative rounded-[8px] shrink-0 w-[40px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10" data-name="Home">
       <Icon />
-    </div>
+    </button>
   );
 }
 
@@ -64,9 +64,9 @@ function Icon1() {
 
 function Studies() {
   return (
-    <div className="content-stretch flex h-[38px] items-center justify-center px-[10px] relative rounded-[8px] shrink-0 w-[40px]" data-name="Studies">
+    <button type="button" className="content-stretch flex h-[38px] items-center justify-center px-[10px] relative rounded-[8px] shrink-0 w-[40px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10" data-name="Studies">
       <Icon1 />
-    </div>
+    </button>
   );
 }
 
@@ -110,12 +110,13 @@ function Icon2() {
 
 function Settings() {
   return (
-    <div
-      className="absolute bg-white border-[#d9d9d9] border-[0.8px] border-solid content-stretch flex h-[38px] items-center justify-center left-[16px] rounded-[8px] top-[9px] w-[40px]"
+    <button
+      type="button"
+      className="absolute bg-white border-[#d9d9d9] border-[0.8px] border-solid content-stretch flex h-[38px] items-center justify-center left-[16px] rounded-[8px] top-[9px] w-[40px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10"
       data-name="Settings"
     >
       <Icon2 />
-    </div>
+    </button>
   );
 }
 
@@ -149,9 +150,9 @@ function Container2() {
 
 function Link() {
   return (
-    <div className="absolute content-stretch flex flex-col h-[38px] items-start left-[16px] overflow-clip relative rounded-[8px] top-[55px] w-[40px]" data-name="Link">
+    <button type="button" className="absolute content-stretch flex flex-col h-[38px] items-start left-[16px] overflow-clip relative rounded-[8px] top-[55px] w-[40px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10" data-name="Link">
       <Container2 />
-    </div>
+    </button>
   );
 }
 
@@ -169,9 +170,9 @@ function Icon4() {
 
 function Language() {
   return (
-    <div className="absolute content-stretch flex h-[38px] items-center justify-center left-[16px] overflow-clip px-[10px] py-[0.8px] relative rounded-[8px] top-[101px] w-[40px]" data-name="Language">
+    <button type="button" className="absolute content-stretch flex h-[38px] items-center justify-center left-[16px] overflow-clip px-[10px] py-[0.8px] relative rounded-[8px] top-[101px] w-[40px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10" data-name="Language">
       <Icon4 />
-    </div>
+    </button>
   );
 }
 
@@ -472,8 +473,10 @@ function Container13() {
 }
 
 function Icon7() {
+  // Caja 16px (antes 14x13.6, tamaño nativo del asset) — icon-button-circle
+  // Medium pide ícono de 16px centrado, spec "Controles — confirmadas".
   return (
-    <div className="h-[13.6px] relative w-[14px]" data-name="Icon">
+    <div className="size-[16px] relative" data-name="Icon">
       <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 14 13.6">
         <g id="Icon">
           <path d={svgPaths.p27e78730} fill="var(--fill-0, black)" fillOpacity="0.85" id="Vector" />
@@ -505,15 +508,15 @@ function Container26() {
 
 function Border() {
   return (
-    <div className="border border-[#d9d9d9] border-solid content-stretch flex items-center justify-center p-[0.8px] relative rounded-[9999px] shrink-0 size-[32px]" data-name="Border">
+    <button type="button" className="border border-[#d9d9d9] border-solid content-stretch flex items-center justify-center p-[0.8px] relative rounded-[9999px] shrink-0 size-[32px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10" data-name="Border">
       <Container26 />
-    </div>
+    </button>
   );
 }
 
 function Icon8() {
   return (
-    <div className="h-[13.6px] relative w-[14px]" data-name="Icon">
+    <div className="size-[16px] relative" data-name="Icon">
       <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 14 13.6">
         <g id="Icon">
           <path d={svgPaths.p2e358200} fill="var(--fill-0, black)" fillOpacity="0.85" id="Vector" />
@@ -545,15 +548,15 @@ function Container28() {
 
 function Border1() {
   return (
-    <div className="border border-[#d9d9d9] border-solid content-stretch flex items-center justify-center p-[0.8px] relative rounded-[9999px] shrink-0 size-[32px]" data-name="Border">
+    <button type="button" className="border border-[#d9d9d9] border-solid content-stretch flex items-center justify-center p-[0.8px] relative rounded-[9999px] shrink-0 size-[32px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10" data-name="Border">
       <Container28 />
-    </div>
+    </button>
   );
 }
 
 function Svg() {
   return (
-    <div className="relative shrink-0 size-[14px]" data-name="SVG">
+    <div className="relative shrink-0 size-[16px]" data-name="SVG">
       <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 14 14">
         <g id="SVG">
           <path d={svgPaths.p30d46a00} fill="var(--fill-0, black)" fillOpacity="0.85" id="Vector" />
@@ -565,9 +568,9 @@ function Svg() {
 
 function Border2() {
   return (
-    <div className="border border-[#d9d9d9] border-solid content-stretch flex items-center justify-center p-[0.8px] relative rounded-[9999px] shrink-0 size-[32px]" data-name="Border">
+    <button type="button" className="border border-[#d9d9d9] border-solid content-stretch flex items-center justify-center p-[0.8px] relative rounded-[9999px] shrink-0 size-[32px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10" data-name="Border">
       <Svg />
-    </div>
+    </button>
   );
 }
 
@@ -710,8 +713,9 @@ function ListItem() {
           </div>
         </div>
       </button>
-      <div className="bg-[#1890ff] border border-[#1890ff] border-solid h-[32px] relative rounded-[8px] shadow-[0px_2px_0px_0px_rgba(0,0,0,0.04)] shrink-0" data-name="Button">
-        <div className="content-stretch flex gap-[8px] items-center justify-center overflow-clip px-[17px] py-[5px] relative rounded-[inherit] size-full">
+      {/* Botón Medium: padding py-7/px-8 confirmado en "Controles — specs confirmadas" (antes py-5/px-17, valor crudo de Figma) */}
+      <button type="button" className="bg-[#1890ff] border border-[#1890ff] border-solid h-[32px] relative rounded-[8px] shadow-[0px_2px_0px_0px_rgba(0,0,0,0.04)] shrink-0 cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-[#40a9ff] active:bg-[#096dd9]" data-name="Button">
+        <div className="content-stretch flex gap-[8px] items-center justify-center overflow-clip px-[8px] py-[7px] relative rounded-[inherit] size-full">
           <div className="relative shrink-0 size-[14px]" data-name="Icon-Wrapper (NO USAR)">
             <div className="overflow-clip relative rounded-[inherit] size-full">
               <div className="absolute inset-[12.5%]" data-name="icon">
@@ -725,7 +729,7 @@ function ListItem() {
             Guardar
           </p>
         </div>
-      </div>
+      </button>
     </div>
   );
 }
