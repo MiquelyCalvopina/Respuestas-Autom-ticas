@@ -49,16 +49,16 @@ function IconIn({ path, opacity = 0.45, fill = 'black' }: { path: string; opacit
 
 function Home() {
   return (
-    <div className="content-stretch flex h-[38px] items-center justify-center px-[10px] relative rounded-[8px] shrink-0 w-[40px]" data-name="Home">
+    <button type="button" className="content-stretch flex h-[38px] items-center justify-center px-[10px] relative rounded-[8px] shrink-0 w-[40px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10" data-name="Home">
       <IconIn path={svgPaths.p6f26c80} />
-    </div>
+    </button>
   );
 }
 
 function Studies() {
   // Item de menú activo — igual convención que "Module 1" en BoostersPage.
   return (
-    <div className="bg-white border border-[#d9d9d9] border-solid relative rounded-[8px] shrink-0 size-[40px]" data-name="Module 1">
+    <button type="button" className="bg-white border border-[#d9d9d9] border-solid relative rounded-[8px] shrink-0 size-[40px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10" data-name="Module 1">
       <div className="content-stretch flex flex-col items-center justify-center px-[10px] relative size-full">
         <div className="overflow-clip relative shrink-0 size-[18px]" data-name="bx-book">
           <div className="absolute inset-[8.33%_12.5%]">
@@ -66,7 +66,7 @@ function Studies() {
           </div>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -94,15 +94,15 @@ function BottomItems() {
   return (
     <div className="h-[187px] relative shrink-0 w-[72px]" data-name="Bottom Items">
       <div className="content-stretch flex flex-col gap-[8px] items-center px-[16px] relative size-full">
-        <div className="content-stretch flex h-[38px] items-center justify-center relative rounded-[8px] shrink-0 w-[40px]" data-name="Settings">
+        <button type="button" className="content-stretch flex h-[38px] items-center justify-center relative rounded-[8px] shrink-0 w-[40px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10" data-name="Settings">
           <IconIn path={svgPaths.pc894400} fill="#1890FF" />
-        </div>
-        <div className="content-stretch flex h-[38px] items-center justify-center relative rounded-[8px] shrink-0 w-[40px]" data-name="Link">
+        </button>
+        <button type="button" className="content-stretch flex h-[38px] items-center justify-center relative rounded-[8px] shrink-0 w-[40px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10" data-name="Link">
           <IconIn path={svgPaths.p2d89f300} />
-        </div>
-        <div className="content-stretch flex h-[38px] items-center justify-center px-[10px] relative rounded-[8px] shrink-0 w-[40px]" data-name="Language">
+        </button>
+        <button type="button" className="content-stretch flex h-[38px] items-center justify-center px-[10px] relative rounded-[8px] shrink-0 w-[40px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10" data-name="Language">
           <IconIn path={svgPaths.p352f980} />
-        </div>
+        </button>
         <Profile />
       </div>
     </div>
@@ -146,7 +146,7 @@ function Breadcrumb() {
 
 function EditPencil() {
   return (
-    <div className="content-stretch flex flex-col items-start relative shrink-0 w-[18px]" data-name="Container">
+    <button type="button" className="content-stretch flex flex-col items-start relative shrink-0 w-[18px] cursor-pointer transition-opacity duration-150 ease-out active:duration-100 hover:opacity-60" data-name="Container">
       <div className="flex items-center justify-center relative shrink-0">
         <div className="-scale-y-100 flex-none">
           <div className="h-[17.6px] relative w-[18px]" data-name="Icon">
@@ -156,14 +156,14 @@ function EditPencil() {
           </div>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
 function ActivoSwitch() {
   return (
-    <div className="content-stretch flex flex-col items-start pt-[1.3px] relative shrink-0" data-name="nz-switch">
-      <div className="bg-[#51c11a] h-[22px] max-w-[86px] min-w-[86px] relative rounded-[100px] shrink-0 w-[86px]" data-name="Button">
+    <button type="button" className="content-stretch flex flex-col items-start pt-[1.3px] relative shrink-0 cursor-pointer" data-name="nz-switch">
+      <div className="bg-[#51c11a] h-[22px] max-w-[86px] min-w-[86px] relative rounded-[100px] shrink-0 w-[86px] transition-opacity duration-150 ease-out active:duration-100 hover:opacity-90" data-name="Button">
         <div className="absolute content-stretch flex flex-col items-center left-[7px] pb-[0.6px] pl-[6.17px] pr-[6.18px] top-[-0.6px]">
           <div className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[12px] text-center text-white whitespace-nowrap" style={{ fontVariationSettings: '"wdth" 100' }}>
             <p className="leading-[22px]">ACTIVO</p>
@@ -171,7 +171,7 @@ function ActivoSwitch() {
         </div>
         <div className="absolute bg-white left-[66px] rounded-[9px] shadow-[0px_2px_4px_0px_rgba(0,35,11,0.2)] size-[18px] top-[2px]" />
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -192,8 +192,8 @@ function StudioStepper() {
               <div
                 className={
                   active
-                    ? "border-[#1890ff] border-b-[0.8px] border-solid content-stretch flex h-full items-center pb-[0.8px] px-[12px] relative shrink-0"
-                    : "content-stretch flex h-full items-center px-[12px] relative shrink-0"
+                    ? "border-[#1890ff] border-b-[0.8px] border-solid content-stretch flex h-full items-center pb-[0.8px] px-[12px] relative shrink-0 cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5"
+                    : "content-stretch flex h-full items-center px-[12px] relative shrink-0 cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5"
                 }
                 data-name="Step"
               >
@@ -220,18 +220,24 @@ function StudioStepper() {
 }
 
 function ToolBorder({ path, wide }: { path: string; wide?: boolean }) {
+  // icon-button-circle Medium: caja 32px (ya coincidía), ícono 16px centrado
+  // (antes 14x13.6px, tamaño nativo del asset de Figma) — spec "Controles".
   return (
-    <div className="border border-[#f0f0f0] border-solid content-stretch flex items-center justify-center p-[0.8px] relative rounded-[9999px] shrink-0 size-[32px]" data-name="Border">
+    <button
+      type="button"
+      className="border border-[#f0f0f0] border-solid content-stretch flex items-center justify-center p-[0.8px] relative rounded-[9999px] shrink-0 size-[32px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10"
+      data-name="Border"
+    >
       <div className="flex items-center justify-center relative shrink-0">
         <div className={wide ? undefined : '-scale-y-100 flex-none'}>
-          <div className="h-[13.6px] relative w-[14px]" data-name="Icon">
+          <div className="size-[16px] relative" data-name="Icon">
             <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 14 13.6">
               <path d={path} fill="var(--fill-0, black)" fillOpacity="0.85" id="Vector" />
             </svg>
           </div>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -276,7 +282,12 @@ function SectionHeader() {
           <p className="leading-[normal]">Todavía no has creado ninguna.</p>
         </div>
       </div>
-      <button className="bg-[#1890ff] border border-[#1890ff] border-solid content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[9px] py-[8px] relative rounded-[8px] shadow-[0px_2px_0px_0px_rgba(0,0,0,0.04)] shrink-0 cursor-pointer" data-name="Button">
+      {/* Botón Medium: padding py-7/px-8 confirmado en "Controles — specs confirmadas" (antes py-8/px-9, valor crudo de Figma) */}
+      <button
+        type="button"
+        className="bg-[#1890ff] border border-[#1890ff] border-solid content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[8px] py-[7px] relative rounded-[8px] shadow-[0px_2px_0px_0px_rgba(0,0,0,0.04)] shrink-0 cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-[#40a9ff] active:bg-[#096dd9]"
+        data-name="Button"
+      >
         <div className="relative shrink-0">
           <div className="overflow-clip relative shrink-0 size-[14px]" data-name="bx-plus">
             <div className="absolute inset-[20.83%]">
@@ -382,7 +393,7 @@ function GraphicsDocument() {
 function DespedidaSinUsarPill({ nombre }: { nombre: string }) {
   return (
     <div className="bg-[#f5f5f5] border border-[#d9d9d9] border-solid relative rounded-[8px] shrink-0 w-full" data-name="Background+Border">
-      <div className="flex gap-[8px] items-center px-[8.8px] py-[4.8px] relative size-full">
+      <div className="flex gap-[8px] items-center px-[8px] py-[4px] relative size-full">
         <div className="bg-[#ffccc7] max-h-[20px] max-w-[20px] min-h-[20px] min-w-[20px] relative rounded-[9999px] shrink-0 flex items-center justify-center">
           <LinkOutlined style={{ fontSize: 10, color: '#a8071a' }} />
         </div>
@@ -405,7 +416,7 @@ function DespedidasSinUsarPanel() {
   // exceda el ancho disponible, sea cual sea el viewport.
   return (
     <div className="absolute left-4 top-4 max-w-[calc(100%-32px)]" data-name="Container">
-      <div className="border border-[#d9d9d9] border-solid content-stretch flex flex-col gap-[12px] items-start p-[12.8px] relative rounded-[8px] shrink-0 w-[169px] max-w-full" data-name="Border">
+      <div className="border border-[#d9d9d9] border-solid content-stretch flex flex-col gap-[12px] items-start p-[12px] relative rounded-[8px] shrink-0 w-[169px] max-w-full" data-name="Border">
         <div className="relative shrink-0 w-full">
           <div className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.85)] w-full" style={{ fontVariationSettings: '"wdth" 100' }}>
             <p className="leading-[22px] mb-0">Despedidas sin usar</p>
@@ -424,11 +435,11 @@ function SurveyVisualHintSpace() {
   // la columna lo maneja Step Content.
   return (
     <div
-      className="border-[#f0f0f0] border-solid content-stretch flex flex-1 gap-[16px] items-start justify-center min-w-0 pl-[24.8px] pr-[24px] py-[16px] relative w-full xl:h-full xl:border-l-[0.8px] xl:w-auto"
+      className="border-[#f0f0f0] border-solid content-stretch flex flex-1 gap-[16px] items-start justify-center min-w-0 pl-[24px] pr-[24px] py-[16px] relative w-full xl:h-full xl:border-l-[0.8px] xl:w-auto"
       data-name="Survey visual hint space"
     >
       <div className="flex-1 min-w-0 relative">
-        <div className="flex flex-col items-center pb-[6.4px] relative size-full">
+        <div className="flex flex-col items-center pb-[8px] relative size-full">
           <GraphicsDocument />
         </div>
       </div>
