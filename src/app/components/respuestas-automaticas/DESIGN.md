@@ -403,35 +403,6 @@ Tres tipos de contenedor reutilizables, con sus valores de referencia ya auditad
   mínimo ni crece más allá del máximo sin importar el viewport, para que el contenido del panel
   no quede ilegible ni desproporcionadamente ancho.
 
-## Patrón: panel de propiedades de 3 alcances (herramientas de construcción tipo canvas)
-
-Cualquier herramienta con canvas + paleta + panel de propiedades (un editor de correo, un
-constructor de formularios, un editor de flujos, un diseñador de plantillas) organiza su panel
-lateral en **tres pestañas**, alineadas exactamente sobre el ancho del sidebar y separadas del
-canvas por la misma línea vertical que baja desde el header. La regla que define qué va en cada
-pestaña es **el alcance de lo que se edita**, no el tipo de control:
-
-| Pestaña | Alcance | Depende de la selección |
-|---|---|---|
-| **Elementos** | Agregar contenido nuevo — la paleta | No |
-| **Configuración** | **El artefacto completo** (el lienzo entero: cuánto espacio ocupa, su fondo) | **No — panel fijo** |
-| **Diseño** | El **elemento (fila/bloque/nodo) seleccionado** en el canvas | Sí |
-
-Principio rector: **"Configuración" nunca cambia según lo que esté seleccionado** — es la
-configuración global del lienzo, siempre igual sin importar qué esté seleccionado en el canvas.
-Todo lo que es *por elemento* vive en **"Diseño"**: una sección "Bloque" común a cualquier tipo de
-elemento (fondo, alineación, borde, relleno de 4 lados, ocultar en móvil) + una sección específica
-según el tipo. Seleccionar cualquier elemento del canvas lleva automáticamente a "Diseño"; sin
-nada seleccionado, "Diseño" muestra una ayuda ("Selecciona un elemento del canvas para editar su
-diseño"). Esta separación evita el error de mezclar el layout global del artefacto con el estilo
-de un elemento puntual en un mismo panel ambiguo.
-
-**Ejemplo de referencia** (editor de correo de Respuestas Automáticas): Elementos = paleta de
-Columnas / Texto / Imagen / Divisor / Espaciador / Redes Sociales / Respuesta / Botón;
-Configuración = Ancho del contenido (%) + Estilo del contenedor (con margen/ancho completo) +
-Color de fondo del lienzo; Diseño = Bloque + sección específica ("Columnas y tamaños" para una
-fila, "Redes Sociales" para ese componente, etc.).
-
 ## Elevation
 
 No hay un token de sombra "de fábrica" declarado aparte — el sistema usa tres niveles reales,
