@@ -403,25 +403,34 @@ Tres tipos de contenedor reutilizables, con sus valores de referencia ya auditad
   mínimo ni crece más allá del máximo sin importar el viewport, para que el contenido del panel
   no quede ilegible ni desproporcionadamente ancho.
 
-## Bloque de propiedades del editor de correo
+## Patrón: panel de propiedades de 3 alcances (herramientas de construcción tipo canvas)
 
-El panel derecho del editor de correo (`EditorView`) es el **bloque de propiedades**. Se organiza
-en **tres pestañas**, alineadas exactamente sobre el ancho del sidebar y separadas del canvas por
-la misma línea vertical que baja desde el header. La regla que define qué va en cada pestaña es
-**el alcance de lo que se edita**, no el tipo de control:
+Cualquier herramienta con canvas + paleta + panel de propiedades (un editor de correo, un
+constructor de formularios, un editor de flujos, un diseñador de plantillas) organiza su panel
+lateral en **tres pestañas**, alineadas exactamente sobre el ancho del sidebar y separadas del
+canvas por la misma línea vertical que baja desde el header. La regla que define qué va en cada
+pestaña es **el alcance de lo que se edita**, no el tipo de control:
 
-| Pestaña | Alcance | Depende de la selección | Contenido |
-|---|---|---|---|
-| **Elementos** | Agregar contenido | No | Paleta: *Estructura* (Columnas) + *Componentes* (Texto, Imagen, Divisor, Espaciador, Redes Sociales, Respuesta, Texto adaptativo, Botón) |
-| **Configuración** | **El correo completo** | **No — panel fijo** | Layout global: Ancho del contenido (%), Estilo del contenedor (con margen / ancho completo), Color de fondo del lienzo |
-| **Diseño** | La **fila o el componente** seleccionado | Sí | Sección *Bloque* (estilo genérico: fondo, alineación, borde, relleno de 4 lados, ocultar en móvil) + una sección específica del tipo (p.ej. *Columnas y tamaños* para una fila, *Redes Sociales* para ese componente) |
+| Pestaña | Alcance | Depende de la selección |
+|---|---|---|
+| **Elementos** | Agregar contenido nuevo — la paleta | No |
+| **Configuración** | **El artefacto completo** (el lienzo entero: cuánto espacio ocupa, su fondo) | **No — panel fijo** |
+| **Diseño** | El **elemento (fila/bloque/nodo) seleccionado** en el canvas | Sí |
 
 Principio rector: **"Configuración" nunca cambia según lo que esté seleccionado** — es la
-configuración del lienzo del correo (qué porcentaje del contenedor del proveedor ocupa y su fondo),
-siempre igual. Todo lo que es *por elemento* vive en **"Diseño"**. Seleccionar una fila o un
-componente en el canvas lleva automáticamente a "Diseño"; sin nada seleccionado, "Diseño" muestra
-la ayuda "Selecciona una fila o un componente…". Esta separación evita el error de mezclar el
-layout del correo con el estilo de un bloque en un mismo panel ambiguo.
+configuración global del lienzo, siempre igual sin importar qué esté seleccionado en el canvas.
+Todo lo que es *por elemento* vive en **"Diseño"**: una sección "Bloque" común a cualquier tipo de
+elemento (fondo, alineación, borde, relleno de 4 lados, ocultar en móvil) + una sección específica
+según el tipo. Seleccionar cualquier elemento del canvas lleva automáticamente a "Diseño"; sin
+nada seleccionado, "Diseño" muestra una ayuda ("Selecciona un elemento del canvas para editar su
+diseño"). Esta separación evita el error de mezclar el layout global del artefacto con el estilo
+de un elemento puntual en un mismo panel ambiguo.
+
+**Ejemplo de referencia** (editor de correo de Respuestas Automáticas): Elementos = paleta de
+Columnas / Texto / Imagen / Divisor / Espaciador / Redes Sociales / Respuesta / Botón;
+Configuración = Ancho del contenido (%) + Estilo del contenedor (con margen/ancho completo) +
+Color de fondo del lienzo; Diseño = Bloque + sección específica ("Columnas y tamaños" para una
+fila, "Redes Sociales" para ese componente, etc.).
 
 ## Elevation
 
@@ -460,6 +469,13 @@ Los íconos funcionales usan la librería **BoxIcons, variante Outlined** (trazo
 en toda la interfaz. Se permite un SVG personalizado puntual (para algo que BoxIcons no cubre)
 siempre que mantenga la misma estética: trazo redondeado, liviano (sin relleno pesado ni sombras),
 minimalista. Nunca un emoji como ícono funcional.
+
+**Ícono + texto en la misma línea**: siempre `display:flex` (o `inline-flex`) con
+`alignItems:center` y un `gap` explícito entre ícono y texto — nunca un `marginRight`/`marginLeft`
+suelto en el ícono dentro de un contenedor sin flex. Sin el contenedor flex, el ícono puede
+desprenderse visualmente del texto (quedar descuadrado, en su propia línea, o pegado a una
+esquina) apenas el contenido envuelve o el layout padre cambia — es un bug de bajo drama pero que
+se repite seguido porque "un ícono y una palabra" parece no necesitar layout explícito.
 
 ### Botones
 Cinco **tipos**, cada uno con variante **Danger** (semántica destructiva, en rojo):
@@ -562,6 +578,20 @@ warning, ai (violeta), info (azul). Un uso específico de este componente es el 
 confianza**: acompaña un dato (nunca lo reemplaza) con un tono verde/ámbar/gris que indica qué
 tan confiable es ese valor, sin alterar cómo se muestra el dato mismo.
 
+**Claridad entre estados que "se ven igual de válidos"**: cuando dos entidades pueden parecer
+estar en el mismo estado activo/vigente a simple vista pero en realidad solo una de ellas es la
+que efectivamente rige (ej. un ítem "de respaldo" en espera vs. el que está en uso ahora mismo),
+**nunca comparten el mismo chip** — ni el mismo color ni el mismo texto. Cada situación real
+distinta necesita su propio tono y su propia frase explícita; reutilizar el chip de "activo/éxito"
+para ambas deja al usuario sin forma de saber cuál es la que de verdad importa.
+
+**`section-header`** — encabezado chico para agrupar una lista larga en secciones por categoría o
+estado (ej. "en rotación" sin encabezado por ser la principal/default, luego "Historial", "Sin
+programar"): label en mayúsculas (11-12px, peso 600, `{colors.text-disabled}`) + una línea
+divisoria (`{colors.border-split}`) que ocupa el resto del ancho disponible. Una sección (label +
+contenido) se **omite por completo** cuando no tiene ningún ítem — nunca se muestra un encabezado
+vacío tipo "Historial (0)".
+
 **`chip-selectable`** — pill con borde, fondo blanco en reposo; distinto de `chip-badge` porque
 es interactivo (el usuario lo clickea para incluir/excluir una opción de un conjunto), no solo
 informativo. Se usa para elegir entre varias opciones no excluyentes (tipos, categorías, tokens).
@@ -612,6 +642,13 @@ popovers de acción — presets + campo + acción, ancla debajo del control que 
 **`card-elevated`** — blanco, radio `{rounded.tarjeta}` (12px), sombra
 `0 8px 24px rgba(0,0,0,0.12)`. Superficies elevadas de contenido (ej. una tarjeta que simula un
 artefacto real, como un documento o correo).
+
+**`inline-editable-text`** — un campo de texto que se ve como texto plano en reposo y solo revela
+que es editable en hover/foco (ej. un subrayado punteado que aparece y desaparece), **sin** ícono
+de lápiz propio cuando ya existe un botón "Editar" cercano en el mismo contexto que usaría ese
+mismo ícono para otra acción distinta (ver "Navegación e íconos que no confunden" en Interaction
+Principles). Es el patrón para renombrar una entidad en línea dentro de una lista, sin abrir un
+modal ni un input aparte.
 
 **Confirmación antes de eliminar** (patrón, no un componente único): `Popconfirm` de AntD con un
 ícono circular custom (fondo `{colors.danger-bg}`, ícono `DeleteOutlined` en `{colors.danger}`)
@@ -673,6 +710,24 @@ Los estados viven como tokens de componente, no como reglas sueltas. Ver cada co
 - **Acciones nuevas o de bajo riesgo** (duplicar, reordenar) no necesitan bloquear con un diálogo
   de confirmación: un toast de éxito con un botón "Deshacer" (`toast.success('...', { undo })`)
   cubre el mismo caso sin fricción, porque revertirlas es trivial.
+- **Guardar/enviar con contenido estructuralmente incompleto sí es daño real**: un elemento que el
+  usuario agregó pero dejó a medias (una imagen sin imagen, un botón sin destino, un grupo de
+  opciones con ninguna marcada) no es una preferencia de estilo — genera un artefacto roto que
+  recién se descubre en destino. Bloquear el guardado/envío listando exactamente qué falta es el
+  mismo principio de "no bloquear salvo daño real" (ver Product Principles), aplicado a
+  integridad de contenido en vez de a una condición de negocio.
+
+### Navegación e íconos que no confunden
+- **Dos acciones distintas en la misma fila nunca comparten el mismo ícono**: si dos controles
+  cercanos (ej. "renombrar" y "editar contenido") usarían naturalmente el mismo ícono, se le da a
+  uno de ellos una afordancia distinta (ver `inline-editable-text` en Components) en vez de un
+  segundo ícono idéntico — dos íconos iguales con significados distintos generan confusión sobre
+  cuál hace qué.
+- **Una vista "de todo" agrega de verdad, o no existe**: un punto de entrada presentado como "ver
+  todo" (todas las reglas, todos los estudios, todo el historial) tiene que combinar realmente
+  todos los elementos — nunca sustituir en silencio por el primero de la lista como atajo. Si
+  agregar de verdad no está listo todavía, se quita el botón/enlace en vez de dejar un placeholder
+  que muestra solo una parte disfrazada de "todo".
 
 ### Vacíos y primeros usos
 Los empty-states de un mismo producto deben compartir **un solo tratamiento visual**, no mezclar
@@ -710,6 +765,16 @@ interacción.
   "simulado" ni se distinguen visualmente de un dato real por defecto. Esa distinción solo se
   muestra si el usuario la pide explícitamente (ej. un modo de depuración o un toggle de "ver
   origen del dato").
+- **No asumir una forma fija de una fuente de datos que varía por entidad**: cuando el detalle
+  mostrado depende de una fuente cuya estructura cambia según el caso (cada estudio, cliente o
+  configuración puede tener 0, 1 o varios campos de un mismo tipo, o directamente no tener un
+  campo que otro sí tiene — ej. no todo estudio mide NPS, tiene sucursales, o recolecta el nombre
+  del encuestado), nunca se hardcodea "siempre hay exactamente uno" — se modela la presencia/
+  cantidad real (0/1/n) y la interfaz solo muestra lo que aplica en cada caso concreto.
+- **Nada queda encerrado por su propio estado**: una entidad con vigencia o programación (fechas
+  de inicio-fin, una ventana activa) se puede reprogramar en cualquier momento de su ciclo de
+  vida — antes de empezar, durante, o después de terminar — sin obligar a eliminarla y recrearla
+  desde cero solo para ajustar una fecha.
 
 ### Principios de interacción
 - **Sugerir → aplicar → override**: el patrón por defecto para cualquier propuesta del sistema
@@ -770,6 +835,11 @@ interacción.
   cierto que preciso y falso.
 - **El control dice lo que hace**: el label de un botón de acción puede cambiar tras ejecutarse
   (ej. "Aplicar" → "✓ Aplicado") para confirmar el resultado en el lugar donde ocurrió la acción.
+- **El label de una acción refleja el estado real de la entidad, no un verbo fijo**: si la misma
+  acción (ej. abrir un selector de fechas) aplica tanto a algo que nunca se configuró como a algo
+  que ya se había configurado antes, el label/título cambia según corresponda ("Programar" vs.
+  "Reprogramar") — un verbo genérico fijo en los dos casos es menos preciso de lo que el sistema
+  ya sabe.
 - **Guardrail de métricas gamificables**: cuando el usuario elige una métrica u objetivo que el
   sistema va a medir u optimizar, advertir si esa métrica se puede "inflar" artificialmente sin
   lograr el resultado real que se busca (efecto cobra) — no dejar que una métrica mal elegida
@@ -810,6 +880,10 @@ interacción.
   chico, 8px para controles, 12px para tarjetas de contenido, 20px solo para Card/Modal/Drawer
   reales.
 - Mantener 12px como el tamaño de texto más chico permitido en toda la interfaz.
+- Agrupar ícono + texto con `display:flex, alignItems:center, gap` — nunca un `marginRight` suelto
+  en el ícono.
+- Modelar 0/n explícito cuando un campo depende de una fuente de datos que varía por entidad —
+  nunca asumir que siempre hay exactamente uno.
 
 ### Don't
 - No agregar `size="small"` a un control de captura solo para "que se vea más compacto".
@@ -820,6 +894,10 @@ interacción.
 - No asumir que un `<div>` con borde "parece tarjeta" hereda el radio de 20px — ese radio es
   exclusivo de instancias reales de Card/Modal/Drawer.
 - No introducir gradientes decorativos — el único gradiente del sistema es el de IA.
+- No reusar el mismo chip para dos estados que a simple vista parecen "igual de vigentes" pero
+  donde uno de ellos no es el que realmente rige.
+- No dejar un botón "ver todo"/agregado que en realidad solo abre o muestra el primer ítem de la
+  lista.
 
 ## Responsive Behavior
 
@@ -854,6 +932,20 @@ con dedo, sí. Cuando una superficie con estos botones debe soportar mobile real
 hit-area con padding invisible alrededor del ícono (manteniendo el tamaño visual de 24px) en
 viewports `< md`, en vez de agrandar el ícono mismo.
 
+### Filas y headers con contenido variable
+El mismo criterio aplica tanto a un header (breadcrumb + acciones) como a una fila de lista con
+varias piezas (ícono + nombre + meta + chip + acciones): en vez de un solo `flex` sin wrap que se
+comprime o desborda en viewports angostos, se agrupa el contenido en 2 clusters con
+`flexWrap:'wrap'` + `rowGap` — un cluster de identidad (con `flex-basis` propio) y un cluster de
+metadatos/acciones que puede a su vez envolver internamente si hace falta. El contenido pasa a una
+segunda línea en vez de recortarse o forzar scroll horizontal — nunca ocultar información para que
+"quepa" en una sola línea.
+
+**Popovers/dropdowns en mobile**: el contenido de un `Popover`/`Popconfirm` de ancho fijo lleva un
+`maxWidth: calc(100vw - Npx)` de seguridad para no exceder el viewport en pantallas angostas, y sus
+botones internos nunca usan `size="small"` (24px) — mismo criterio de mínimo táctil que el resto
+del sistema.
+
 ## Iteration Guide — para quien (humano o IA) siga editando este sistema
 
 1. Usá `{token.refs}` de este documento en vez de repetir hex/px sueltos en código nuevo — si el
@@ -864,3 +956,7 @@ viewports `< md`, en vez de agrandar el ícono mismo.
    AntD salvo la excepción explícita (`row-interactive-hover`).
 4. Un valor o patrón se documenta como regla del sistema recién cuando aparece en 2+ superficies
    con el mismo uso. Si es de una sola pantalla, queda como decisión local, no se promueve.
+5. **Nunca devolver un Fragment (`<>...</>`) como hijo directo de un contenedor `flexWrap`** — cada
+   parte del Fragment se vuelve su propio ítem de flex independiente (los Fragments no aportan una
+   caja de wrapping), lo que puede dejar una pieza (ej. un separador "·") huérfana en su propia
+   línea al envolver. Envolver el resultado en un `<span>`/`<div>` real en vez de un Fragment.
