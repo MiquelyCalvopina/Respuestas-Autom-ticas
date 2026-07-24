@@ -1,21 +1,16 @@
-// Réplica del node-id 1605:52900 (archivo Figma "Ajustes 121-151") con el paso
-// "Lógica" activo en el stepper en vez de "Potenciadores". El rail, el topbar,
-// el stepper y los íconos son EXACTAMENTE los mismos assets que ya usa
-// src/imports/BoostersPage/index.tsx (mismo archivo de Figma, mismo componente
-// de chrome) — se reutilizan en vez de reconstruirse.
+// Shell de la pantalla Lógica (node-id 1605:52900 del archivo Figma
+// "Ajustes 121-151"), con "Lógica" activo en el stepper. El rail, el topbar y
+// el stepper son los mismos assets que src/imports/BoostersPage/index.tsx
+// (mismo archivo de Figma, mismo chrome) — se reutilizan.
 //
-// Dos assets de esta pantalla (la ilustración del estado vacío y el ícono
-// bx-link de las despedidas sin usar) no se pudieron descargar en este
-// entorno: el proxy de red del sandbox bloquea salidas directas a figma.com
-// (confirmado con `curl` contra la URL del asset, HTTP 000 / connection
-// reset). Se sustituyeron por un ícono equivalente de @ant-design/icons y un
-// SVG inline simple, marcados abajo con TODO — reemplazar por el asset real
-// de Figma en un entorno con acceso.
-import { LinkOutlined } from '@ant-design/icons';
+// El contenido interactivo (sidebar de reglas + canvas + barra de destino) vive
+// en el módulo src/app/components/logica, que este shell renderiza como Step
+// Content — igual que BoostersPage renderiza RespuestasAutomaticas dentro suyo.
 import svgPaths from '../BoostersPage/svg-6wl0e5bdid';
 import imgLogo from '../BoostersPage/c1a59b77699b503cff1b1dc54942368b615932ea.png';
 import imgImageAvatar from '../BoostersPage/03428a1137072a2d2c0da0ea370ebfd6aabfe00f.png';
-import { ESTUDIO, FLUJO, DESPEDIDAS } from '@/app/data/estudio';
+import { ESTUDIO } from '@/app/data/estudio';
+import LogicaModule from '@/app/components/logica/index';
 
 // ─── Rail (idéntico a BoostersPage/index.tsx) ────────────────────────────────
 
@@ -269,204 +264,14 @@ function HorizontalNavigation() {
   );
 }
 
-// ─── Logics Sidebar ───────────────────────────────────────────────────────────
-
-function SectionHeader() {
-  return (
-    <div className="border-[#f0f0f0] border-b border-solid content-stretch flex gap-[16px] items-center justify-center px-[12px] py-[8px] relative shrink-0 w-full" data-name="Section Header">
-      <div className="content-stretch flex flex-[1_0_0] flex-col gap-[4px] items-start leading-[0] min-w-px relative">
-        <div className="flex flex-col font-['Roboto:Medium',sans-serif] font-medium justify-center relative shrink-0 text-[14px] text-[rgba(0,0,0,0.85)] w-full" style={{ fontVariationSettings: '"wdth" 100' }}>
-          <p className="leading-[normal]">Reglas de lógica del estudio</p>
-        </div>
-        <div className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center relative shrink-0 text-[12px] text-[rgba(0,0,0,0.45)] w-full" style={{ fontVariationSettings: '"wdth" 100' }}>
-          <p className="leading-[normal]">Todavía no has creado ninguna.</p>
-        </div>
-      </div>
-      {/* Botón Medium: padding py-7/px-8 confirmado en "Controles — specs confirmadas" (antes py-8/px-9, valor crudo de Figma) */}
-      <button
-        type="button"
-        className="bg-[#1890ff] border border-[#1890ff] border-solid content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[8px] py-[7px] relative rounded-[8px] shadow-[0px_2px_0px_0px_rgba(0,0,0,0.04)] shrink-0 cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-[#40a9ff] active:bg-[#096dd9]"
-        data-name="Button"
-      >
-        <div className="relative shrink-0">
-          <div className="overflow-clip relative shrink-0 size-[14px]" data-name="bx-plus">
-            <div className="absolute inset-[20.83%]">
-              <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 10.5 10.5">
-                <path d={svgPaths.p3fb923b0} fill="var(--fill-0, white)" id="icon" />
-              </svg>
-            </div>
-          </div>
-        </div>
-        <p className="font-['Roboto:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[14px] text-center text-white whitespace-nowrap" style={{ fontVariationSettings: '"wdth" 100' }}>
-          Crear regla
-        </p>
-      </button>
-    </div>
-  );
-}
-
-// TODO: reemplazar por el SVG real de Figma (node 1605:53215) — no se pudo
-// descargar en este entorno (proxy bloquea figma.com). Sustituto equivalente.
-function EmptyStateIllustration() {
-  return (
-    <svg width="116" height="117" viewBox="0 0 116 117" fill="none">
-      <rect x="18" y="24" width="30" height="20" rx="4" stroke="#D9D9D9" strokeWidth="2" />
-      <rect x="43" y="16" width="30" height="20" rx="4" stroke="#D9D9D9" strokeWidth="2" />
-      <rect x="68" y="24" width="30" height="20" rx="4" stroke="#D9D9D9" strokeWidth="2" />
-      <path d="M40 60 C40 90, 76 90, 76 60 L76 100 L58 116 L40 100 Z" stroke="#D9D9D9" strokeWidth="2" fill="none" />
-    </svg>
-  );
-}
-
-function SectionContent() {
-  return (
-    <div className="content-stretch flex flex-[1_0_0] flex-col gap-[12px] items-center justify-center min-h-px p-[24px] relative w-full" data-name="Section content">
-      <div className="h-[117px] relative shrink-0 w-[116px]" data-name="SVG">
-        <EmptyStateIllustration />
-      </div>
-      <div className="content-stretch flex flex-col items-start leading-[0] relative shrink-0 text-[16px] text-[rgba(0,0,0,0.55)] text-center w-full">
-        <div className="flex flex-col font-['Roboto:Medium',sans-serif] font-medium justify-center relative shrink-0 w-full" style={{ fontVariationSettings: '"wdth" 100' }}>
-          <p className="leading-[24px]">Aún no hay reglas en este estudio.</p>
-        </div>
-        <div className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center relative shrink-0 w-full" style={{ fontVariationSettings: '"wdth" 100' }}>
-          <p className="leading-[24px]">Selecciona una pregunta del diagrama, o usa Crear regla arriba, para configurar la primera.</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LogicsSidebar() {
-  // Ancho fijo (576px) solo desde `lg` — lado a lado con el diagrama, como en
-  // Figma. Debajo de `lg` (tablets) se apila arriba, a todo el ancho, y el
-  // scroll de la columna completa lo maneja Step Content — no duplica scroll.
-  return (
-    <div
-      className="content-stretch flex flex-col items-start relative shrink-0 w-full min-h-[280px] border-b border-[#f0f0f0] xl:w-[576px] xl:h-full xl:border-b-0"
-      data-name="Logics Sidebar"
-    >
-      <SectionHeader />
-      <SectionContent />
-    </div>
-  );
-}
-
-// ─── Survey visual hint space — diagrama del flujo real del estudio ──────────
-
-function FlowNodeBox({ label }: { label: string }) {
-  return (
-    <div className="bg-white border border-[#f0f0f0] border-solid content-stretch flex flex-col items-center justify-center min-w-[90px] overflow-clip px-[12px] py-[8px] relative rounded-[8px] shrink-0" data-name="Container">
-      <div className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.85)] whitespace-nowrap" style={{ fontVariationSettings: '"wdth" 100' }}>
-        <p className="leading-[normal]">{label}</p>
-      </div>
-    </div>
-  );
-}
-
-function Connector() {
-  return (
-    <div className="h-[25px] relative shrink-0 w-0" data-name="Connector">
-      <div className="absolute inset-[0_-0.5px] border-l border-[#f0f0f0] h-full" />
-    </div>
-  );
-}
-
-function flujoLabel(nodo: (typeof FLUJO)[number]) {
-  return nodo.label;
-}
-
-function GraphicsDocument() {
-  return (
-    <div className="content-stretch flex flex-col items-center max-w-[277px] overflow-clip relative shrink-0 w-full" data-name="Graphics-document document">
-      {FLUJO.map((nodo, i) => (
-        <div key={nodo.id} className="contents">
-          <FlowNodeBox label={flujoLabel(nodo)} />
-          {i < FLUJO.length - 1 && <Connector />}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// TODO: el ícono "bx-link" real de Figma (node 1617:59105) no se pudo
-// descargar en este entorno (proxy bloquea figma.com). Sustituto: LinkOutlined.
-function DespedidaSinUsarPill({ nombre }: { nombre: string }) {
-  return (
-    <div className="bg-[#f5f5f5] border border-[#d9d9d9] border-solid relative rounded-[8px] shrink-0 w-full" data-name="Background+Border">
-      <div className="flex gap-[8px] items-center px-[8px] py-[4px] relative size-full">
-        <div className="bg-[#ffccc7] max-h-[20px] max-w-[20px] min-h-[20px] min-w-[20px] relative rounded-[9999px] shrink-0 flex items-center justify-center">
-          <LinkOutlined style={{ fontSize: 10, color: '#a8071a' }} />
-        </div>
-        <div className="relative min-w-0">
-          <div className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.85)]" style={{ fontVariationSettings: '"wdth" 100' }}>
-            <p className="leading-[22px]">{nombre}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DespedidasSinUsarPanel() {
-  const sinUsar = DESPEDIDAS.filter(d => !d.usada);
-  if (sinUsar.length === 0) return null;
-  // Posición relativa a su contenedor (antes left/top fijos en px, que en un
-  // "Survey visual hint space" angosto quedaban más anchos que el propio
-  // contenedor y se salían por la derecha) — clamp con max-w para que nunca
-  // exceda el ancho disponible, sea cual sea el viewport.
-  return (
-    <div className="absolute left-4 top-4 max-w-[calc(100%-32px)]" data-name="Container">
-      <div className="border border-[#d9d9d9] border-solid content-stretch flex flex-col gap-[12px] items-start p-[12px] relative rounded-[8px] shrink-0 w-[169px] max-w-full" data-name="Border">
-        <div className="relative shrink-0 w-full">
-          <div className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.85)] w-full" style={{ fontVariationSettings: '"wdth" 100' }}>
-            <p className="leading-[22px] mb-0">Despedidas sin usar</p>
-            <p className="leading-[22px]">en el flujo del estudio.</p>
-          </div>
-        </div>
-        {sinUsar.map(d => <DespedidaSinUsarPill key={d.id} nombre={d.nombre} />)}
-      </div>
-    </div>
-  );
-}
-
-function SurveyVisualHintSpace() {
-  // Borde izquierdo y h-full solo desde `lg` (cuando va lado a lado con el
-  // sidebar); apilado, se deja crecer con su contenido y el scroll de toda
-  // la columna lo maneja Step Content.
-  return (
-    <div
-      className="border-[#f0f0f0] border-solid content-stretch flex flex-1 gap-[16px] items-start justify-center min-w-0 pl-[24px] pr-[24px] py-[16px] relative w-full xl:h-full xl:border-l-[0.8px] xl:w-auto"
-      data-name="Survey visual hint space"
-    >
-      <div className="flex-1 min-w-0 relative">
-        <div className="flex flex-col items-center pb-[8px] relative size-full">
-          <GraphicsDocument />
-        </div>
-      </div>
-      <DespedidasSinUsarPanel />
-    </div>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
-
-function StepContent() {
-  // Apilado (columna) en tablets, lado a lado desde `lg` (1024px) — evita el
-  // solapamiento del sidebar de 576px fijo contra el diagrama en viewports
-  // angostos (tablets verticales y algunas horizontales).
-  return (
-    <div className="content-stretch flex flex-col xl:flex-row flex-1 items-start min-h-0 relative w-full z-[1] overflow-y-auto xl:overflow-visible" data-name="Step Content">
-      <LogicsSidebar />
-      <SurveyVisualHintSpace />
-    </div>
-  );
-}
 
 function PageContent() {
   return (
-    <div className="bg-white border-[#f0f0f0] border-l border-t border-solid content-stretch flex flex-col h-full isolate items-start overflow-clip rounded-tl-[20px] w-full" data-name="Page content">
+    <div className="bg-white border-[#f0f0f0] border-l border-t border-solid content-stretch flex flex-col h-full isolate items-start overflow-hidden rounded-tl-[20px] w-full" data-name="Page content">
       <HorizontalNavigation />
-      <StepContent />
+      {/* Contenido interactivo del módulo Lógica (sidebar + canvas + barra destino) */}
+      <LogicaModule />
     </div>
   );
 }
