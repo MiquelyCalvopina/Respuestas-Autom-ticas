@@ -1,86 +1,335 @@
-import { useState } from 'react';
-import { Button, Card, Tag, Typography, Empty, Alert, Space } from 'antd';
-import { LeftOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { useMemo, useState } from 'react';
+import { Button, Empty, Alert, Select } from 'antd';
+import { BiArrowBack, BiInfoCircle, BiChevronDown } from 'react-icons/bi';
 import { AutoResponse } from './types';
+import { describeRecipientSource } from './data';
 
-const { Title, Text } = Typography;
+// ─── Modelo de una ejecución del potenciador ─────────────────────────────────
+type LogStatus = 'enviado' | 'no_enviado' | 'error';
+interface NpsScore { label: string; value: number }
+interface Execution {
+  id: string;          // ID de interacción — lo único garantizado en cualquier estudio, sin importar su estructura
+  ts: number;          // epoch ms
+  status: LogStatus;
+  motivo: string;      // solo para no_enviado / error
+  nombre: string;       // '—' (→ "Anónimo") si el estudio no recolecta nombre, o si no se pudo enviar
+  correo: string;
+  sucursal: string | null; // null si el estudio no tiene el concepto de sucursal
+  canal: string;
+  npsScores: NpsScore[]; // 0, 1 o varias — un estudio puede no tener ninguna pregunta NPS, o tener más de una
+  ruleId: string;       // de qué regla vino — necesario en la vista agregada (todas las reglas)
+  ruleName: string;
+}
 
-interface Execution { id: string; responseId: string; status: 'sent' | 'not_sent'; timestamp: string; detail: string; }
+// Forma del estudio detrás de una regla — determina qué campos de la ejecución tienen sentido
+// mostrar. No todo estudio tiene sucursales, recolecta el nombre del encuestado, o incluye
+// alguna pregunta de tipo NPS (y puede tener más de una). Lo único universal es el ID de
+// interacción, que siempre se muestra. Semilla propia (distinta a la de las ejecuciones) para
+// que la forma sea estable por regla sin acoplarse al PRNG de cada ejecución individual.
+interface StudyShape { hasSucursal: boolean; hasRespondentName: boolean; npsQuestions: string[] }
+const NPS_LABELS = ['NPS General', 'NPS Atención al cliente', 'NPS Producto', 'NPS Proceso de compra'];
+function studyShapeFor(rule: AutoResponse): StudyShape {
+  const rand = mulberry32(hashStr(`${rule.id}:shape`));
+  const hasSucursal = rand() > 0.2;
+  const hasRespondentName = rand() > 0.15;
+  const npsCount = Math.floor(rand() * 3); // 0, 1 o 2 preguntas NPS — nunca asumir exactamente 1
+  const pool = [...NPS_LABELS];
+  const npsQuestions: string[] = [];
+  for (let i = 0; i < npsCount && pool.length; i++) {
+    npsQuestions.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]);
+  }
+  return { hasSucursal, hasRespondentName, npsQuestions };
+}
 
-const MOCK: Execution[] = [
-  { id: '1', responseId: '4821', status: 'sent',     timestamp: 'hace 3 min',   detail: 'Enviado a juan.perez@gmail.com' },
-  { id: '2', responseId: '4820', status: 'not_sent', timestamp: 'hace 12 min',  detail: 'correo_electronico vacío en la respuesta' },
-  { id: '3', responseId: '4819', status: 'sent',     timestamp: 'hace 18 min',  detail: 'Enviado a maria.gomez@outlook.com' },
-  { id: '4', responseId: '4817', status: 'sent',     timestamp: 'hace 35 min',  detail: 'Enviado a carlos.ruiz@empresa.com' },
-  { id: '5', responseId: '4815', status: 'not_sent', timestamp: 'hace 52 min',  detail: 'correo_electronico vacío en la respuesta' },
-  { id: '6', responseId: '4812', status: 'sent',     timestamp: 'hace 1 hora',  detail: 'Enviado a ana.torres@hotmail.com' },
+const MOTIVOS_ERROR = [
+  'Error SMTP — buzón del destinatario lleno',
+  'Error SMTP — dominio del destinatario no existe',
+  'Timeout al conectar con el servidor de correo',
+  'Dirección de correo con formato inválido',
 ];
+const SUCURSALES = ['Quito Norte', 'Quito Sur', 'Guayaquil', 'Cuenca', 'Presencial'];
+const CANALES = ['Correo electrónico', 'WhatsApp', 'Enlace personalizado'];
+const NOMBRES = ['María R.', 'Carlos M.', 'Ana G.', 'Jorge P.', 'Lucía T.', 'Pedro A.', 'Sofía V.', 'Luis H.', 'Carmen B.', 'Rafael O.'];
+const PAGE_SIZE = 15;
 
-type Filter = 'all' | 'sent' | 'not_sent';
+// PRNG con semilla (mulberry32) para que las ejecuciones simuladas de una regla sean
+// estables entre renders — no se rebarajan cada vez que abres el historial. 100% mock,
+// no hay backend real en este prototipo.
+function hashStr(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function mulberry32(seed: number): () => number {
+  let a = seed;
+  return () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
-export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: () => void }) {
-  const [filter, setFilter] = useState<Filter>('all');
-  const sent    = MOCK.filter(e => e.status === 'sent').length;
-  const notSent = MOCK.filter(e => e.status === 'not_sent').length;
-  const visible = filter === 'all' ? MOCK : MOCK.filter(e => e.status === (filter === 'sent' ? 'sent' : 'not_sent'));
+function generateLogs(rule: AutoResponse, now: number): Execution[] {
+  // Una regla que nunca se ha activado no tiene ejecuciones.
+  if (!rule.active && !rule.published) return [];
+  const shape = studyShapeFor(rule);
+  const rand = mulberry32(hashStr(rule.id));
+  const total = 20 + Math.floor(rand() * 70);
+  const logs: Execution[] = [];
+  for (let i = 0; i < total; i++) {
+    const ts = now - Math.floor(rand() * 30 * 24 * 60 * 60 * 1000); // hasta 30 días atrás
+    const r = rand();
+    let status: LogStatus = 'enviado';
+    let motivo = '';
+    if (r >= 0.82 && r < 0.94) { status = 'no_enviado'; motivo = `${describeRecipientSource(rule.recipientVariable)} sin valor en la respuesta`; }
+    else if (r >= 0.94) { status = 'error'; motivo = MOTIVOS_ERROR[Math.floor(rand() * MOTIVOS_ERROR.length)]; }
+    const nombreReal = NOMBRES[Math.floor(rand() * NOMBRES.length)];
+    logs.push({
+      id: `#${4500 + Math.floor(rand() * 1000)}`,
+      ts, status, motivo,
+      nombre: status === 'enviado' && shape.hasRespondentName ? nombreReal : '—',
+      correo: status === 'enviado' ? `${nombreReal.toLowerCase().replace(/[^a-z]/g, '')}.${Math.floor(rand() * 99)}@email.com` : '',
+      sucursal: shape.hasSucursal ? SUCURSALES[Math.floor(rand() * SUCURSALES.length)] : null,
+      canal: CANALES[Math.floor(rand() * CANALES.length)],
+      npsScores: shape.npsQuestions.map(label => ({ label, value: Math.floor(rand() * 11) })),
+      ruleId: rule.id,
+      ruleName: rule.name,
+    });
+  }
+  return logs.sort((a, b) => b.ts - a.ts);
+}
+
+function relativeTime(ts: number, now: number): string {
+  const diff = now - ts;
+  const min = Math.floor(diff / 60000), hr = Math.floor(diff / 3600000), day = Math.floor(diff / 86400000);
+  if (min < 1) return 'Hace un momento';
+  if (min < 60) return `Hace ${min} min`;
+  if (hr < 24) return `Hace ${hr} h`;
+  if (day === 1) return 'Ayer';
+  return `Hace ${day} días`;
+}
+
+const STATUS_META: Record<LogStatus, { label: string; bg: string; border: string; color: string }> = {
+  enviado:    { label: 'Enviado',         bg: '#f6ffed', border: '#b7eb8f', color: '#389e0d' },
+  no_enviado: { label: 'No enviado',      bg: '#fffbe6', border: '#ffe58f', color: '#d48806' },
+  error:      { label: 'Error de envío',  bg: '#fff1f0', border: '#ffccc7', color: '#cf1322' },
+};
+
+type Filter = 'all' | LogStatus;
+
+function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div style={{ background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, padding: '12px 14px' }}>
+      <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 20, fontWeight: 700, color }}>{value}</div>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: LogStatus }) {
+  const m = STATUS_META[status];
+  return (
+    <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 10px', borderRadius: 1000, background: m.bg, border: `1px solid ${m.border}`, color: m.color, whiteSpace: 'nowrap' }}>
+      {m.label}
+    </span>
+  );
+}
+
+function LogRow({ exec, now, expanded, onToggle, showRule }: { exec: Execution; now: number; expanded: boolean; onToggle: () => void; showRule: boolean }) {
+  const detail = exec.status === 'enviado' ? `Enviado a ${exec.correo} · ${exec.canal}` : exec.motivo;
+  // El único dato garantizado en cualquier estudio es el ID de interacción — el resto depende de
+  // cómo esté armado ESE estudio en particular: no todos tienen sucursal, recolectan el nombre
+  // del encuestado, o incluyen alguna pregunta NPS (y puede haber más de una).
+  const rows: [string, string][] = [
+    ['ID de interacción', exec.id],
+    ...(showRule ? ([['Regla', exec.ruleName]] as [string, string][]) : []),
+    ['Encuestado', exec.nombre !== '—' ? exec.nombre : 'Anónimo'],
+    ['Correo destino', exec.correo || '—'],
+    ['Canal de respuesta', exec.canal],
+    ...(exec.sucursal ? ([['Sucursal', exec.sucursal]] as [string, string][]) : []),
+    ...exec.npsScores.map(n => [n.label, `${n.value} de 10`] as [string, string]),
+    ['Fecha y hora', new Date(exec.ts).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })],
+  ];
+  if (exec.motivo) rows.push(['Motivo', exec.motivo]);
 
   return (
-    <div style={{ padding: '24px 32px', maxWidth: 760, margin: '0 auto' }}>
-      <Button type="text" icon={<LeftOutlined />} onClick={onBack} style={{ marginBottom: 16, color: 'rgba(0,0,0,.45)', paddingLeft: 0 }}>
+    <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, background: '#fff', padding: '10px 13px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div onClick={onToggle} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexWrap: 'wrap' }}>
+          <code style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(0,0,0,0.85)' }}>{exec.id}</code>
+          {showRule && (
+            <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 8px', borderRadius: 1000, background: '#f0f5ff', color: '#1890ff' }}>{exec.ruleName}</span>
+          )}
+          <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>{exec.sucursal ? `${exec.sucursal} · ` : ''}{relativeTime(exec.ts, now)}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <StatusBadge status={exec.status} />
+          <BiChevronDown style={{ fontSize: 14, color: 'rgba(0,0,0,0.45)', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
+        </div>
+      </div>
+      <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.65)' }}>{detail}</div>
+      {expanded && (
+        <div style={{ marginTop: 4, padding: '10px 12px', background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 5 }}>
+          {rows.map(([k, v]) => (
+            <div key={k} style={{ display: 'flex', gap: 8, fontSize: 12 }}>
+              <span style={{ color: 'rgba(0,0,0,0.45)', width: 130, flexShrink: 0, fontWeight: 500 }}>{k}</span>
+              <span style={{ color: 'rgba(0,0,0,0.75)' }}>{v}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// `rules` siempre es un array: 1 elemento para "Ver ejecuciones" de una regla puntual (desde su
+// card), 2+ para el "Ver logs" general del header de la lista — que antes, por error, abría el
+// log de la primera regla nada más en vez de combinar todas. La columna/chip de regla y el
+// selector de regla solo aparecen cuando hay más de una (en el caso de 1 sola no aportan nada).
+export default function LogView({ rules, onBack }: { rules: AutoResponse[]; onBack: () => void }) {
+  const now = useMemo(() => Date.now(), []);
+  const showRule = rules.length > 1;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const all = useMemo(
+    () => rules.flatMap(r => generateLogs(r, now)).sort((a, b) => b.ts - a.ts),
+    [rules.map(r => `${r.id}:${r.active}:${r.published}`).join('|'), now],
+  );
+  const [ruleFilter, setRuleFilter] = useState<string>('all');
+  const [filter, setFilter] = useState<Filter>('all');
+  const [page, setPage] = useState(0);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const byRule = ruleFilter === 'all' ? all : all.filter(e => e.ruleId === ruleFilter);
+  const enviados = byRule.filter(e => e.status === 'enviado');
+  const noEnviados = byRule.filter(e => e.status === 'no_enviado');
+  const errores = byRule.filter(e => e.status === 'error');
+
+  const filtered = filter === 'all' ? byRule : byRule.filter(e => e.status === filter);
+  const paged = filtered.slice(0, PAGE_SIZE * (page + 1));
+  const hasMore = filtered.length > paged.length;
+
+  const ultima = byRule.length ? relativeTime(byRule[0].ts, now) : '—';
+
+  const filterChips: { key: Filter; label: string; count: number }[] = [
+    { key: 'all', label: 'Todos', count: byRule.length },
+    { key: 'enviado', label: 'Enviados', count: enviados.length },
+    { key: 'no_enviado', label: 'No enviados', count: noEnviados.length },
+    { key: 'error', label: 'Errores', count: errores.length },
+  ];
+
+  function toggle(id: string) {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  const title = showRule ? 'Ejecuciones — Todas las reglas' : `Ejecuciones — ${rules[0]?.name ?? ''}`;
+
+  return (
+    <div style={{ padding: '32px 24px', maxWidth: 760, margin: '0 auto', width: '100%', boxSizing: 'border-box', fontFamily: "'Roboto', sans-serif" }}>
+      <Button type="text" icon={<BiArrowBack />} onClick={onBack} style={{ marginBottom: 16, color: 'rgba(0,0,0,0.45)', paddingLeft: 0 }}>
         Volver
       </Button>
 
-      <div style={{ marginBottom: 20 }}>
-        <Title level={4} style={{ margin: 0 }}>Historial — {rule.name}</Title>
-        <Text type="secondary" style={{ fontSize: 13 }}>{MOCK.length} ejecuciones · última hace 3 min</Text>
+      <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        <div>
+          <p style={{ margin: 0, fontSize: 20, fontWeight: 500, color: 'rgba(0,0,0,0.85)' }}>{title}</p>
+          <p style={{ margin: '4px 0 0', fontSize: 14, color: 'rgba(0,0,0,0.45)' }}>
+            {byRule.length} {byRule.length === 1 ? 'ejecución' : 'ejecuciones'}{byRule.length > 0 ? ` · Última ${ultima}` : ''}
+          </p>
+        </div>
+        {showRule && rules.length > 0 && (
+          <Select
+            value={ruleFilter}
+            onChange={v => { setRuleFilter(v); setPage(0); }}
+            style={{ minWidth: 200 }}
+            options={[{ value: 'all', label: 'Todas las reglas' }, ...rules.map(r => ({ value: r.id, label: r.name }))]}
+          />
+        )}
       </div>
 
-      {/* Filter bar */}
-      <Space style={{ marginBottom: 16 }}>
-        {([
-          { key: 'all',      label: 'Todos',        count: MOCK.length },
-          { key: 'sent',     label: 'Enviados',     count: sent },
-          { key: 'not_sent', label: 'No enviados',  count: notSent },
-        ] as { key: Filter; label: string; count: number }[]).map(f => (
-          <Button
-            key={f.key}
-            type={filter === f.key ? 'primary' : 'default'}
-            size="small"
-            onClick={() => setFilter(f.key)}
-          >
-            {f.label} ({f.count})
-          </Button>
-        ))}
-      </Space>
-
-      {/* List */}
-      <Card size="small" style={{ marginBottom: 16 }}>
-        {visible.length === 0 ? (
-          <Empty description="Sin ejecuciones" />
-        ) : visible.map((exec, i) => (
-          <div key={exec.id} style={{ padding: '10px 0', borderBottom: i < visible.length - 1 ? '1px solid #f0f0f0' : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <code style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(0,0,0,.85)', minWidth: 52 }}>
-              #{exec.responseId}
-            </code>
-            <Tag color={exec.status === 'sent' ? 'success' : 'error'} style={{ flexShrink: 0 }}>
-              {exec.status === 'sent' ? 'Enviado' : 'No enviado'}
-            </Tag>
-            <div style={{ flex: 1 }}>
-              <Text style={{ fontSize: 12, display: 'block' }}>{exec.detail}</Text>
-              <Text type="secondary" style={{ fontSize: 11 }}>{exec.timestamp}</Text>
-            </div>
-          </div>
-        ))}
-      </Card>
-
-      {notSent > 0 && (
-        <Alert
-          type="info"
-          icon={<InfoCircleOutlined />}
-          showIcon
-          title='Los registros "No enviado" por variable vacía son comportamiento esperado, no un error del sistema. Ocurren cuando la respuesta no incluye el campo correo_electronico.'
-          style={{ fontSize: 12 }}
+      {rules.length === 0 ? (
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={<span style={{ fontSize: 13, color: 'rgba(0,0,0,0.45)' }}>Todavía no has creado ninguna regla.</span>}
+          style={{ padding: '48px 0' }}
         />
+      ) : byRule.length === 0 ? (
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={
+            <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.45)' }}>
+              {showRule && ruleFilter === 'all'
+                ? 'Ninguna regla tiene ejecuciones todavía. Aparecerán aquí una vez que estén activas y lleguen respuestas que las disparen.'
+                : 'Esta regla aún no tiene ejecuciones. Aparecerán aquí una vez que esté activa y lleguen respuestas que la disparen.'}
+            </span>
+          }
+          style={{ padding: '48px 0' }}
+        />
+      ) : (
+        <>
+          {/* Stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
+            <StatCard label="Total" value={byRule.length} color="rgba(0,0,0,0.85)" />
+            <StatCard label="Enviados" value={enviados.length} color="#389e0d" />
+            <StatCard label="No enviados" value={noEnviados.length} color="#d48806" />
+            <StatCard label="Errores" value={errores.length} color="#cf1322" />
+          </div>
+
+          {/* Filtros */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+            {filterChips.map(f => (
+              <Button
+                key={f.key}
+                size="small"
+                type={filter === f.key ? 'primary' : 'default'}
+                onClick={() => { setFilter(f.key); setPage(0); }}
+              >
+                {f.label} ({f.count})
+              </Button>
+            ))}
+          </div>
+
+          {/* Lista */}
+          {paged.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 40, color: 'rgba(0,0,0,0.25)', fontSize: 13 }}>
+              Sin ejecuciones en esta categoría
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {paged.map(exec => (
+                <LogRow
+                  key={exec.ruleId + exec.id + exec.ts}
+                  exec={exec} now={now} showRule={showRule}
+                  expanded={expanded.has(exec.ruleId + exec.id + exec.ts)}
+                  onToggle={() => toggle(exec.ruleId + exec.id + exec.ts)}
+                />
+              ))}
+            </div>
+          )}
+
+          {hasMore && (
+            <Button block onClick={() => setPage(p => p + 1)} style={{ marginTop: 8 }}>
+              Cargar más ({filtered.length - paged.length} restantes)
+            </Button>
+          )}
+
+          <Alert
+            type="info"
+            icon={<BiInfoCircle />}
+            showIcon
+            message={
+              <span style={{ fontSize: 12 }}>
+                Los <strong>no enviados</strong> ocurren cuando el encuestado no tiene valor en la fuente de correo configurada para esta regla —
+                son omisiones esperadas, no errores del sistema. Los <strong>errores</strong> indican un fallo técnico en el envío.
+              </span>
+            }
+            style={{ marginTop: 16 }}
+          />
+        </>
       )}
     </div>
   );
