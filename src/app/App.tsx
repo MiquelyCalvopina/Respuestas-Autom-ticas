@@ -4,7 +4,7 @@ import { App as AntApp, ConfigProvider } from 'antd';
 import esES from 'antd/locale/es_ES';
 import { Toaster } from 'sonner';
 import BoostersPage from "@/imports/BoostersPage/index";
-import LogicaScreen from "@/app/components/logica/index";
+import LogicaScreen from "@/imports/LogicaPage/index";
 
 // Switcher temporal de desarrollo entre los módulos que se están construyendo.
 // Quitar cuando Lógica tenga su propio punto de entrada en el shell real.
