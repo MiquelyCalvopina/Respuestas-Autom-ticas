@@ -108,7 +108,10 @@ export default function LogicaModule() {
   const mostrarBarra = modo === 'lista' && momentoActual !== null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1, background: '#fff' }}>
+    // width:100% es necesario: el contenedor "Page content" del shell usa
+    // items-start (export de Figma), que en flex-column encoge los hijos a su
+    // ancho de contenido en vez de estirarlos — sin esto el canvas no llena.
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1, width: '100%', background: '#fff' }}>
       {/* Línea informativa (sección 2) */}
       {infoVisible && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f5f7fa', borderBottom: '1px solid #f0f0f0', padding: '8px 24px', flexShrink: 0 }}>
