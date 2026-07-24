@@ -122,7 +122,7 @@ function Rail() {
 
 function Breadcrumb() {
   return (
-    <div className="content-stretch flex gap-[8px] items-center relative shrink-0 w-[238.94px]" data-name="Container">
+    <div className="content-stretch flex gap-[8px] items-center relative shrink min-w-0" data-name="Container">
       <div className="content-stretch flex flex-col items-start overflow-clip relative shrink-0" data-name="nz-breadcrumb">
         <div className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[#1890ff] text-[14px] whitespace-nowrap" style={{ fontVariationSettings: '"wdth" 100' }}>
           <p className="leading-[22px]">Miqui</p>
@@ -135,9 +135,9 @@ function Breadcrumb() {
           </div>
         </div>
       </div>
-      <div className="content-stretch flex flex-col items-start overflow-clip relative shrink-0" data-name="Container">
-        <div className="flex flex-col font-['Roboto:Medium',sans-serif] font-medium justify-center leading-[0] relative shrink-0 text-[16px] text-[rgba(0,0,0,0.85)] whitespace-nowrap" style={{ fontVariationSettings: '"wdth" 100' }}>
-          <p className="leading-[24px]">{ESTUDIO.nombre}</p>
+      <div className="content-stretch flex flex-col items-start overflow-clip relative shrink min-w-0" data-name="Container">
+        <div className="flex flex-col font-['Roboto:Medium',sans-serif] font-medium justify-center leading-[0] relative shrink-0 text-[16px] text-[rgba(0,0,0,0.85)] truncate" style={{ fontVariationSettings: '"wdth" 100' }}>
+          <p className="leading-[24px] truncate">{ESTUDIO.nombre}</p>
         </div>
       </div>
     </div>
@@ -178,37 +178,43 @@ function ActivoSwitch() {
 const STEPS = ['Estructura', 'Look&Feel', 'Variables', 'Lógica', 'Potenciadores', 'Envíos'];
 
 function StudioStepper() {
+  // flex-1 + min-w-0 para que este bloque pueda achicarse dentro del topbar en
+  // vez de forzar su ancho natural sobre breadcrumb/tools (causa del overlap
+  // en tablet); overflow-x-auto para que, si aun así no alcanza el espacio,
+  // se pueda desplazar en vez de solaparse con lo demás.
   return (
-    <div className="content-stretch flex flex-[1_0_0] h-[59.2px] items-center justify-center min-w-px relative" data-name="Studio Stepper">
-      {STEPS.map((step, i) => {
-        const active = step === 'Lógica';
-        return (
-          <div key={step} className="content-stretch flex items-center h-full">
-            <div
-              className={
-                active
-                  ? "border-[#1890ff] border-b-[0.8px] border-solid content-stretch flex h-full items-center pb-[0.8px] px-[12px] relative shrink-0"
-                  : "content-stretch flex h-full items-center px-[12px] relative shrink-0"
-              }
-              data-name="Step"
-            >
+    <div className="flex flex-1 min-w-0 h-[59.2px] items-center justify-center overflow-x-auto" data-name="Studio Stepper">
+      <div className="content-stretch flex items-center h-full">
+        {STEPS.map((step, i) => {
+          const active = step === 'Lógica';
+          return (
+            <div key={step} className="content-stretch flex items-center h-full shrink-0">
               <div
-                className={`flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[14px] whitespace-nowrap ${active ? 'text-[#1890ff]' : 'text-[rgba(0,0,0,0.45)]'}`}
-                style={{ fontVariationSettings: '"wdth" 100' }}
+                className={
+                  active
+                    ? "border-[#1890ff] border-b-[0.8px] border-solid content-stretch flex h-full items-center pb-[0.8px] px-[12px] relative shrink-0"
+                    : "content-stretch flex h-full items-center px-[12px] relative shrink-0"
+                }
+                data-name="Step"
               >
-                <p className="leading-[20px]">{step}</p>
-              </div>
-            </div>
-            {i < STEPS.length - 1 && (
-              <div className="content-stretch flex flex-col items-start relative shrink-0" data-name="Div">
-                <div className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[18px] text-[rgba(0,0,0,0.06)] whitespace-nowrap" style={{ fontVariationSettings: '"wdth" 100' }}>
-                  <p className="leading-[28px]">|</p>
+                <div
+                  className={`flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[14px] whitespace-nowrap ${active ? 'text-[#1890ff]' : 'text-[rgba(0,0,0,0.45)]'}`}
+                  style={{ fontVariationSettings: '"wdth" 100' }}
+                >
+                  <p className="leading-[20px]">{step}</p>
                 </div>
               </div>
-            )}
-          </div>
-        );
-      })}
+              {i < STEPS.length - 1 && (
+                <div className="content-stretch flex flex-col items-start relative shrink-0" data-name="Div">
+                  <div className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[18px] text-[rgba(0,0,0,0.06)] whitespace-nowrap" style={{ fontVariationSettings: '"wdth" 100' }}>
+                    <p className="leading-[28px]">|</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -230,8 +236,10 @@ function ToolBorder({ path, wide }: { path: string; wide?: boolean }) {
 }
 
 function Tools() {
+  // Ancho de contenido (antes fijo en 217.2px, el espacio sobrante que le
+  // asignaba Figma) — así no le resta espacio al stepper en viewports angostos.
   return (
-    <div className="content-stretch flex items-center justify-end relative shrink-0 w-[217.2px]" data-name="Tools">
+    <div className="content-stretch flex items-center justify-end relative shrink-0" data-name="Tools">
       <div className="content-stretch flex gap-[12px] items-center relative shrink-0">
         <ToolBorder path={svgPaths.p27e78730} />
         <ToolBorder path={svgPaths.p2e358200} />
@@ -243,8 +251,8 @@ function Tools() {
 
 function HorizontalNavigation() {
   return (
-    <div className="bg-white border-b-[0.8px] border-[rgba(0,0,0,0.06)] border-solid content-stretch flex items-center justify-between px-[24px] relative shrink-0 w-full z-[2]" data-name="HorizontalNavigation">
-      <div className="content-stretch flex items-center justify-between relative shrink-0 w-[362px]" data-name="Name + Back button">
+    <div className="bg-white border-b-[0.8px] border-[rgba(0,0,0,0.06)] border-solid content-stretch flex items-center justify-between gap-3 px-[24px] relative shrink-0 w-full z-[2]" data-name="HorizontalNavigation">
+      <div className="content-stretch flex items-center gap-2 relative shrink min-w-0 max-w-[362px]" data-name="Name + Back button">
         <Breadcrumb />
         <EditPencil />
         <ActivoSwitch />
@@ -318,8 +326,14 @@ function SectionContent() {
 }
 
 function LogicsSidebar() {
+  // Ancho fijo (576px) solo desde `lg` — lado a lado con el diagrama, como en
+  // Figma. Debajo de `lg` (tablets) se apila arriba, a todo el ancho, y el
+  // scroll de la columna completa lo maneja Step Content — no duplica scroll.
   return (
-    <div className="content-stretch flex flex-col h-full items-start relative shrink-0 w-[576px]" data-name="Logics Sidebar">
+    <div
+      className="content-stretch flex flex-col items-start relative shrink-0 w-full min-h-[280px] border-b border-[#f0f0f0] xl:w-[576px] xl:h-full xl:border-b-0"
+      data-name="Logics Sidebar"
+    >
       <SectionHeader />
       <SectionContent />
     </div>
@@ -372,8 +386,8 @@ function DespedidaSinUsarPill({ nombre }: { nombre: string }) {
         <div className="bg-[#ffccc7] max-h-[20px] max-w-[20px] min-h-[20px] min-w-[20px] relative rounded-[9999px] shrink-0 flex items-center justify-center">
           <LinkOutlined style={{ fontSize: 10, color: '#a8071a' }} />
         </div>
-        <div className="relative shrink-0">
-          <div className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.85)] whitespace-nowrap" style={{ fontVariationSettings: '"wdth" 100' }}>
+        <div className="relative min-w-0">
+          <div className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.85)]" style={{ fontVariationSettings: '"wdth" 100' }}>
             <p className="leading-[22px]">{nombre}</p>
           </div>
         </div>
@@ -384,9 +398,14 @@ function DespedidaSinUsarPill({ nombre }: { nombre: string }) {
 
 function DespedidasSinUsarPanel() {
   const sinUsar = DESPEDIDAS.filter(d => !d.usada);
+  if (sinUsar.length === 0) return null;
+  // Posición relativa a su contenedor (antes left/top fijos en px, que en un
+  // "Survey visual hint space" angosto quedaban más anchos que el propio
+  // contenedor y se salían por la derecha) — clamp con max-w para que nunca
+  // exceda el ancho disponible, sea cual sea el viewport.
   return (
-    <div className="absolute left-[50px] top-[50px]" data-name="Container">
-      <div className="border border-[#d9d9d9] border-solid content-stretch flex flex-col gap-[12px] items-start p-[12.8px] relative rounded-[8px] shrink-0 w-[169px]" data-name="Border">
+    <div className="absolute left-4 top-4 max-w-[calc(100%-32px)]" data-name="Container">
+      <div className="border border-[#d9d9d9] border-solid content-stretch flex flex-col gap-[12px] items-start p-[12.8px] relative rounded-[8px] shrink-0 w-[169px] max-w-full" data-name="Border">
         <div className="relative shrink-0 w-full">
           <div className="flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.85)] w-full" style={{ fontVariationSettings: '"wdth" 100' }}>
             <p className="leading-[22px] mb-0">Despedidas sin usar</p>
@@ -400,9 +419,15 @@ function DespedidasSinUsarPanel() {
 }
 
 function SurveyVisualHintSpace() {
+  // Borde izquierdo y h-full solo desde `lg` (cuando va lado a lado con el
+  // sidebar); apilado, se deja crecer con su contenido y el scroll de toda
+  // la columna lo maneja Step Content.
   return (
-    <div className="border-[#f0f0f0] border-l-[0.8px] border-solid content-stretch flex flex-[1_0_0] gap-[16px] h-full items-start justify-center min-w-px pl-[24.8px] pr-[24px] py-[16px] relative" data-name="Survey visual hint space">
-      <div className="flex-[1_0_0] min-w-px relative">
+    <div
+      className="border-[#f0f0f0] border-solid content-stretch flex flex-1 gap-[16px] items-start justify-center min-w-0 pl-[24.8px] pr-[24px] py-[16px] relative w-full xl:h-full xl:border-l-[0.8px] xl:w-auto"
+      data-name="Survey visual hint space"
+    >
+      <div className="flex-1 min-w-0 relative">
         <div className="flex flex-col items-center pb-[6.4px] relative size-full">
           <GraphicsDocument />
         </div>
@@ -415,8 +440,11 @@ function SurveyVisualHintSpace() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 function StepContent() {
+  // Apilado (columna) en tablets, lado a lado desde `lg` (1024px) — evita el
+  // solapamiento del sidebar de 576px fijo contra el diagrama en viewports
+  // angostos (tablets verticales y algunas horizontales).
   return (
-    <div className="content-stretch flex flex-[1_0_0] items-start min-h-px relative w-full z-[1]" data-name="Step Content">
+    <div className="content-stretch flex flex-col xl:flex-row flex-1 items-start min-h-0 relative w-full z-[1] overflow-y-auto xl:overflow-visible" data-name="Step Content">
       <LogicsSidebar />
       <SurveyVisualHintSpace />
     </div>
