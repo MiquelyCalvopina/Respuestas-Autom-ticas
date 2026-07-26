@@ -3,7 +3,7 @@ import { App } from 'antd';
 import { preguntaById } from '@/app/data/estudio';
 import { BoxIcon } from './boxicons';
 import { Regla, Seleccion, SidebarModo, Momento, DestinosPorMomento } from './types';
-import { SEED_REGLAS, emptyGrupo, uid } from './seed';
+import { emptyGrupo, uid } from './seed';
 import { reglasDeMomento, preguntasSinAcceso, destinoCalculado } from './derive';
 import Canvas from './Canvas';
 import SidebarList from './SidebarList';
@@ -33,7 +33,8 @@ function nuevoBorrador(momento: Momento): Regla {
 
 export default function LogicaModule() {
   const { message } = App.useApp();
-  const [reglas, setReglas] = useState<Regla[]>(SEED_REGLAS);
+  // Arranca en el estado vacío (3.1.a) — primer contacto del usuario con el módulo.
+  const [reglas, setReglas] = useState<Regla[]>([]);
   const [seleccion, setSeleccion] = useState<Seleccion>({ tipo: 'none' });
   const [modo, setModo] = useState<SidebarModo>('lista');
   const [borrador, setBorrador] = useState<Regla | null>(null);
