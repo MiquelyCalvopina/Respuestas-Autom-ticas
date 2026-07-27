@@ -170,9 +170,13 @@ export default function SidebarList({ reglas, seleccion, onCrear, onEditar, onEl
           </Button>
         }
       />
-      {/* Cuerpo scrolleable */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column' }}>
-        {cuerpo}
+      {/* Cuerpo scrolleable — scroll en bloque plano; contenido en hijo flex
+          (minHeight 100% para que el estado vacío centre). Evita el bug de
+          flex+overflow que recorta el último elemento. */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        <div style={{ padding: 24, minHeight: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+          {cuerpo}
+        </div>
       </div>
     </div>
   );

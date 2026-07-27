@@ -354,8 +354,12 @@ export default function SidebarForm({ borrador, modoForm, reglas, onChange, onGu
         }
       />
 
-      {/* Cuerpo scrolleable */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Cuerpo scrolleable. El contenedor de scroll es un BLOQUE plano y el
+          contenido va en un hijo flex: si el scroll fuera a la vez flex-column,
+          su scrollHeight no incluye la última tarjeta y la consecuencia queda
+          cortada e inalcanzable. */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+       <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <SectionDivider label="Condición/es" />
 
         {borrador.grupos.map((g, gi) => (
@@ -452,6 +456,7 @@ export default function SidebarForm({ borrador, modoForm, reglas, onChange, onGu
             )}
           </CondBody>
         </div>
+       </div>
       </div>
 
       {/* Pie */}

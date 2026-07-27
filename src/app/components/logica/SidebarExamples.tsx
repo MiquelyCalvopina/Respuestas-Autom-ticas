@@ -38,7 +38,10 @@ export default function SidebarExamples({ onVolver }: Props) {
         title="Ejemplos de reglas"
         subtitle="Estos ejemplos son solo referencia. Arma tu propia regla usándolos como inspiración."
       />
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Scroll en bloque plano; contenido en hijo flex (evita el bug de
+          flex+overflow que recorta el último elemento). */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+       <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {EJEMPLOS.map((e, i) => (
           <div key={i} style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 12, background: '#fff' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
@@ -51,6 +54,7 @@ export default function SidebarExamples({ onVolver }: Props) {
             </div>
           </div>
         ))}
+       </div>
       </div>
     </div>
   );
