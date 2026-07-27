@@ -1,6 +1,7 @@
 import { Button, Popconfirm } from 'antd';
 import { preguntaById } from '@/app/data/estudio';
 import { BoxIcon } from './boxicons';
+import { EmptyIllustration } from './EmptyIllustration';
 import { Regla, Seleccion } from './types';
 import { Seg, condicionResumen, consecuenciaResumen } from './naturalLanguage';
 import { momentosConReglas, reglasDeMomento } from './derive';
@@ -94,7 +95,11 @@ export default function SidebarList({ reglas, seleccion, onCrear, onEditar, onEl
     subtitulo = 'Reglas que se evalúan cuando el encuestado responde esta pregunta. Pueden evaluar la respuesta o variables.';
   } else {
     titulo = 'Reglas de lógica del estudio';
-    subtitulo = 'Todas las reglas configuradas, evaluadas de arriba hacia abajo. Selecciona una pregunta o Bienvenida para enfocarte en las de ese momento.';
+    // Figma (estado vacío): el subtítulo del encabezado es corto. Con reglas
+    // creadas, se describe el comportamiento de evaluación.
+    subtitulo = momentosConReglas(reglas).length === 0
+      ? 'Todavía no has creado ninguna.'
+      : 'Todas las reglas del estudio, evaluadas de arriba hacia abajo.';
   }
 
   // Cuerpo
@@ -102,16 +107,20 @@ export default function SidebarList({ reglas, seleccion, onCrear, onEditar, onEl
   if (seleccion.tipo === 'none') {
     const momentos = momentosConReglas(reglas);
     if (momentos.length === 0) {
-      // 3.1.a — estudio sin ninguna regla
+      // 3.1.a — estudio sin ninguna regla. Textos y jerarquía exactos de Figma:
+      // ilustración 116px + título Medium (500) + descripción Regular (400),
+      // ambas 16px rgba(0,0,0,0.55), gap 12, padding 24.
       cuerpo = (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '48px 24px', textAlign: 'center', flex: 1 }}>
-          <BoxIcon name="bx-git-branch" size={40} color="rgba(0,0,0,0.25)" style={{ marginBottom: 4 }} />
-          <p style={{ fontFamily: FONT, fontSize: 16, color: 'rgba(0,0,0,0.55)', margin: 0, lineHeight: '24px', maxWidth: 340 }}>
-            Aún no hay reglas de lógica en este estudio.
-          </p>
-          <p style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(0,0,0,0.45)', margin: 0, lineHeight: '22px', maxWidth: 340 }}>
-            Todavía no has creado ninguna.
-          </p>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, textAlign: 'center', flex: 1 }}>
+          <EmptyIllustration size={116} />
+          <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+            <p style={{ fontFamily: FONT, fontWeight: 500, fontSize: 16, color: 'rgba(0,0,0,0.55)', margin: 0, lineHeight: '24px' }}>
+              Aún no hay reglas en este estudio.
+            </p>
+            <p style={{ fontFamily: FONT, fontWeight: 400, fontSize: 16, color: 'rgba(0,0,0,0.55)', margin: 0, lineHeight: '24px' }}>
+              Selecciona una pregunta del diagrama, o usa Crear regla arriba, para configurar la primera.
+            </p>
+          </div>
         </div>
       );
     } else {

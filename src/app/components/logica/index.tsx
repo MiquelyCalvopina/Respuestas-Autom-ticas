@@ -149,10 +149,11 @@ export default function LogicaModule() {
           )}
         </div>
 
-        {/* Canvas */}
+        {/* Canvas — la línea informativa solo aparece al editar una regla (Figma
+            1620/1633); el estado vacío/lista (1605) no la muestra. */}
         <Canvas
           reglas={reglas} seleccion={seleccion} onSelect={seleccionar} preguntasSinAcceso={sinAcceso}
-          infoVisible={infoVisible} onDismissInfo={() => setInfoVisible(false)}
+          infoVisible={infoVisible && modo === 'formulario'} onDismissInfo={() => setInfoVisible(false)}
         />
       </div>
     </div>

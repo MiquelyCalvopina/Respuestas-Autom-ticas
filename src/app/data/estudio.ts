@@ -151,7 +151,7 @@ export const FLUJO: FlujoNodo[] = [
   { id: 'n3',  tipo: 'pregunta',   label: 'P9 RESPUESTA ABIERTA', refId: 'p9_abierta' },
   { id: 'n4',  tipo: 'pregunta',   label: 'P10 FORMULARIO',      refId: 'p10_formulario' },
   { id: 'n5',  tipo: 'pregunta',   label: 'P11 EXPRESIÓN',       refId: 'p11_expresion' },
-  { id: 'n6',  tipo: 'pregunta',   label: 'P12 SELECCIÓN SIMPLE', refId: 'p12_simple' },
+  { id: 'n6',  tipo: 'pregunta',   label: 'P12 SELECCIÓN SIMPLE - Porro a...', refId: 'p12_simple' },
   { id: 'n7',  tipo: 'pregunta',   label: 'P13 SELECCIÓN MÚLTIPLE', refId: 'p13_multiple' },
   { id: 'n8',  tipo: 'pregunta',   label: 'P18 MAXDIFF',         refId: 'p18_maxdiff' },
   { id: 'n9',  tipo: 'pregunta',   label: 'P19 RANKING',         refId: 'p19_ranking' },
