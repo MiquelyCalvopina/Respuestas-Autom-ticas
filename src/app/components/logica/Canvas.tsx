@@ -65,18 +65,20 @@ export default function Canvas({ reglas, seleccion, onSelect, preguntasSinAcceso
       {/* Zona de scroll: diagrama centrado y alineado arriba; la caja de
           despedidas es una capa absoluta arriba-izquierda (no empuja el diagrama). */}
       <div style={{ position: 'relative', flex: 1, minHeight: 0, overflow: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: '16px 24px' }}>
-        {/* Caja de despedidas sin usar — condicional (sección 1). Figma: borde
-            Neutral/5 #d9d9d9, radio 8, padding 12.8; píldoras #f5f5f5 borde #d9d9d9. */}
+        {/* Caja de despedidas sin usar — condicional (sección 1). Figma nodo
+            1621:59344: caja borde Neutral/4 #f0f0f0, radio 8, padding 13, gap 8;
+            píldoras #fafafa borde #f0f0f0 radio 4; círculo #ffccc7 con ícono
+            bx-link en rojo (Character/danger #ff4d4f). */}
         {huerfanas.length > 0 && (
-          <div style={{ position: 'absolute', top: 16, left: 24, width: 156, background: '#fff', border: '1px solid #d9d9d9', borderRadius: 8, padding: 12.8, display: 'flex', flexDirection: 'column', gap: 12, zIndex: 1 }}>
+          <div style={{ position: 'absolute', top: 16, left: 24, width: 210, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, padding: 13, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 1 }}>
             <div style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(0,0,0,0.85)', lineHeight: '22px' }}>
               <p style={{ margin: 0 }}>Despedidas sin usar</p>
               <p style={{ margin: 0 }}>en el flujo del estudio.</p>
             </div>
             {huerfanas.map(d => (
-              <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f5f5f5', border: '1px solid #d9d9d9', borderRadius: 8, padding: '4.8px 8.8px' }}>
+              <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 4, padding: '5px 9px' }}>
                 <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: 999, background: '#ffccc7', flexShrink: 0, padding: 3, boxSizing: 'border-box' }}>
-                  <BoxIcon name="bx-link" size={14} color="rgba(0,0,0,0.85)" />
+                  <BoxIcon name="bx-link" size={14} color="#ff4d4f" />
                 </span>
                 <span style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(0,0,0,0.85)', lineHeight: '22px', whiteSpace: 'nowrap' }}>{d.nombre}</span>
               </div>
