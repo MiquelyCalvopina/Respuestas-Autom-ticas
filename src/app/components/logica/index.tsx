@@ -121,10 +121,13 @@ export default function LogicaModule() {
       {/* Split responsive: sidebar + canvas. La línea informativa (sección 2)
           vive dentro del panel visual (Canvas), no a lo ancho del módulo. */}
       <div className="flex flex-col xl:flex-row" style={{ flex: 1, minHeight: 0 }}>
-        {/* Sidebar */}
+        {/* Sidebar — altura acotada para que el formulario tenga scroll propio:
+            en columna (<xl) comparte alto con el canvas (flex-1); en fila (xl)
+            ancho fijo 576 y alto completo por stretch. Nunca height:auto, que
+            rompería el scroll interno y ocultaría la consecuencia. */}
         <div
-          className="w-full xl:w-[576px] xl:h-auto"
-          style={{ display: 'flex', flexDirection: 'column', minHeight: 0, borderRight: '1px solid #f0f0f0', flexShrink: 0 }}
+          className="w-full flex-1 min-h-0 xl:flex-none xl:w-[576px]"
+          style={{ display: 'flex', flexDirection: 'column', borderRight: '1px solid #f0f0f0' }}
         >
           <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             {modo === 'lista' && (
