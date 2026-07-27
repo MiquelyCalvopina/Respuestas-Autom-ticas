@@ -2,6 +2,7 @@ import { Button, Popconfirm } from 'antd';
 import { preguntaById } from '@/app/data/estudio';
 import { BoxIcon } from './boxicons';
 import { EmptyIllustration } from './EmptyIllustration';
+import { SidebarHeader } from './SidebarHeader';
 import { Regla, Seleccion } from './types';
 import { Seg, condicionResumen, consecuenciaResumen } from './naturalLanguage';
 import { momentosConReglas, reglasDeMomento } from './derive';
@@ -155,23 +156,20 @@ export default function SidebarList({ reglas, seleccion, onCrear, onEditar, onEl
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-      {/* Encabezado + botón */}
-      <div style={{ padding: '12px 24px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, justifyContent: 'space-between' }}>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ fontFamily: FONT, fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: 0, lineHeight: '20px' }}>{titulo}</p>
-            <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '4px 0 0 0', lineHeight: '16px' }}>{subtitulo}</p>
-          </div>
-          {/* Botón primario del sistema (AntD/NG-Zorro) — 32px de alto, radio 8,
-              hover/press del tema Plugthem. Ícono con Box Icons. */}
+      {/* Encabezado estandarizado; la acción "Crear regla" va a la derecha
+          (botón primario del sistema, 32px, ícono Box Icons). */}
+      <SidebarHeader
+        title={titulo}
+        subtitle={subtitulo}
+        right={
           <Button
             type="primary" onClick={onCrear} style={{ flexShrink: 0 }}
             icon={<BoxIcon name="bx-plus" size={16} color="#fff" />}
           >
             Crear regla
           </Button>
-        </div>
-      </div>
+        }
+      />
       {/* Cuerpo scrolleable */}
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column' }}>
         {cuerpo}

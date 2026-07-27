@@ -12,6 +12,7 @@ import {
 } from './catalog';
 import { emptyCondicion, emptyGrupo, uid } from './seed';
 import { nodoDeMomento } from './derive';
+import { SidebarHeader } from './SidebarHeader';
 
 const FONT = "'Roboto', sans-serif";
 const T85 = 'rgba(0,0,0,0.85)';
@@ -328,24 +329,18 @@ export default function SidebarForm({ borrador, modoForm, reglas, onChange, onGu
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-      {/* Encabezado */}
-      <div style={{ padding: '12px 24px', borderBottom: `1px solid ${BORDER}`, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-          <button type="button" onClick={onCancelar} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', color: '#1890ff', padding: 0, flexShrink: 0 }}>
-            <BoxIcon name="bx-arrow-back" size={15} color="#1890ff" />
-            <span style={{ fontFamily: FONT, fontSize: 14 }}>Volver</span>
+      {/* Encabezado estandarizado (Volver a la izquierda, acción a la derecha) */}
+      <SidebarHeader
+        onVolver={onCancelar}
+        title={modoForm === 'crear' ? 'Nueva regla' : 'Editar regla'}
+        subtitle={<>Editando en <span style={{ color: T85 }}>{tituloMomento(momento)}</span></>}
+        right={
+          <button type="button" onClick={onVerEjemplos} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', color: '#1890ff', padding: 0, flexShrink: 0 }}>
+            <BoxIcon name="bx-bulb" size={14} color="#1890ff" />
+            <span style={{ fontFamily: FONT, fontSize: 14 }}>Ver ejemplos</span>
           </button>
-          <div style={{ width: 1, height: 20, background: FIELD_BORDER, flexShrink: 0 }} />
-          <div style={{ minWidth: 0 }}>
-            <p style={{ fontFamily: FONT, fontWeight: 500, fontSize: 14, color: T85, margin: 0, lineHeight: '18px' }}>{modoForm === 'crear' ? 'Nueva regla' : 'Editar regla'}</p>
-            <p style={{ fontFamily: FONT, fontSize: 12, color: T45, margin: '2px 0 0 0', lineHeight: '16px' }}>Editando en <span style={{ color: T85 }}>{tituloMomento(momento)}</span></p>
-          </div>
-        </div>
-        <button type="button" onClick={onVerEjemplos} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', color: '#1890ff', padding: 0, flexShrink: 0 }}>
-          <BoxIcon name="bx-bulb" size={14} color="#1890ff" />
-          <span style={{ fontFamily: FONT, fontSize: 14 }}>Ver ejemplos</span>
-        </button>
-      </div>
+        }
+      />
 
       {/* Cuerpo scrolleable */}
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>

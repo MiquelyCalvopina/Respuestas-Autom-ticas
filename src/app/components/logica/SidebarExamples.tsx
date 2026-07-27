@@ -1,4 +1,5 @@
 import { BoxIcon } from './boxicons';
+import { SidebarHeader } from './SidebarHeader';
 
 const FONT = "'Roboto', sans-serif";
 
@@ -32,19 +33,11 @@ const EJEMPLOS = [
 export default function SidebarExamples({ onVolver }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-      <div style={{ padding: '12px 24px', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
-        <button
-          type="button" onClick={onVolver}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', cursor: 'pointer', color: '#1890ff', padding: 0, marginBottom: 8 }}
-        >
-          <BoxIcon name="bx-arrow-back" size={15} color="#1890ff" />
-          <span style={{ fontFamily: FONT, fontSize: 13 }}>Volver</span>
-        </button>
-        <p style={{ fontFamily: FONT, fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: 0 }}>Ejemplos de reglas</p>
-        <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '4px 0 0 0', lineHeight: '16px' }}>
-          Estos ejemplos son solo referencia. Arma tu propia regla usándolos como inspiración.
-        </p>
-      </div>
+      <SidebarHeader
+        onVolver={onVolver}
+        title="Ejemplos de reglas"
+        subtitle="Estos ejemplos son solo referencia. Arma tu propia regla usándolos como inspiración."
+      />
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {EJEMPLOS.map((e, i) => (
           <div key={i} style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 12, background: '#fff' }}>
