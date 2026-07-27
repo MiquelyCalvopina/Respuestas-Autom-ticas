@@ -7,8 +7,8 @@ import { BoxIcon, BoxIconName } from './boxicons';
 import { Regla, Condicion, GrupoCondicion, Consecuencia, ConsecuenciaTipo, Momento, Conector } from './types';
 import {
   operadoresPregunta, operadoresVariable, subSelectorDe, condicionLista, tieneModoNotaGrupo,
-  errorCondicion, esDominioValido,
-  SIN_VALOR, RANGO, LISTA_TAGS, MULTI_IGUALDAD,
+  errorCondicion, esDominioValido, seleccionMultiple,
+  SIN_VALOR, RANGO, LISTA_TAGS,
 } from './catalog';
 import { emptyCondicion, emptyGrupo, uid } from './seed';
 import { nodoDeMomento } from './derive';
@@ -119,15 +119,21 @@ function ValorControl({ c, q, onChange }: { c: Condicion; q?: Pregunta; onChange
   }
 
   if (RANGO.has(c.operador)) {
+    // Escala de pregunta → dos selects simples con las opciones (estándar).
+    // Fecha → dos date pickers. Número (formulario/variable) → dos number inputs.
+    const escalaOpts = (esNumero && q?.escala)
+      ? Array.from({ length: q.escala[1] - q.escala[0] + 1 }, (_, k) => ({ value: String(q.escala![0] + k), label: String(q.escala![0] + k) }))
+      : null;
+    const extremo = (key: 'valor' | 'valorB', ph: string) => {
+      if (escalaOpts) return <Select showSearch optionFilterProp="label" style={{ width: '100%' }} value={c[key] || undefined} onChange={(v) => onChange({ [key]: v as string })} options={escalaOpts} placeholder={ph} />;
+      if (esFecha) return <Input type="date" value={c[key]} onChange={e => onChange({ [key]: e.target.value })} />;
+      return <InputNumber style={{ width: '100%' }} value={c[key] === '' ? null : Number(c[key])} onChange={v => onChange({ [key]: v == null ? '' : String(v) })} placeholder={ph} />;
+    };
     return (
       <div style={{ ...fieldWide, display: 'flex', alignItems: 'center', gap: 8 }}>
-        {esFecha
-          ? <Input type="date" value={c.valor} onChange={e => onChange({ valor: e.target.value })} />
-          : <InputNumber style={{ width: '100%' }} value={c.valor === '' ? null : Number(c.valor)} onChange={v => onChange({ valor: v == null ? '' : String(v) })} placeholder="Desde" />}
+        {extremo('valor', 'Desde')}
         <span style={{ fontFamily: FONT, fontSize: 12, color: T45 }}>y</span>
-        {esFecha
-          ? <Input type="date" value={c.valorB} onChange={e => onChange({ valorB: e.target.value })} />
-          : <InputNumber style={{ width: '100%' }} value={c.valorB === '' ? null : Number(c.valorB)} onChange={v => onChange({ valorB: v == null ? '' : String(v) })} placeholder="Hasta" />}
+        {extremo('valorB', 'Hasta')}
       </div>
     );
   }
@@ -146,18 +152,24 @@ function ValorControl({ c, q, onChange }: { c: Condicion; q?: Pregunta; onChange
       }} />;
   }
 
-  const esMulti = MULTI_IGUALDAD.has(c.operador);
+  // Simple vs. múltiple según el estándar (indicador/matriz "Es igual a" y modo
+  // grupo → múltiple; opción simple / dropdown / sí-no / maxdiff → simple).
+  const multiSel = q ? seleccionMultiple(q, c) : false;
   const modoGrupo = c.modoMatriz === 'grupo' && !!q?.grupos;
   if (modoGrupo) {
     const opts = (q!.grupos ?? []).concat('No aplica').map(g => ({ value: g, label: g }));
     return <Select mode="multiple" showSearch optionFilterProp="label" style={fieldWide} value={c.valores} onChange={(v) => onChange({ valores: v as string[] })} options={opts} placeholder="Elige uno o más grupos" />;
   }
-  if (q?.opciones && (q.tipo.startsWith('seleccion') || q.tipo === 'dropdown' || q.tipo === 'maxdiff' || q.tipo === 'ranking') && c.subTipo !== 'comentario') {
-    const opts = q.opciones.map(o => ({ value: o, label: o }));
-    if (esMulti) return <Select mode="multiple" showSearch optionFilterProp="label" style={fieldWide} value={c.valores} onChange={(v) => onChange({ valores: v as string[] })} options={opts} placeholder="Elige una o más opciones" />;
+  if (q?.opciones && (q.tipo.startsWith('seleccion') || q.tipo === 'dropdown' || q.tipo === 'si_no' || q.tipo === 'maxdiff' || q.tipo === 'ranking') && c.subTipo !== 'comentario') {
+    // Opciones del usuario + adicionales del estándar según el tipo.
+    const extras = q.tipo === 'seleccion_multiple' ? ['Otro', 'Ninguna de las anteriores', 'Seleccionar todas']
+      : (q.tipo === 'seleccion_simple' || q.tipo === 'dropdown' || q.tipo === 'si_no') ? ['Otro', 'Ninguna de las anteriores']
+      : [];
+    const opts = [...q.opciones, ...extras].map(o => ({ value: o, label: o }));
+    if (multiSel) return <Select mode="multiple" showSearch optionFilterProp="label" style={fieldWide} value={c.valores} onChange={(v) => onChange({ valores: v as string[] })} options={opts} placeholder="Elige una o más opciones" />;
     return <Select showSearch optionFilterProp="label" style={fieldWide} value={c.valor || undefined} onChange={(v) => onChange({ valor: v as string })} options={opts} placeholder="Elige una opción" />;
   }
-  if (esNumero && q?.escala && esMulti) {
+  if (esNumero && q?.escala && multiSel) {
     const [min, max] = q.escala;
     const nums = Array.from({ length: max - min + 1 }, (_, k) => String(min + k));
     const opts = nums.concat('No aplica').map(n => ({ value: n, label: n }));
