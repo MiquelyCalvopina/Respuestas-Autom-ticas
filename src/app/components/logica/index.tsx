@@ -36,7 +36,16 @@ export default function LogicaModule() {
   const [borrador, setBorrador] = useState<Regla | null>(null);
   const [modoForm, setModoForm] = useState<'crear' | 'editar'>('crear');
   const [destinos, setDestinos] = useState<DestinosPorMomento>({});
-  const [infoVisible, setInfoVisible] = useState(true);
+  // La barra informativa se descarta por sesión: si el usuario la cierra, no
+  // vuelve a aparecer hasta la siguiente sesión (sessionStorage se limpia al
+  // cerrar la pestaña/sesión).
+  const [infoVisible, setInfoVisible] = useState(() => {
+    try { return sessionStorage.getItem('logica.infoDescartada') !== '1'; } catch { return true; }
+  });
+  function descartarInfo() {
+    setInfoVisible(false);
+    try { sessionStorage.setItem('logica.infoDescartada', '1'); } catch { /* modo privado / no disponible */ }
+  }
   const [editandoDestino, setEditandoDestino] = useState(false);
   const [destinoPrueba, setDestinoPrueba] = useState<string | undefined>(undefined);
 
@@ -149,11 +158,11 @@ export default function LogicaModule() {
           )}
         </div>
 
-        {/* Canvas — la línea informativa solo aparece al editar una regla (Figma
-            1620/1633); el estado vacío/lista (1605) no la muestra. */}
+        {/* Canvas — la línea informativa se muestra en todos los estados (incluido
+            el vacío); si el usuario la cierra, no reaparece hasta la próxima sesión. */}
         <Canvas
           reglas={reglas} seleccion={seleccion} onSelect={seleccionar} preguntasSinAcceso={sinAcceso}
-          infoVisible={infoVisible && modo === 'formulario'} onDismissInfo={() => setInfoVisible(false)}
+          infoVisible={infoVisible} onDismissInfo={descartarInfo}
         />
       </div>
     </div>
