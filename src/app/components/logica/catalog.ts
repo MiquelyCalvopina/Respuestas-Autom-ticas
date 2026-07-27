@@ -5,7 +5,7 @@
 // durante la sesión del encuestado, por eso SÍ expone "vacía"/"no contestó" en
 // preguntas (sección 7, nota transversal).
 
-import { Pregunta, VariableTipo } from '@/app/data/estudio';
+import { Pregunta, VariableTipo, variableByKey } from '@/app/data/estudio';
 import { Condicion } from './types';
 
 // ── Sets de operadores ────────────────────────────────────────────────────────
@@ -106,6 +106,8 @@ export function operadoresVariable(tipo: VariableTipo): string[] {
 }
 
 // ── ¿La condición está lista? (feedback "✓ Condición lista") ────────────────────
+// "Lista" = estructuralmente completa (tiene todos los campos requeridos). La
+// validez del formato del valor se comprueba aparte con errorCondicion().
 export function condicionLista(c: Condicion, preguntaTipo?: Pregunta): boolean {
   if (!c.campo || !c.operador) return false;
   // matriz necesita fila + modo antes de operador (ya reflejado en operador vacío)
@@ -114,4 +116,103 @@ export function condicionLista(c: Condicion, preguntaTipo?: Pregunta): boolean {
   if (LISTA_TAGS.has(c.operador)) return c.valores.length > 0;
   if (MULTI_IGUALDAD.has(c.operador) && c.valores.length > 0) return true;
   return c.valor.trim() !== '';
+}
+
+// ── Validadores de formato ─────────────────────────────────────────────────────
+/** Dominio válido, con o sin "@" inicial (ej. gmail.com, @sub.example.co.uk). */
+export function esDominioValido(v: string): boolean {
+  const d = v.trim().replace(/^@/, '');
+  if (!d || d.length > 253) return false;
+  return /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(d);
+}
+
+/** Correo electrónico con estructura usuario@dominio.tld. */
+export function esCorreoValido(v: string): boolean {
+  const s = v.trim();
+  if (!s || s.length > 254 || /\s/.test(s)) return false;
+  const at = s.indexOf('@');
+  if (at <= 0 || at !== s.lastIndexOf('@')) return false;
+  return esDominioValido(s.slice(at + 1));
+}
+
+/** URL válida (acepta sin protocolo, ej. example.com/ruta). */
+export function esUrlValida(v: string): boolean {
+  const s = v.trim();
+  if (!s || /\s/.test(s)) return false;
+  try {
+    const url = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(s) ? s : `https://${s}`);
+    return url.hostname === 'localhost' || /\.[a-z]{2,}$/i.test(url.hostname);
+  } catch { return false; }
+}
+
+/** Tipo efectivo del valor de una condición, para elegir la validación. */
+function tipoDelValor(c: Condicion, q?: Pregunta): VariableTipo | 'url' | 'texto' | 'opciones' {
+  if (c.fuente === 'variable') return variableByKey(c.campo)?.tipo ?? 'texto';
+  if (!q) return 'texto';
+  if (q.tipo === 'formulario') {
+    const campo = (q.campos ?? []).find(f => f.key === c.subTipo);
+    return campo?.tipo === 'numero' ? 'numero'
+      : campo?.tipo === 'fecha' ? 'fecha'
+      : campo?.tipo === 'correo' ? 'correo'
+      : campo?.tipo === 'url' ? 'url'
+      : 'texto';
+  }
+  if (c.subTipo === 'comentario') return 'texto';
+  if (['NPS', 'CSAT', 'CES', 'CLI', 'rating'].includes(q.tipo)) return 'numero';
+  if (q.tipo === 'matriz') return c.modoMatriz === 'grupo' ? 'texto' : 'numero';
+  return 'texto';
+}
+
+/** Mensaje de error de formato del valor, o null si es válido/incompleto.
+ *  No exige que la condición esté completa: solo valida lo ya escrito. */
+export function errorCondicion(c: Condicion, q?: Pregunta): string | null {
+  if (!c.operador || SIN_VALOR.has(c.operador)) return null;
+
+  // Tags de dominios: cada valor debe ser un dominio real.
+  if (c.operador.includes('dominios')) {
+    const malos = c.valores.filter(v => v.trim() && !esDominioValido(v));
+    if (!malos.length) return null;
+    return `Dominio${malos.length > 1 ? 's' : ''} no válido${malos.length > 1 ? 's' : ''}: ${malos.join(', ')}`;
+  }
+  // Otras listas de tags: sin valores vacíos.
+  if (LISTA_TAGS.has(c.operador)) {
+    return c.valores.some(v => !v.trim()) ? 'Hay valores vacíos en la lista.' : null;
+  }
+
+  const tipo = tipoDelValor(c, q);
+
+  // Rango "Está entre": ambos válidos e inicio ≤ fin (y dentro de la escala).
+  if (RANGO.has(c.operador)) {
+    if (c.valor.trim() === '' || c.valorB.trim() === '') return null; // incompleto
+    if (tipo === 'fecha') {
+      return c.valor > c.valorB ? 'La fecha inicial debe ser anterior o igual a la final.' : null;
+    }
+    const a = Number(c.valor), b = Number(c.valorB);
+    if (Number.isNaN(a) || Number.isNaN(b)) return 'Ingresa números válidos.';
+    if (a > b) return 'El valor inicial debe ser menor o igual al final.';
+    if (q?.escala) {
+      const [min, max] = q.escala;
+      if (a < min || b > max) return `Los valores deben estar entre ${min} y ${max}.`;
+    }
+    return null;
+  }
+
+  // Igualdad exacta sobre correo / URL: formato válido.
+  const igualdadExacta = c.operador === 'Es igual a' || c.operador === 'No es igual a';
+  if (igualdadExacta && c.valor.trim() !== '') {
+    if (tipo === 'correo' && !esCorreoValido(c.valor)) return 'Correo no válido.';
+    if (tipo === 'url' && !esUrlValida(c.valor)) return 'URL no válida.';
+  }
+
+  // Numérico libre (fuera de selección acotada): número dentro de la escala.
+  if (tipo === 'numero' && !MULTI_IGUALDAD.has(c.operador) && c.valor.trim() !== '') {
+    const n = Number(c.valor);
+    if (Number.isNaN(n)) return 'Ingresa un número válido.';
+    if (q?.escala) {
+      const [min, max] = q.escala;
+      if (n < min || n > max) return `El valor debe estar entre ${min} y ${max}.`;
+    }
+  }
+
+  return null;
 }

@@ -1,4 +1,4 @@
-import { Select, Input, InputNumber, Segmented, Tooltip, Button } from 'antd';
+import { Select, Input, InputNumber, Segmented, Tooltip, Button, Tag } from 'antd';
 import {
   PREGUNTAS, VARIABLES_DETALLE, DESPEDIDAS, FLUJO, ESTUDIO,
   preguntaById, variableByKey, Pregunta,
@@ -7,6 +7,7 @@ import { BoxIcon, BoxIconName } from './boxicons';
 import { Regla, Condicion, GrupoCondicion, Consecuencia, ConsecuenciaTipo, Momento, Conector } from './types';
 import {
   operadoresPregunta, operadoresVariable, subSelectorDe, condicionLista, tieneModoNotaGrupo,
+  errorCondicion, esDominioValido,
   SIN_VALOR, RANGO, LISTA_TAGS, MULTI_IGUALDAD,
 } from './catalog';
 import { emptyCondicion, emptyGrupo, uid } from './seed';
@@ -133,7 +134,15 @@ function ValorControl({ c, q, onChange }: { c: Condicion; q?: Pregunta; onChange
   if (LISTA_TAGS.has(c.operador)) {
     const esDominio = c.operador.includes('dominios');
     return <Select mode="tags" style={fieldWide} value={c.valores} onChange={(v) => onChange({ valores: v as string[] })}
-      placeholder={esDominio ? 'Escribe un dominio y Enter (ej. @gmail.com)' : 'Escribe un valor y Enter'} tokenSeparators={[',', ';']} open={false} suffixIcon={null} />;
+      placeholder={esDominio ? 'Escribe un dominio y Enter (ej. @gmail.com)' : 'Escribe un valor y Enter'} tokenSeparators={[',', ';']} open={false} suffixIcon={null}
+      tagRender={(props) => {
+        const invalido = esDominio ? !esDominioValido(String(props.value)) : !String(props.value).trim();
+        return (
+          <Tag color={invalido ? 'error' : undefined} closable={props.closable} onClose={props.onClose} style={{ marginInlineEnd: 4 }}>
+            {props.label}
+          </Tag>
+        );
+      }} />;
   }
 
   const esMulti = MULTI_IGUALDAD.has(c.operador);
@@ -176,7 +185,8 @@ function CondFields({ c, momento, onChange }: { c: Condicion; momento: Momento; 
   const esMatriz = q?.tipo === 'matriz';
   const conModo = q ? tieneModoNotaGrupo(q) : false;
   const operadores = c.fuente === 'variable' ? (varTipo ? operadoresVariable(varTipo) : []) : (q ? operadoresPregunta(q, c) : []);
-  const lista = condicionLista(c, q);
+  const error = errorCondicion(c, q);
+  const lista = condicionLista(c, q) && !error;
   const subResuelto = !sub || !!c.subTipo;
   const matrizResuelto = !esMatriz || !!c.filaMatriz;
   const mostrarOperador = !!c.campo && subResuelto && matrizResuelto && operadores.length > 0;
@@ -220,13 +230,18 @@ function CondFields({ c, momento, onChange }: { c: Condicion; momento: Momento; 
       )}
       {/* Valor */}
       {c.operador && <ValorControl c={c} q={q} onChange={onChange} />}
-      {/* Condición lista */}
-      {lista && (
+      {/* Validación: error de formato o "Condición lista" */}
+      {error ? (
+        <div style={{ flexBasis: '100%', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <BoxIcon name="bx-error-circle" size={14} color="#ff4d4f" />
+          <span style={{ fontFamily: FONT, fontSize: 13, color: '#ff4d4f' }}>{error}</span>
+        </div>
+      ) : lista ? (
         <div style={{ flexBasis: '100%', display: 'flex', alignItems: 'center', gap: 4 }}>
           <BoxIcon name="bx-check-circle" size={14} color="#52c41a" />
           <span style={{ fontFamily: FONT, fontSize: 13, color: '#52c41a' }}>Condición lista</span>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -286,12 +301,16 @@ export default function SidebarForm({ borrador, modoForm, reglas, onChange, onGu
   const campoActual = borrador.grupos[0]?.condiciones[0]?.campo;
   const reusa = !!campoActual && reglas.some(r => r.id !== borrador.id && r.grupos.some(g => g.condiciones.some(c => c.campo === campoActual)));
 
-  const todasListas = borrador.grupos.every(g => g.condiciones.every(c => condicionLista(c, c.fuente === 'response' ? preguntaById(c.campo) : undefined)));
+  const qDe = (c: Condicion) => (c.fuente === 'response' ? preguntaById(c.campo) : undefined);
+  const todasCompletas = borrador.grupos.every(g => g.condiciones.every(c => condicionLista(c, qDe(c))));
+  const todasValidas = borrador.grupos.every(g => g.condiciones.every(c => !errorCondicion(c, qDe(c))));
   const consecuenciaOk = borrador.consecuencia.tipo === 'mostrar'
     ? (!!borrador.consecuencia.destino || borrador.consecuencia.destinoClase === 'pagina')
     : !!borrador.consecuencia.destino;
-  const puedeGuardar = todasListas && consecuenciaOk;
-  const motivoBloqueo = !todasListas ? 'Completa todas las condiciones' : !consecuenciaOk ? 'Elige el destino de la consecuencia' : '';
+  const puedeGuardar = todasCompletas && todasValidas && consecuenciaOk;
+  const motivoBloqueo = !todasValidas ? 'Corrige las condiciones no válidas'
+    : !todasCompletas ? 'Completa todas las condiciones'
+    : !consecuenciaOk ? 'Elige el destino de la consecuencia' : '';
 
   const nodoMomento = nodoDeMomento(momento);
   const iMomento = nodoMomento ? FLUJO.indexOf(nodoMomento) : -1;
