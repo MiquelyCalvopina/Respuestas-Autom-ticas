@@ -2,10 +2,11 @@
 // control de valor expone cada tipo de pregunta/variable, alineado con el
 // estándar "Questions and Variables Logic" (hojas Pregunta-AHORA / Variables-ahora).
 //
-// Regla transversal del estándar: las PREGUNTAS solo exponen "No está vacía"
-// (no "Está vacía"), hasta que el front mande al back la diferencia entre
-// respuesta completa y vacía. Las VARIABLES sí exponen "Está vacía" y "No está
-// vacía". La Casilla no expone ninguna de las dos.
+// Diferencia clave con Respuestas Automáticas: Lógica evalúa EN VIVO durante la
+// sesión del encuestado, así que SÍ puede distinguir respuesta vacía de
+// contestada. Por eso, a diferencia de RA (que trabaja sobre answers.data ya
+// guardado), aquí las preguntas exponen tanto "Está vacía" como "No está vacía".
+// La Casilla es la excepción (siempre está contestada: solo igualdad).
 
 import { Pregunta, VariableTipo, variableByKey } from '@/app/data/estudio';
 import { Condicion } from './types';
@@ -13,29 +14,29 @@ import { Condicion } from './types';
 // ── Sets de operadores ────────────────────────────────────────────────────────
 export const OPS = {
   // preguntas — indicadores/escala (NPS, CSAT, CES, CLI, Rating y Matriz "Por nota")
-  escala:   ['Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'No está vacía'],
-  grupo:    ['Es igual a', 'No es igual a', 'No está vacía'],
-  abierta:  ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'No está vacía'],
-  abiertaCat: ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'No está vacía'],
-  simple:   ['Es igual a', 'No es igual a', 'No está vacía'],
-  multiple: ['Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'No está vacía'],
+  escala:   ['Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'Está vacía', 'No está vacía'],
+  grupo:    ['Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  abierta:  ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  abiertaCat: ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'Está vacía', 'No está vacía'],
+  simple:   ['Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  multiple: ['Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
   // Comentario de Opción SIMPLE (incluye tags de lista)
-  comentarioSimple:    ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'No está vacía'],
-  comentarioSimpleCat: ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'No está vacía'],
+  comentarioSimple:    ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  comentarioSimpleCat: ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'Está vacía', 'No está vacía'],
   // Comentario de Opción MÚLTIPLE (sin tags de lista)
-  comentarioMultiple:    ['Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'No está vacía'],
-  comentarioMultipleCat: ['Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'No está vacía'],
-  casilla:  ['Es igual a', 'No es igual a'],
-  maxdiff:  ['Es igual a', 'No es igual a', 'No está vacía'],
-  ranking:  ['Es igual a', 'No es igual a', 'No está vacía'],
+  comentarioMultiple:    ['Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  comentarioMultipleCat: ['Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'Está vacía', 'No está vacía'],
+  casilla:  ['Es igual a', 'No es igual a'], // siempre contestada: sin vacía/no vacía
+  maxdiff:  ['Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  ranking:  ['Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
   archivo:  ['Fue contestada', 'No fue contestada'], // no está en el estándar; se conserva
-  // campos de formulario (preguntas → sin "Está vacía")
-  campoTexto:  ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'No está vacía'],
-  campoNumero: ['Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'No está vacía'],
-  campoCorreo: ['Contiene', 'No contiene', 'Pertenece a los dominios', 'No pertenece a los dominios', 'Es igual a', 'No es igual a', 'No está vacía'],
-  campoFecha:  ['Es igual a', 'No es igual a', 'Es después de', 'Es antes de', 'Está entre', 'No está vacía'],
-  campoUrl:    ['Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'No está vacía'],
-  // variables (sí exponen "Está vacía" y "No está vacía")
+  // campos de formulario
+  campoTexto:  ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  campoNumero: ['Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'Está vacía', 'No está vacía'],
+  campoCorreo: ['Contiene', 'No contiene', 'Pertenece a los dominios', 'No pertenece a los dominios', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  campoFecha:  ['Es igual a', 'No es igual a', 'Es después de', 'Es antes de', 'Está entre', 'Está vacía', 'No está vacía'],
+  campoUrl:    ['Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  // variables (igual que preguntas en Lógica: exponen "Está vacía" y "No está vacía")
   varTexto:  ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
   varNumero: ['Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'Está vacía', 'No está vacía'],
   varFecha:  ['Es igual a', 'No es igual a', 'Es después de', 'Es antes de', 'Está entre', 'Está vacía', 'No está vacía'],
@@ -61,6 +62,10 @@ export function subSelectorDe(q: Pregunta): { label: string; opciones: SubOpcion
       return { label: 'Evaluar', opciones: [{ value: 'opcion', label: 'La opción elegida' }, { value: 'comentario', label: 'El comentario' }] };
     case 'maxdiff':
       return { label: 'Evaluar', opciones: [{ value: 'mas', label: 'Más importante' }, { value: 'menos', label: 'Menos importante' }] };
+    case 'ranking':
+      // Las condiciones de Ranking son POR POSICIÓN: se elige la posición del
+      // ranking (1..N) y luego qué opción quedó en esa posición.
+      return { label: 'Posición', opciones: (q.opciones ?? []).map((_, i) => ({ value: String(i + 1), label: `Posición ${i + 1}` })) };
     default:
       return null;
   }
@@ -78,6 +83,8 @@ export function operadoresPregunta(q: Pregunta, c: Condicion): string[] {
       // segmented Por nota/Por grupo; sin elegir, se asume "nota"
       return c.modoMatriz === 'grupo' ? [...OPS.grupo] : [...OPS.escala];
     case 'rating':
+      // Rating es una escala como NPS/CSAT pero SIN modo grupo (no tiene un
+      // indicador con grupos atado): siempre operadores de escala.
       return [...OPS.escala];
     case 'matriz':
       if (!c.filaMatriz) return [];
@@ -101,7 +108,7 @@ export function operadoresPregunta(q: Pregunta, c: Condicion): string[] {
       return [...OPS.multiple];
     case 'casilla':   return [...OPS.casilla];
     case 'maxdiff':   return c.subTipo ? [...OPS.maxdiff] : [];
-    case 'ranking':   return [...OPS.ranking];
+    case 'ranking':   return c.subTipo ? [...OPS.ranking] : []; // requiere elegir la posición
     case 'cargar_archivo': return [...OPS.archivo];
     default: return [];
   }
