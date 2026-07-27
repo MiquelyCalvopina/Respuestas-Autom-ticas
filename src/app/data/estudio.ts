@@ -70,7 +70,9 @@ export interface FlujoNodo {
 }
 
 export const ESTUDIO = {
-  nombre: 'NPS Postventa · HIR Casa',
+  // Nombre alineado con el shell de Respuestas Automáticas y los frames de Figma
+  // del módulo Lógica (mismo estudio de pruebas del ambiente HIR Casa).
+  nombre: 'Pruebas Deuda Técnica',
   cliente: 'HIR Casa',
   activo: true,
   /** el estudio tiene una sola página (relevante para el bloqueo de "Mostrar › Páginas") */
@@ -106,12 +108,31 @@ export const VARIABLES_DETALLE: VariableDetalle[] = [
 
 const GRUPOS_NPS = ['Detractor', 'Neutro', 'Promotor'];
 
+// Encuesta base con UN EJEMPLO DE CADA TIPO DE PREGUNTA (estudio "Pruebas Deuda
+// Técnica" del ambiente HIR Casa). Es la encuesta compartida por todo el
+// proyecto para ejercitar el catálogo completo de condiciones (sección 7): cada
+// comportamiento distinto de condición está representado por una pregunta.
 export const PREGUNTAS: Pregunta[] = [
-  { id: 'q1', pnum: 'P1', texto: '¿Qué tan probable es que recomiendes HIR Casa a alguien?', tipo: 'NPS', escala: [0, 10], grupos: GRUPOS_NPS },
-  { id: 'q2', pnum: 'P2', texto: '¿Cuál fue el motivo principal de tu calificación?', tipo: 'texto_abierto', categorizable: true },
-  { id: 'q3', pnum: 'P3', texto: '¿Cómo calificarías la atención recibida?', tipo: 'CSAT', escala: [1, 5], grupos: ['Insatisfecho', 'Neutro', 'Satisfecho'] },
-  { id: 'q4', pnum: 'P4', texto: '¿En qué sucursal fuiste atendido?', tipo: 'seleccion_simple', opciones: ['Quito Norte', 'Quito Sur', 'Guayaquil', 'Cuenca'] },
-  { id: 'q5', pnum: 'P5', texto: 'Califica los siguientes aspectos de tu atención', tipo: 'matriz', escala: [1, 5], filas: ['Rapidez', 'Amabilidad', 'Claridad de la información'] },
+  { id: 'q1',  pnum: 'P1',  texto: '¿Qué tan probable es que recomiendes HIR Casa a alguien?', tipo: 'NPS', escala: [0, 10], grupos: GRUPOS_NPS },
+  { id: 'q2',  pnum: 'P2',  texto: '¿Qué tan satisfecho quedaste con la atención recibida?', tipo: 'CSAT', escala: [1, 5], grupos: ['Insatisfecho', 'Neutro', 'Satisfecho'] },
+  { id: 'q3',  pnum: 'P3',  texto: 'Califica tu experiencia general', tipo: 'rating', escala: [1, 5] },
+  { id: 'q4',  pnum: 'P4',  texto: '¿Cuál fue el motivo principal de tu calificación?', tipo: 'texto_abierto', categorizable: true },
+  { id: 'q5',  pnum: 'P5',  texto: '¿En qué sucursal fuiste atendido?', tipo: 'seleccion_simple', opciones: ['Quito Norte', 'Quito Sur', 'Guayaquil', 'Cuenca'] },
+  { id: 'q6',  pnum: 'P6',  texto: '¿Qué servicios utilizaste?', tipo: 'seleccion_multiple', opciones: ['Crédito', 'Asesoría', 'Pagos en línea', 'Atención en sucursal'] },
+  { id: 'q7',  pnum: 'P7',  texto: '¿Cómo nos conociste?', tipo: 'dropdown', opciones: ['Recomendación', 'Redes sociales', 'Publicidad', 'Otro'] },
+  { id: 'q8',  pnum: 'P8',  texto: '¿Volverías a contratar con nosotros?', tipo: 'si_no', opciones: ['Sí', 'No'] },
+  { id: 'q9',  pnum: 'P9',  texto: 'Califica los siguientes aspectos de tu atención', tipo: 'matriz', escala: [1, 5], filas: ['Rapidez', 'Amabilidad', 'Claridad de la información'] },
+  { id: 'q10', pnum: 'P10', texto: 'Datos de contacto para seguimiento', tipo: 'formulario', campos: [
+      { key: 'nombre', label: 'Nombre', tipo: 'texto' },
+      { key: 'edad', label: 'Edad', tipo: 'numero' },
+      { key: 'correo', label: 'Correo', tipo: 'correo' },
+      { key: 'fecha_visita', label: 'Fecha de visita', tipo: 'fecha' },
+      { key: 'sitio', label: 'Sitio web', tipo: 'url' },
+    ] },
+  { id: 'q11', pnum: 'P11', texto: 'Acepto ser contactado para dar seguimiento', tipo: 'casilla' },
+  { id: 'q12', pnum: 'P12', texto: '¿Qué es lo más y lo menos importante para ti?', tipo: 'maxdiff', opciones: ['Precio', 'Rapidez', 'Atención', 'Ubicación'] },
+  { id: 'q13', pnum: 'P13', texto: 'Ordena estos factores por prioridad', tipo: 'ranking', opciones: ['Precio', 'Rapidez', 'Atención', 'Ubicación'] },
+  { id: 'q14', pnum: 'P14', texto: 'Adjunta un comprobante si aplica', tipo: 'cargar_archivo' },
 ];
 
 // Dos despedidas segmentadas por resultado del NPS (patrón real: distinto cierre
@@ -124,13 +145,22 @@ export const DESPEDIDAS: Despedida[] = [
 
 // El flujo lineal vigente del estudio (orden de Estructura), de arriba hacia abajo.
 export const FLUJO: FlujoNodo[] = [
-  { id: 'n0', tipo: 'bienvenida', label: 'Bienvenida' },
-  { id: 'n1', tipo: 'pregunta',   label: 'P1 · NPS',            refId: 'q1' },
-  { id: 'n2', tipo: 'pregunta',   label: 'P2 · Comentario',     refId: 'q2' },
-  { id: 'n3', tipo: 'pregunta',   label: 'P3 · CSAT atención',  refId: 'q3' },
-  { id: 'n4', tipo: 'pregunta',   label: 'P4 · Sucursal',       refId: 'q4' },
-  { id: 'n5', tipo: 'pregunta',   label: 'P5 · Matriz aspectos', refId: 'q5' },
-  { id: 'n6', tipo: 'despedida',  label: 'Despedida general',   refId: 'desp_general' },
+  { id: 'n0',  tipo: 'bienvenida', label: 'Bienvenida' },
+  { id: 'n1',  tipo: 'pregunta',   label: 'P1 · NPS',                refId: 'q1' },
+  { id: 'n2',  tipo: 'pregunta',   label: 'P2 · CSAT',               refId: 'q2' },
+  { id: 'n3',  tipo: 'pregunta',   label: 'P3 · Rating',             refId: 'q3' },
+  { id: 'n4',  tipo: 'pregunta',   label: 'P4 · Respuesta abierta',  refId: 'q4' },
+  { id: 'n5',  tipo: 'pregunta',   label: 'P5 · Selección simple',   refId: 'q5' },
+  { id: 'n6',  tipo: 'pregunta',   label: 'P6 · Selección múltiple', refId: 'q6' },
+  { id: 'n7',  tipo: 'pregunta',   label: 'P7 · Dropdown',           refId: 'q7' },
+  { id: 'n8',  tipo: 'pregunta',   label: 'P8 · Sí/No',              refId: 'q8' },
+  { id: 'n9',  tipo: 'pregunta',   label: 'P9 · Matriz',             refId: 'q9' },
+  { id: 'n10', tipo: 'pregunta',   label: 'P10 · Formulario',        refId: 'q10' },
+  { id: 'n11', tipo: 'pregunta',   label: 'P11 · Casilla',           refId: 'q11' },
+  { id: 'n12', tipo: 'pregunta',   label: 'P12 · MaxDiff',           refId: 'q12' },
+  { id: 'n13', tipo: 'pregunta',   label: 'P13 · Ranking',           refId: 'q13' },
+  { id: 'n14', tipo: 'pregunta',   label: 'P14 · Subir archivo',     refId: 'q14' },
+  { id: 'n15', tipo: 'despedida',  label: 'Despedida general',       refId: 'desp_general' },
 ];
 
 // Helpers compartidos
@@ -140,7 +170,8 @@ export const variableByKey = (key: string) => VARIABLES_DETALLE.find(v => v.key 
 
 export const SIMULATED_RESPONSES: Record<string, string | number> = {
   q1: 4,
-  q2: 'El proceso de trámite fue más largo de lo esperado y no recibí suficiente comunicación durante el proceso.',
-  q3: 3,
-  q4: 'Quito Norte',
+  q2: 3,
+  q3: 4,
+  q4: 'El proceso de trámite fue más largo de lo esperado y no recibí suficiente comunicación durante el proceso.',
+  q5: 'Quito Norte',
 };
