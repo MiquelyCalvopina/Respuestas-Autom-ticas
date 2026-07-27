@@ -9,6 +9,8 @@ type ActiveContent = 'boosters-list' | 'respuestas-automaticas';
 const BoostersCtx = createContext<{
   activeContent: ActiveContent;
   setActiveContent: (c: ActiveContent) => void;
+  /** navega al paso "Lógica" del stepper (lo provee App) */
+  onGoLogica?: () => void;
 }>({ activeContent: 'boosters-list', setActiveContent: () => {} });
 
 function Logo() {
@@ -401,8 +403,13 @@ function Container19() {
 }
 
 function Container20() {
+  const { onGoLogica } = useContext(BoostersCtx);
   return (
-    <div className="content-stretch flex h-full items-center px-[12px] relative shrink-0" data-name="Container">
+    <div
+      onClick={onGoLogica}
+      className="content-stretch flex h-full items-center px-[12px] relative shrink-0 cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5"
+      data-name="Container"
+    >
       <div className="[word-break:break-word] flex flex-col font-['Roboto:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.45)] whitespace-nowrap" style={{ fontVariationSettings: '"wdth" 100' }}>
         <p className="leading-[20px]">Lógica</p>
       </div>
@@ -1180,10 +1187,10 @@ function Body() {
   );
 }
 
-export default function BoostersPage() {
+export default function BoostersPage({ onGoLogica }: { onGoLogica?: () => void }) {
   const [activeContent, setActiveContent] = useState<ActiveContent>('boosters-list');
   return (
-    <BoostersCtx.Provider value={{ activeContent, setActiveContent }}>
+    <BoostersCtx.Provider value={{ activeContent, setActiveContent, onGoLogica }}>
       <div className="bg-[#fafafa] content-stretch flex items-start relative size-full" data-name="Boosters Page">
         <PagesVerticalMenu />
         <Body />

@@ -78,6 +78,10 @@ export function operadoresPregunta(q: Pregunta, c: Condicion): string[] {
       return c.modoMatriz === 'grupo' ? [...OPS.grupo] : [...OPS.escala];
     case 'texto_abierto':
       return q.categorizable ? [...OPS.abiertaCat] : [...OPS.abierta];
+    case 'expresion':
+      // Una Expresión es una captura de texto libre: mismos operadores que una
+      // respuesta abierta sin categorización.
+      return [...OPS.abierta];
     case 'formulario': {
       const campo = (q.campos ?? []).find(f => f.key === c.subTipo);
       if (!campo) return [];

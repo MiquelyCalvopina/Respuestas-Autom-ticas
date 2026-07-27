@@ -1,4 +1,4 @@
-import { Popconfirm } from 'antd';
+import { Button, Popconfirm } from 'antd';
 import { preguntaById } from '@/app/data/estudio';
 import { BoxIcon } from './boxicons';
 import { Regla, Seleccion } from './types';
@@ -36,7 +36,7 @@ function tituloMomento(momento: string): string {
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
-      <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 600, letterSpacing: 0.4, color: 'rgba(0,0,0,0.35)', whiteSpace: 'nowrap' }}>
+      <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, letterSpacing: 0.4, color: 'rgba(0,0,0,0.35)', whiteSpace: 'nowrap' }}>
         {children}
       </span>
       <div style={{ flex: 1, height: 1, background: '#f0f0f0' }} />
@@ -104,10 +104,13 @@ export default function SidebarList({ reglas, seleccion, onCrear, onEditar, onEl
     if (momentos.length === 0) {
       // 3.1.a — estudio sin ninguna regla
       cuerpo = (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '48px 24px', textAlign: 'center', flex: 1 }}>
-          <BoxIcon name="bx-git-branch" size={48} color="rgba(0,0,0,0.25)" />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '48px 24px', textAlign: 'center', flex: 1 }}>
+          <BoxIcon name="bx-git-branch" size={40} color="rgba(0,0,0,0.25)" style={{ marginBottom: 4 }} />
+          <p style={{ fontFamily: FONT, fontSize: 16, color: 'rgba(0,0,0,0.55)', margin: 0, lineHeight: '24px', maxWidth: 340 }}>
+            Aún no hay reglas de lógica en este estudio.
+          </p>
           <p style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(0,0,0,0.45)', margin: 0, lineHeight: '22px', maxWidth: 340 }}>
-            Aún no hay reglas en este estudio. Selecciona una pregunta del diagrama, o usa <strong style={{ color: 'rgba(0,0,0,0.65)' }}>Crear regla</strong> arriba, para configurar la primera.
+            Todavía no has creado ninguna.
           </p>
         </div>
       );
@@ -130,8 +133,8 @@ export default function SidebarList({ reglas, seleccion, onCrear, onEditar, onEl
     const rs = reglasDeMomento(reglas, momento);
     cuerpo = rs.length === 0 ? (
       <div style={{ padding: '32px 24px', textAlign: 'center' }}>
-        <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(0,0,0,0.45)', margin: 0, lineHeight: '20px' }}>
-          Este momento aún no tiene reglas. Usa <strong style={{ color: 'rgba(0,0,0,0.65)' }}>Crear regla</strong> para agregar la primera.
+        <p style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(0,0,0,0.45)', margin: 0, lineHeight: '22px' }}>
+          Este momento aún no tiene reglas. Usa Crear regla para agregar la primera.
         </p>
       </div>
     ) : (
@@ -150,15 +153,14 @@ export default function SidebarList({ reglas, seleccion, onCrear, onEditar, onEl
             <p style={{ fontFamily: FONT, fontWeight: 500, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: 0, lineHeight: '20px' }}>{titulo}</p>
             <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(0,0,0,0.45)', margin: '4px 0 0 0', lineHeight: '16px' }}>{subtitulo}</p>
           </div>
-          <button
-            type="button" onClick={onCrear}
-            style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, background: '#1890ff', border: '1px solid #1890ff', borderRadius: 8, padding: '7px 8px', cursor: 'pointer', boxShadow: '0px 2px 0px rgba(0,0,0,0.04)', color: '#fff', transition: 'background .15s ease' }}
-            onMouseEnter={e => (e.currentTarget.style.background = '#40a9ff')}
-            onMouseLeave={e => (e.currentTarget.style.background = '#1890ff')}
+          {/* Botón primario del sistema (AntD/NG-Zorro) — 32px de alto, radio 8,
+              hover/press del tema Plugthem. Ícono con Box Icons. */}
+          <Button
+            type="primary" onClick={onCrear} style={{ flexShrink: 0 }}
+            icon={<BoxIcon name="bx-plus" size={16} color="#fff" />}
           >
-            <BoxIcon name="bx-plus" size={14} color="#fff" />
-            <span style={{ fontFamily: FONT, fontSize: 14, whiteSpace: 'nowrap' }}>Crear regla</span>
-          </button>
+            Crear regla
+          </Button>
         </div>
       </div>
       {/* Cuerpo scrolleable */}

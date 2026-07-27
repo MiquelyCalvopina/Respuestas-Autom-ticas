@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { App } from 'antd';
-import { preguntaById } from '@/app/data/estudio';
-import { BoxIcon } from './boxicons';
 import { Regla, Seleccion, SidebarModo, Momento, DestinosPorMomento } from './types';
 import { emptyGrupo, uid } from './seed';
 import { reglasDeMomento, preguntasSinAcceso, destinoCalculado } from './derive';
@@ -10,8 +8,6 @@ import SidebarList from './SidebarList';
 import SidebarForm from './SidebarForm';
 import SidebarExamples from './SidebarExamples';
 import DefaultDestinationBar from './DefaultDestinationBar';
-
-const FONT = "'Roboto', sans-serif";
 
 function momentoDeSeleccion(sel: Seleccion): Momento | null {
   if (sel.tipo === 'bienvenida') return 'inicio';
@@ -113,23 +109,8 @@ export default function LogicaModule() {
     // items-start (export de Figma), que en flex-column encoge los hijos a su
     // ancho de contenido en vez de estirarlos — sin esto el canvas no llena.
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1, width: '100%', background: '#fff' }}>
-      {/* Línea informativa (sección 2) */}
-      {infoVisible && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f5f7fa', borderBottom: '1px solid #f0f0f0', padding: '8px 24px', flexShrink: 0 }}>
-          <BoxIcon name="bx-info-circle" size={14} color="rgba(0,0,0,0.35)" />
-          <span style={{ flex: 1, fontFamily: FONT, fontSize: 12, color: 'rgba(0,0,0,0.55)', lineHeight: '16px' }}>
-            El orden que ves aquí es el de Estructura. La lógica puede mostrar, ocultar o saltar preguntas según cada encuestado, pero no las reordena.
-          </span>
-          <button
-            type="button" onClick={() => setInfoVisible(false)} aria-label="Descartar"
-            style={{ display: 'flex', background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.35)', padding: 2 }}
-          >
-            <BoxIcon name="bx-x" size={16} />
-          </button>
-        </div>
-      )}
-
-      {/* Split responsive: sidebar + canvas */}
+      {/* Split responsive: sidebar + canvas. La línea informativa (sección 2)
+          vive dentro del panel visual (Canvas), no a lo ancho del módulo. */}
       <div className="flex flex-col xl:flex-row" style={{ flex: 1, minHeight: 0 }}>
         {/* Sidebar */}
         <div
@@ -169,7 +150,10 @@ export default function LogicaModule() {
         </div>
 
         {/* Canvas */}
-        <Canvas reglas={reglas} seleccion={seleccion} onSelect={seleccionar} preguntasSinAcceso={sinAcceso} />
+        <Canvas
+          reglas={reglas} seleccion={seleccion} onSelect={seleccionar} preguntasSinAcceso={sinAcceso}
+          infoVisible={infoVisible} onDismissInfo={() => setInfoVisible(false)}
+        />
       </div>
     </div>
   );

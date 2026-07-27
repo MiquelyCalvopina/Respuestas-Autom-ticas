@@ -36,11 +36,11 @@ export function labelNodo(key: string): string {
   return key;
 }
 
-/** Despedidas sin ningún camino que las alcance. desp_general es el cierre
+/** Despedidas sin ningún camino que las alcance. desp_a es el cierre
  *  estructural por defecto (siempre usada); las demás solo si una regla
  *  "Terminar encuesta" las apunta. */
 export function despedidasHuerfanas(reglas: Regla[]): Despedida[] {
-  const usadas = new Set<string>(['desp_general']);
+  const usadas = new Set<string>(['desp_a']);
   reglas.forEach(r => {
     if (r.consecuencia.tipo === 'terminar' && r.consecuencia.destino) usadas.add(r.consecuencia.destino);
   });

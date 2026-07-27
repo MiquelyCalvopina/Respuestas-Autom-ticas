@@ -172,7 +172,7 @@ function ActivoSwitch() {
 
 const STEPS = ['Estructura', 'Look&Feel', 'Variables', 'Lógica', 'Potenciadores', 'Envíos'];
 
-function StudioStepper() {
+function StudioStepper({ onGoPotenciadores }: { onGoPotenciadores?: () => void }) {
   // flex-1 + min-w-0 para que este bloque pueda achicarse dentro del topbar en
   // vez de forzar su ancho natural sobre breadcrumb/tools (causa del overlap
   // en tablet); overflow-x-auto para que, si aun así no alcanza el espacio,
@@ -182,9 +182,11 @@ function StudioStepper() {
       <div className="content-stretch flex items-center h-full">
         {STEPS.map((step, i) => {
           const active = step === 'Lógica';
+          const onClick = step === 'Potenciadores' ? onGoPotenciadores : undefined;
           return (
             <div key={step} className="content-stretch flex items-center h-full shrink-0">
               <div
+                onClick={onClick}
                 className={
                   active
                     ? "border-[#1890ff] border-b-[0.8px] border-solid content-stretch flex h-full items-center pb-[0.8px] px-[12px] relative shrink-0 cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5"
@@ -250,7 +252,7 @@ function Tools() {
   );
 }
 
-function HorizontalNavigation() {
+function HorizontalNavigation({ onGoPotenciadores }: { onGoPotenciadores?: () => void }) {
   return (
     <div className="bg-white border-b-[0.8px] border-[rgba(0,0,0,0.06)] border-solid content-stretch flex items-center justify-between gap-3 px-[24px] relative shrink-0 w-full z-[2]" data-name="HorizontalNavigation">
       <div className="content-stretch flex items-center gap-2 relative shrink min-w-0 max-w-[362px]" data-name="Name + Back button">
@@ -258,7 +260,7 @@ function HorizontalNavigation() {
         <EditPencil />
         <ActivoSwitch />
       </div>
-      <StudioStepper />
+      <StudioStepper onGoPotenciadores={onGoPotenciadores} />
       <Tools />
     </div>
   );
@@ -266,22 +268,22 @@ function HorizontalNavigation() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-function PageContent() {
+function PageContent({ onGoPotenciadores }: { onGoPotenciadores?: () => void }) {
   return (
     <div className="bg-white border-[#f0f0f0] border-l border-t border-solid content-stretch flex flex-col h-full isolate items-start overflow-hidden rounded-tl-[20px] w-full" data-name="Page content">
-      <HorizontalNavigation />
+      <HorizontalNavigation onGoPotenciadores={onGoPotenciadores} />
       {/* Contenido interactivo del módulo Lógica (sidebar + canvas + barra destino) */}
       <LogicaModule />
     </div>
   );
 }
 
-export default function LogicaPage() {
+export default function LogicaPage({ onGoPotenciadores }: { onGoPotenciadores?: () => void }) {
   return (
     <div className="bg-[#fafafa] content-stretch flex items-start relative size-full" data-name="Senders page">
       <Rail />
       <div className="flex-[1_0_0] h-full min-w-px relative pt-[16px] pl-0" data-name="Body">
-        <PageContent />
+        <PageContent onGoPotenciadores={onGoPotenciadores} />
       </div>
     </div>
   );

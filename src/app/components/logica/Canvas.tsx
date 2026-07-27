@@ -12,6 +12,9 @@ interface Props {
   onSelect: (s: Seleccion) => void;
   /** preguntas (ids) que el preview de destino por defecto marca sin acceso */
   preguntasSinAcceso: string[];
+  /** línea informativa (sección 2) — vive en el panel visual */
+  infoVisible: boolean;
+  onDismissInfo: () => void;
 }
 
 function claveNodo(n: FlujoNodo): string {
@@ -25,9 +28,8 @@ function estaSeleccionado(n: FlujoNodo, sel: Seleccion): boolean {
   return false;
 }
 
-export default function Canvas({ reglas, seleccion, onSelect, preguntasSinAcceso }: Props) {
+export default function Canvas({ reglas, seleccion, onSelect, preguntasSinAcceso, infoVisible, onDismissInfo }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
-  const dimmed = reglas.length === 0;
   const conLogica = nodosConLogica(reglas);
   const huerfanas = despedidasHuerfanas(reglas);
   const sinAcceso = new Set(preguntasSinAcceso);
@@ -41,20 +43,36 @@ export default function Canvas({ reglas, seleccion, onSelect, preguntasSinAcceso
 
   return (
     <div style={{ flex: 1, minWidth: 0, background: '#fafafa', overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-      {/* Caja de despedidas sin usar — condicional (sección 1). No existe en DOM si no hay
-          huérfanas. En flujo normal arriba-izquierda: nunca se solapa con el diagrama. */}
+      {/* Línea informativa (sección 2) — en el panel visual, fondo Neutral/3 */}
+      {infoVisible && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f5f5f5', borderBottom: '1px solid #f0f0f0', padding: '8px 16px', flexShrink: 0 }}>
+          <BoxIcon name="bx-info-circle" size={14} color="rgba(0,0,0,0.45)" />
+          <span style={{ flex: 1, fontFamily: FONT, fontSize: 12, color: 'rgba(0,0,0,0.55)', lineHeight: '16px' }}>
+            El orden que ves aquí es el de Estructura. La lógica puede mostrar, ocultar o saltar preguntas según cada encuestado, pero no las reordena.
+          </span>
+          <button
+            type="button" onClick={onDismissInfo} aria-label="Descartar"
+            style={{ display: 'flex', background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.45)', padding: 2 }}
+          >
+            <BoxIcon name="bx-x" size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Caja de despedidas sin usar — condicional (sección 1). No existe en DOM si no
+          hay huérfanas. Arriba-izquierda: nunca se solapa con el diagrama central. */}
       {huerfanas.length > 0 && (
-        <div style={{ alignSelf: 'flex-start', margin: '16px 0 0 16px', width: 210, background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, boxShadow: '0 4px 6px rgba(15,23,42,.07)', padding: 12 }}>
-          <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(0,0,0,0.65)', margin: '0 0 10px 0', lineHeight: '18px' }}>
-            Despedidas sin usar en el flujo del estudio.
+        <div style={{ alignSelf: 'flex-start', margin: '16px 0 0 16px', width: 220, background: '#fff', border: '1px solid #d9d9d9', borderRadius: 8, boxShadow: '0 1px 2px rgba(15,23,42,.05)', padding: 12 }}>
+          <p style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(0,0,0,0.85)', margin: '0 0 12px 0', lineHeight: '20px' }}>
+            Despedidas sin usar<br />en el flujo del estudio.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {huerfanas.map(d => (
-              <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 8, padding: '4px 8px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: 999, background: '#FFF1F0', flexShrink: 0 }}>
-                  <BoxIcon name="bx-unlink" size={12} color="#CF1322" />
+              <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f5f5f5', border: '1px solid #d9d9d9', borderRadius: 8, padding: '4px 8px' }}>
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: 999, background: '#ffccc7', flexShrink: 0 }}>
+                  <BoxIcon name="bx-link" size={12} color="rgba(0,0,0,0.85)" />
                 </span>
-                <span style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(0,0,0,0.85)' }}>{d.nombre}</span>
+                <span style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(0,0,0,0.85)' }}>{d.nombre}</span>
               </div>
             ))}
           </div>
@@ -66,29 +84,23 @@ export default function Canvas({ reglas, seleccion, onSelect, preguntasSinAcceso
         {FLUJO.map((n, i) => {
           const key = claveNodo(n);
           const sel = estaSeleccionado(n, seleccion);
-          const tieneLogica = !dimmed && conLogica.has(key);
+          const tieneLogica = conLogica.has(key);
           const orphan = n.tipo === 'pregunta' && sinAcceso.has(n.refId!);
           const clickable = seleccionable(n);
 
-          // color base del texto
-          const textColor = dimmed ? 'rgba(0,0,0,0.45)'
-            : sel ? '#1890ff'
-            : 'rgba(0,0,0,0.85)';
+          // Color del texto: azul si seleccionado, negro 85% en cualquier otro caso
+          // (peso Regular 400 — el sistema solo usa 400/500).
+          const textColor = sel ? '#1890ff' : 'rgba(0,0,0,0.85)';
 
+          // Todos los nodos son blancos con borde Neutral/4; el seleccionado usa
+          // Primary/1 + Primary/6; el huérfano, borde punteado de peligro.
           const border = orphan ? '1px dashed #ff4d4f'
             : sel ? '1px solid #1890ff'
-            : n.tipo === 'bienvenida' ? '1px solid #C7D2FE'
-            : n.tipo === 'despedida' ? '1px solid #A7F3D0'
             : '1px solid #f0f0f0';
+          const bg = sel ? '#e6f7ff' : '#fff';
 
-          const bg = orphan ? '#fff'
-            : sel ? 'rgba(24,144,255,0.06)'
-            : n.tipo === 'bienvenida' ? '#EEF2FF'
-            : n.tipo === 'despedida' ? '#ECFDF5'
-            : '#fff';
-
-          // Feedback de hover en nodos clickeables (requisito de micro-interacción del
-          // sistema): eleva la sombra y azulea el borde sin pelear con el color base.
+          // Feedback de hover en nodos clickeables (micro-interacción del sistema):
+          // azulea el borde y eleva la sombra sin pelear con el color base.
           const isHover = clickable && !sel && !orphan && hovered === key;
           const border2 = isHover ? '1px solid #69c0ff' : border;
           const shadow = sel ? '0 2px 8px rgba(24,144,255,0.15)'
@@ -104,8 +116,8 @@ export default function Canvas({ reglas, seleccion, onSelect, preguntasSinAcceso
                 role={clickable ? 'button' : undefined}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8,
-                  maxWidth: 260, minWidth: 160, boxSizing: 'border-box',
-                  padding: '8px 16px', borderRadius: 8,
+                  maxWidth: 320, minWidth: 90, boxSizing: 'border-box',
+                  padding: '8px 12px', borderRadius: 8,
                   border: border2, background: bg,
                   opacity: orphan ? 0.55 : 1,
                   boxShadow: shadow,
@@ -115,7 +127,7 @@ export default function Canvas({ reglas, seleccion, onSelect, preguntasSinAcceso
               >
                 {tieneLogica && <BoxIcon name="bx-git-branch" size={16} color="#1890ff" />}
                 <span style={{
-                  fontFamily: FONT, fontSize: 14, fontWeight: 500, color: textColor,
+                  fontFamily: FONT, fontSize: 14, fontWeight: 400, color: textColor,
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                 }}>
                   {n.label}

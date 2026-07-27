@@ -13,7 +13,7 @@ export interface EstudioSetup {
 
 export type PreguntaTipo =
   | 'NPS' | 'CSAT' | 'CES' | 'CLI' | 'rating'
-  | 'texto_abierto'
+  | 'texto_abierto' | 'expresion'
   | 'seleccion_simple' | 'seleccion_multiple' | 'dropdown' | 'si_no'
   | 'matriz' | 'formulario' | 'casilla' | 'maxdiff' | 'ranking' | 'cargar_archivo';
 
@@ -70,9 +70,10 @@ export interface FlujoNodo {
 }
 
 export const ESTUDIO = {
-  // Nombre alineado con el shell de Respuestas Automáticas y los frames de Figma
-  // del módulo Lógica (mismo estudio de pruebas del ambiente HIR Casa).
-  nombre: 'Pruebas Deuda Técnica',
+  // Nombre exacto de los frames de Figma del módulo Lógica y del shell de
+  // Respuestas Automáticas: es un estudio de QA donde cada pregunta lleva el
+  // nombre de su tipo (un ejemplo de cada tipo para ejercitar el catálogo).
+  nombre: 'Pruebas Deuda Tecnica',
   cliente: 'HIR Casa',
   activo: true,
   /** el estudio tiene una sola página (relevante para el bloqueo de "Mostrar › Páginas") */
@@ -108,59 +109,54 @@ export const VARIABLES_DETALLE: VariableDetalle[] = [
 
 const GRUPOS_NPS = ['Detractor', 'Neutro', 'Promotor'];
 
-// Encuesta base con UN EJEMPLO DE CADA TIPO DE PREGUNTA (estudio "Pruebas Deuda
-// Técnica" del ambiente HIR Casa). Es la encuesta compartida por todo el
-// proyecto para ejercitar el catálogo completo de condiciones (sección 7): cada
-// comportamiento distinto de condición está representado por una pregunta.
+// Encuesta base del estudio de QA "Pruebas Deuda Tecnica" (ambiente HIR Casa),
+// tal cual aparece en los frames de Figma del módulo Lógica: cada pregunta lleva
+// el nombre de su TIPO — es un estudio de pruebas con un ejemplo de cada tipo
+// para ejercitar el catálogo completo de condiciones (sección 7). Los pnum (P3,
+// P7, P9…) y los enunciados replican exactamente los nodos del diagrama de Figma.
 export const PREGUNTAS: Pregunta[] = [
-  { id: 'q1',  pnum: 'P1',  texto: '¿Qué tan probable es que recomiendes HIR Casa a alguien?', tipo: 'NPS', escala: [0, 10], grupos: GRUPOS_NPS },
-  { id: 'q2',  pnum: 'P2',  texto: '¿Qué tan satisfecho quedaste con la atención recibida?', tipo: 'CSAT', escala: [1, 5], grupos: ['Insatisfecho', 'Neutro', 'Satisfecho'] },
-  { id: 'q3',  pnum: 'P3',  texto: 'Califica tu experiencia general', tipo: 'rating', escala: [1, 5] },
-  { id: 'q4',  pnum: 'P4',  texto: '¿Cuál fue el motivo principal de tu calificación?', tipo: 'texto_abierto', categorizable: true },
-  { id: 'q5',  pnum: 'P5',  texto: '¿En qué sucursal fuiste atendido?', tipo: 'seleccion_simple', opciones: ['Quito Norte', 'Quito Sur', 'Guayaquil', 'Cuenca'] },
-  { id: 'q6',  pnum: 'P6',  texto: '¿Qué servicios utilizaste?', tipo: 'seleccion_multiple', opciones: ['Crédito', 'Asesoría', 'Pagos en línea', 'Atención en sucursal'] },
-  { id: 'q7',  pnum: 'P7',  texto: '¿Cómo nos conociste?', tipo: 'dropdown', opciones: ['Recomendación', 'Redes sociales', 'Publicidad', 'Otro'] },
-  { id: 'q8',  pnum: 'P8',  texto: '¿Volverías a contratar con nosotros?', tipo: 'si_no', opciones: ['Sí', 'No'] },
-  { id: 'q9',  pnum: 'P9',  texto: 'Califica los siguientes aspectos de tu atención', tipo: 'matriz', escala: [1, 5], filas: ['Rapidez', 'Amabilidad', 'Claridad de la información'] },
-  { id: 'q10', pnum: 'P10', texto: 'Datos de contacto para seguimiento', tipo: 'formulario', campos: [
+  { id: 'p3_nps',        pnum: 'P3',  texto: 'NPS',                 tipo: 'NPS', escala: [0, 10], grupos: GRUPOS_NPS },
+  { id: 'p7_matriz',     pnum: 'P7',  texto: 'MATRIZ',             tipo: 'matriz', escala: [1, 5], filas: ['Rapidez', 'Amabilidad', 'Claridad de la información'] },
+  { id: 'p9_abierta',    pnum: 'P9',  texto: 'RESPUESTA ABIERTA',  tipo: 'texto_abierto', categorizable: true },
+  { id: 'p10_formulario', pnum: 'P10', texto: 'FORMULARIO',        tipo: 'formulario', campos: [
       { key: 'nombre', label: 'Nombre', tipo: 'texto' },
       { key: 'edad', label: 'Edad', tipo: 'numero' },
       { key: 'correo', label: 'Correo', tipo: 'correo' },
       { key: 'fecha_visita', label: 'Fecha de visita', tipo: 'fecha' },
       { key: 'sitio', label: 'Sitio web', tipo: 'url' },
     ] },
-  { id: 'q11', pnum: 'P11', texto: 'Acepto ser contactado para dar seguimiento', tipo: 'casilla' },
-  { id: 'q12', pnum: 'P12', texto: '¿Qué es lo más y lo menos importante para ti?', tipo: 'maxdiff', opciones: ['Precio', 'Rapidez', 'Atención', 'Ubicación'] },
-  { id: 'q13', pnum: 'P13', texto: 'Ordena estos factores por prioridad', tipo: 'ranking', opciones: ['Precio', 'Rapidez', 'Atención', 'Ubicación'] },
-  { id: 'q14', pnum: 'P14', texto: 'Adjunta un comprobante si aplica', tipo: 'cargar_archivo' },
+  { id: 'p11_expresion', pnum: 'P11', texto: 'EXPRESIÓN',          tipo: 'expresion' },
+  { id: 'p12_simple',    pnum: 'P12', texto: 'SELECCIÓN SIMPLE',   tipo: 'seleccion_simple', opciones: ['Opción A', 'Opción B', 'Opción C', 'Opción D'] },
+  { id: 'p13_multiple',  pnum: 'P13', texto: 'SELECCIÓN MÚLTIPLE', tipo: 'seleccion_multiple', opciones: ['Opción A', 'Opción B', 'Opción C', 'Opción D'] },
+  { id: 'p18_maxdiff',   pnum: 'P18', texto: 'MAXDIFF',            tipo: 'maxdiff', opciones: ['Precio', 'Rapidez', 'Atención', 'Ubicación'] },
+  { id: 'p19_ranking',   pnum: 'P19', texto: 'RANKING',            tipo: 'ranking', opciones: ['Precio', 'Rapidez', 'Atención', 'Ubicación'] },
+  { id: 'p21_archivo',   pnum: 'P21', texto: 'SUBIR ARCHIVO',      tipo: 'cargar_archivo' },
 ];
 
-// Dos despedidas segmentadas por resultado del NPS (patrón real: distinto cierre
-// para promotor vs. detractor). Semilla de "usada"; Lógica recalcula en vivo.
+// Tres despedidas del estudio de pruebas (Figma). "Despedida A" es el cierre por
+// defecto (usada); B y C quedan sin usar hasta que una regla "Terminar encuesta"
+// las apunte — aparecen en la caja "Despedidas sin usar" del diagrama.
 export const DESPEDIDAS: Despedida[] = [
-  { id: 'desp_general',   nombre: 'Despedida general',        usada: true },
-  { id: 'desp_promotor',  nombre: 'Despedida · Promotor NPS', usada: false },
-  { id: 'desp_detractor', nombre: 'Despedida · Detractor NPS', usada: false },
+  { id: 'desp_a', nombre: 'Despedida A', usada: true },
+  { id: 'desp_b', nombre: 'Despedida B', usada: false },
+  { id: 'desp_c', nombre: 'Despedida C', usada: false },
 ];
 
-// El flujo lineal vigente del estudio (orden de Estructura), de arriba hacia abajo.
+// El flujo lineal vigente del estudio (orden de Estructura), de arriba hacia
+// abajo. Las etiquetas replican exactamente los nodos del diagrama de Figma.
 export const FLUJO: FlujoNodo[] = [
   { id: 'n0',  tipo: 'bienvenida', label: 'Bienvenida' },
-  { id: 'n1',  tipo: 'pregunta',   label: 'P1 · NPS',                refId: 'q1' },
-  { id: 'n2',  tipo: 'pregunta',   label: 'P2 · CSAT',               refId: 'q2' },
-  { id: 'n3',  tipo: 'pregunta',   label: 'P3 · Rating',             refId: 'q3' },
-  { id: 'n4',  tipo: 'pregunta',   label: 'P4 · Respuesta abierta',  refId: 'q4' },
-  { id: 'n5',  tipo: 'pregunta',   label: 'P5 · Selección simple',   refId: 'q5' },
-  { id: 'n6',  tipo: 'pregunta',   label: 'P6 · Selección múltiple', refId: 'q6' },
-  { id: 'n7',  tipo: 'pregunta',   label: 'P7 · Dropdown',           refId: 'q7' },
-  { id: 'n8',  tipo: 'pregunta',   label: 'P8 · Sí/No',              refId: 'q8' },
-  { id: 'n9',  tipo: 'pregunta',   label: 'P9 · Matriz',             refId: 'q9' },
-  { id: 'n10', tipo: 'pregunta',   label: 'P10 · Formulario',        refId: 'q10' },
-  { id: 'n11', tipo: 'pregunta',   label: 'P11 · Casilla',           refId: 'q11' },
-  { id: 'n12', tipo: 'pregunta',   label: 'P12 · MaxDiff',           refId: 'q12' },
-  { id: 'n13', tipo: 'pregunta',   label: 'P13 · Ranking',           refId: 'q13' },
-  { id: 'n14', tipo: 'pregunta',   label: 'P14 · Subir archivo',     refId: 'q14' },
-  { id: 'n15', tipo: 'despedida',  label: 'Despedida general',       refId: 'desp_general' },
+  { id: 'n1',  tipo: 'pregunta',   label: 'P3 NPS',              refId: 'p3_nps' },
+  { id: 'n2',  tipo: 'pregunta',   label: 'P7 MATRIZ',           refId: 'p7_matriz' },
+  { id: 'n3',  tipo: 'pregunta',   label: 'P9 RESPUESTA ABIERTA', refId: 'p9_abierta' },
+  { id: 'n4',  tipo: 'pregunta',   label: 'P10 FORMULARIO',      refId: 'p10_formulario' },
+  { id: 'n5',  tipo: 'pregunta',   label: 'P11 EXPRESIÓN',       refId: 'p11_expresion' },
+  { id: 'n6',  tipo: 'pregunta',   label: 'P12 SELECCIÓN SIMPLE', refId: 'p12_simple' },
+  { id: 'n7',  tipo: 'pregunta',   label: 'P13 SELECCIÓN MÚLTIPLE', refId: 'p13_multiple' },
+  { id: 'n8',  tipo: 'pregunta',   label: 'P18 MAXDIFF',         refId: 'p18_maxdiff' },
+  { id: 'n9',  tipo: 'pregunta',   label: 'P19 RANKING',         refId: 'p19_ranking' },
+  { id: 'n10', tipo: 'pregunta',   label: 'P21 SUBIR ARCHIVO',   refId: 'p21_archivo' },
+  { id: 'n11', tipo: 'despedida',  label: 'Despedida A',         refId: 'desp_a' },
 ];
 
 // Helpers compartidos
@@ -169,9 +165,7 @@ export const despedidaById = (id: string) => DESPEDIDAS.find(d => d.id === id);
 export const variableByKey = (key: string) => VARIABLES_DETALLE.find(v => v.key === key);
 
 export const SIMULATED_RESPONSES: Record<string, string | number> = {
-  q1: 4,
-  q2: 3,
-  q3: 4,
-  q4: 'El proceso de trámite fue más largo de lo esperado y no recibí suficiente comunicación durante el proceso.',
-  q5: 'Quito Norte',
+  p3_nps: 4,
+  p9_abierta: 'El proceso de trámite fue más largo de lo esperado y no recibí suficiente comunicación durante el proceso.',
+  p12_simple: 'Opción B',
 };
