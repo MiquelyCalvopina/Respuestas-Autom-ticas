@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { App } from 'antd';
 import { Regla, Seleccion, SidebarModo, Momento, DestinosPorMomento } from './types';
 import { emptyGrupo, uid } from './seed';
-import { reglasDeMomento, preguntasSinAcceso, destinoCalculado } from './derive';
+import { reglasDeMomento, preguntasSinAcceso, destinoCalculado, momentoDeRegla } from './derive';
 import Canvas from './Canvas';
 import SidebarList from './SidebarList';
 import SidebarForm from './SidebarForm';
@@ -15,15 +15,22 @@ function momentoDeSeleccion(sel: Seleccion): Momento | null {
   return null;
 }
 
-function nuevoBorrador(momento: Momento): Regla {
+function nuevoBorrador(sel: Seleccion): Regla {
   const g = emptyGrupo();
-  // Semilla de la primera condición según el momento
-  if (momento === 'inicio') {
-    g.condiciones[0].fuente = 'variable';
+  const c0 = g.condiciones[0];
+  // Semilla de la primera condición según el foco (o sin foco):
+  // - Bienvenida: solo variables (al inicio no hay respuestas todavía).
+  // - Pregunta: respuesta a esa pregunta, ya preseleccionada.
+  // - Sin foco: respuesta (sin pregunta elegida); el usuario elige libremente.
+  if (sel.tipo === 'bienvenida') {
+    c0.fuente = 'variable';
+  } else if (sel.tipo === 'pregunta') {
+    c0.fuente = 'response';
+    c0.campo = sel.preguntaId;
   } else {
-    g.condiciones[0].fuente = 'response';
-    g.condiciones[0].campo = momento; // por defecto la pregunta del momento
+    c0.fuente = 'response';
   }
+  const momento: Momento = sel.tipo === 'pregunta' ? sel.preguntaId : 'inicio';
   return { id: uid('r'), momento, grupos: [g], consecuencia: { tipo: 'mostrar', destinoClase: 'pregunta' } };
 }
 
@@ -35,6 +42,10 @@ export default function LogicaModule() {
   const [modo, setModo] = useState<SidebarModo>('lista');
   const [borrador, setBorrador] = useState<Regla | null>(null);
   const [modoForm, setModoForm] = useState<'crear' | 'editar'>('crear');
+  // La fuente se bloquea a "variable" solo en reglas de inicio (foco en
+  // Bienvenida o edición de una regla de inicio): antes de la primera pregunta
+  // no hay respuestas. Sin foco NO se bloquea: se puede crear cualquier lógica.
+  const [fuenteBloqueada, setFuenteBloqueada] = useState(false);
   const [destinos, setDestinos] = useState<DestinosPorMomento>({});
   // La barra informativa se descarta por sesión: si el usuario la cierra, no
   // vuelve a aparecer hasta la siguiente sesión (sessionStorage se limpia al
@@ -61,8 +72,9 @@ export default function LogicaModule() {
 
   // ── Crear / editar / eliminar reglas ─────────────────────────────────────────
   function crear() {
-    const m: Momento = momentoActual ?? 'inicio';
-    setBorrador(nuevoBorrador(m));
+    // El foco solo preselecciona/filtra; sin foco se crea cualquier lógica.
+    setFuenteBloqueada(seleccion.tipo === 'bienvenida');
+    setBorrador(nuevoBorrador(seleccion));
     setModoForm('crear');
     setModo('formulario');
     setEditandoDestino(false);
@@ -72,7 +84,8 @@ export default function LogicaModule() {
     if (!r) return;
     setBorrador(JSON.parse(JSON.stringify(r)));
     setModoForm('editar');
-    setSeleccion(r.momento === 'inicio' ? { tipo: 'bienvenida' } : { tipo: 'pregunta', preguntaId: r.momento });
+    // Solo las reglas de inicio (por variables) mantienen la fuente bloqueada.
+    setFuenteBloqueada(r.momento === 'inicio');
     setModo('formulario');
   }
   function eliminar(id: string) {
@@ -87,10 +100,12 @@ export default function LogicaModule() {
   }
   function guardarForm() {
     if (!borrador) return;
-    setReglas(prev => prev.some(r => r.id === borrador.id)
-      ? prev.map(r => r.id === borrador.id ? borrador : r)
-      : [...prev, borrador]);
-    setSeleccion(borrador.momento === 'inicio' ? { tipo: 'bienvenida' } : { tipo: 'pregunta', preguntaId: borrador.momento });
+    // El momento se deriva del contenido (pregunta de la 1ª condición, o inicio
+    // si es por variable). No se toca el foco: el filtro lo controlan las cajas.
+    const reglaFinal: Regla = { ...borrador, momento: momentoDeRegla(borrador) };
+    setReglas(prev => prev.some(r => r.id === reglaFinal.id)
+      ? prev.map(r => r.id === reglaFinal.id ? reglaFinal : r)
+      : [...prev, reglaFinal]);
     setModo('lista');
     setBorrador(null);
     message.success(modoForm === 'crear' ? 'Regla creada' : 'Regla actualizada');
@@ -135,7 +150,7 @@ export default function LogicaModule() {
             )}
             {modo === 'formulario' && borrador && (
               <SidebarForm
-                borrador={borrador} modoForm={modoForm} reglas={reglas}
+                borrador={borrador} modoForm={modoForm} reglas={reglas} fuenteBloqueada={fuenteBloqueada}
                 onChange={setBorrador} onGuardar={guardarForm} onCancelar={() => { setModo('lista'); setBorrador(null); }}
                 onVerEjemplos={() => setModo('ejemplos')}
               />

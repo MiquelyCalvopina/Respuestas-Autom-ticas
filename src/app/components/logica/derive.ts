@@ -5,6 +5,15 @@
 import { FLUJO, DESPEDIDAS, PREGUNTAS, Despedida } from '@/app/data/estudio';
 import { Regla, Momento } from './types';
 
+/** Momento (cuándo se evalúa) derivado del contenido de la regla: la pregunta
+ *  de su primera condición si es sobre una respuesta; si es sobre variable (o
+ *  aún no se elige pregunta) se evalúa al inicio. Así el momento no depende del
+ *  foco/selección, sino de lo que la regla realmente evalúa. */
+export function momentoDeRegla(r: Regla): Momento {
+  const c0 = r.grupos[0]?.condiciones[0];
+  return c0 && c0.fuente === 'response' && c0.campo ? c0.campo : 'inicio';
+}
+
 /** Nodo del FLUJO correspondiente a un momento. */
 export function nodoDeMomento(momento: Momento) {
   if (momento === 'inicio') return FLUJO.find(n => n.tipo === 'bienvenida');

@@ -11,7 +11,7 @@ import {
   SIN_VALOR, RANGO, LISTA_TAGS,
 } from './catalog';
 import { emptyCondicion, emptyGrupo, uid } from './seed';
-import { nodoDeMomento } from './derive';
+import { nodoDeMomento, momentoDeRegla } from './derive';
 import { SidebarHeader } from './SidebarHeader';
 
 const FONT = "'Roboto', sans-serif";
@@ -24,6 +24,8 @@ interface Props {
   borrador: Regla;
   modoForm: 'crear' | 'editar';
   reglas: Regla[];
+  /** true solo en reglas de inicio (foco en Bienvenida): fuente fija a variable */
+  fuenteBloqueada: boolean;
   onChange: (r: Regla) => void;
   onGuardar: () => void;
   onCancelar: () => void;
@@ -185,8 +187,8 @@ function ValorControl({ c, q, onChange }: { c: Condicion; q?: Pregunta; onChange
 }
 
 // ── Campos de una condición (flujo flex-wrap dentro del cuerpo de la tarjeta) ──
-function CondFields({ c, momento, onChange }: { c: Condicion; momento: Momento; onChange: (patch: Partial<Condicion>) => void }) {
-  const fuenteLocked = momento === 'inicio';
+function CondFields({ c, bloqueada, onChange }: { c: Condicion; bloqueada: boolean; onChange: (patch: Partial<Condicion>) => void }) {
+  const fuenteLocked = bloqueada;
   const q = c.fuente === 'response' ? preguntaById(c.campo) : undefined;
   const varTipo = c.fuente === 'variable' ? variableByKey(c.campo)?.tipo : undefined;
   const sub = q ? subSelectorDe(q) : null;
@@ -265,8 +267,11 @@ function CardHeader({ children }: { children: React.ReactNode }) {
 const cardStyle: React.CSSProperties = { border: `1px solid ${BORDER}`, borderRadius: 8, overflow: 'hidden', width: '100%' };
 
 // ── Formulario ─────────────────────────────────────────────────────────────
-export default function SidebarForm({ borrador, modoForm, reglas, onChange, onGuardar, onCancelar, onVerEjemplos }: Props) {
-  const momento = borrador.momento;
+export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloqueada, onChange, onGuardar, onCancelar, onVerEjemplos }: Props) {
+  // Momento derivado del contenido (no del foco): la pregunta de la 1ª condición
+  // o "inicio" si es por variable / aún sin elegir.
+  const momento = momentoDeRegla(borrador);
+  const primeraEsRespuesta = borrador.grupos[0]?.condiciones[0]?.fuente === 'response' && !!borrador.grupos[0]?.condiciones[0]?.campo;
 
   function setGrupos(grupos: GrupoCondicion[]) { onChange({ ...borrador, grupos }); }
   function updateCond(gi: number, ci: number, patch: Partial<Condicion>) {
@@ -292,7 +297,7 @@ export default function SidebarForm({ borrador, modoForm, reglas, onChange, onGu
   function addGrupo() {
     const nuevo = emptyGrupo();
     nuevo.conector = 'Y';
-    if (momento === 'inicio') nuevo.condiciones[0].fuente = 'variable';
+    if (fuenteBloqueada) nuevo.condiciones[0].fuente = 'variable';
     setGrupos([...borrador.grupos, nuevo]);
   }
   function delGrupo(gi: number) { setGrupos(borrador.grupos.filter((_, i) => i !== gi)); }
@@ -333,7 +338,11 @@ export default function SidebarForm({ borrador, modoForm, reglas, onChange, onGu
       <SidebarHeader
         onVolver={onCancelar}
         title={modoForm === 'crear' ? 'Nueva regla' : 'Editar regla'}
-        subtitle={<>Editando en <span style={{ color: T85 }}>{tituloMomento(momento)}</span></>}
+        subtitle={
+          fuenteBloqueada || primeraEsRespuesta
+            ? <>Editando en <span style={{ color: T85 }}>{tituloMomento(momento)}</span></>
+            : <span style={{ color: T45 }}>Regla del estudio</span>
+        }
         right={
           <button type="button" onClick={onVerEjemplos} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', color: '#1890ff', padding: 0, flexShrink: 0 }}>
             <BoxIcon name="bx-bulb" size={14} color="#1890ff" />
@@ -373,7 +382,7 @@ export default function SidebarForm({ borrador, modoForm, reglas, onChange, onGu
                 )}
               </CardHeader>
               <CondBody>
-                <CondFields c={g.condiciones[0]} momento={momento} onChange={(p) => updateCond(gi, 0, p)} />
+                <CondFields c={g.condiciones[0]} bloqueada={fuenteBloqueada} onChange={(p) => updateCond(gi, 0, p)} />
                 {/* Sub-condiciones anidadas */}
                 {g.condiciones.slice(1).map((h, k) => (
                   <div key={h.id} style={{ ...cardStyle, marginLeft: 16 }}>
@@ -389,7 +398,7 @@ export default function SidebarForm({ borrador, modoForm, reglas, onChange, onGu
                       </Popconfirm>
                     </CardHeader>
                     <CondBody>
-                      <CondFields c={h} momento={momento} onChange={(p) => updateCond(gi, k + 1, p)} />
+                      <CondFields c={h} bloqueada={fuenteBloqueada} onChange={(p) => updateCond(gi, k + 1, p)} />
                     </CondBody>
                   </div>
                 ))}
