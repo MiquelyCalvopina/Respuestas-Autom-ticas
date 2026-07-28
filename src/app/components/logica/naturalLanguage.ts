@@ -4,7 +4,7 @@
 // operador según el tipo — nunca un verbo genérico (Casilla → "Aceptó", no
 // "respondió"; Cargar archivo → "fue contestada"; Matriz grupo → nombre del grupo).
 
-import { preguntaById, despedidaById, variableByKey } from '@/app/data/estudio';
+import { preguntaById, despedidaById, variableByKey, paginaByN } from '@/app/data/estudio';
 import { Regla, Condicion, GrupoCondicion } from './types';
 import { SIN_VALOR, RANGO } from './catalog';
 
@@ -81,12 +81,17 @@ export function consecuenciaResumen(regla: Regla): Seg[] {
   const destinoNombre = (): string => {
     if (!cs.destino) return '…';
     if (cs.tipo === 'terminar') return despedidaById(cs.destino)?.nombre ?? cs.destino;
+    // destino de página: "pag_2" → nombre de la página
+    if (cs.destino.startsWith('pag_')) {
+      const n = Number(cs.destino.slice(4));
+      return paginaByN(n)?.nombre ?? `Página ${n}`;
+    }
     const q = preguntaById(cs.destino);
     return q ? q.pnum : cs.destino;
   };
   switch (cs.tipo) {
     case 'mostrar':
-      return [s('mostrar '), r(cs.destinoClase === 'pagina' ? 'la página' : destinoNombre())];
+      return [s('mostrar '), r(destinoNombre())];
     case 'ir_a':
       return [s('saltar a '), r(destinoNombre())];
     case 'obligatoria':

@@ -29,6 +29,8 @@ export interface Pregunta {
   pnum: string;
   texto: string;
   tipo: PreguntaTipo;
+  /** página del estudio a la que pertenece (1..N) */
+  pagina: number;
   /** [min,max] para escalas numéricas (NPS/CSAT/CES/CLI/Rating y filas de Matriz) */
   escala?: [number, number];
   /** opciones para selección/dropdown/imágenes/maxdiff/ranking */
@@ -67,18 +69,33 @@ export interface FlujoNodo {
   label: string;
   /** id de Pregunta o Despedida asociado, cuando aplica */
   refId?: string;
+  /** página a la que pertenece el nodo (solo preguntas) */
+  pagina?: number;
+}
+
+export interface Pagina {
+  n: number;
+  nombre: string;
 }
 
 export const ESTUDIO = {
-  // Nombre exacto de los frames de Figma del módulo Lógica y del shell de
-  // Respuestas Automáticas: es un estudio de QA donde cada pregunta lleva el
-  // nombre de su tipo (un ejemplo de cada tipo para ejercitar el catálogo).
+  // Estudio de QA: un ejemplo de CADA tipo de pregunta, en orden (P1..P17),
+  // repartido en varias páginas para ejercitar también la lógica ligada a
+  // páginas ("Mostrar › la página", saltos de página).
   nombre: 'Pruebas Deuda Tecnica',
   cliente: 'HIR Casa',
   activo: true,
-  /** el estudio tiene una sola página (relevante para el bloqueo de "Mostrar › Páginas") */
-  totalPaginas: 1,
+  /** el estudio tiene varias páginas (habilita "Mostrar › la página") */
+  totalPaginas: 3,
 };
+
+// Páginas del estudio (agrupan las preguntas en Estructura).
+export const PAGINAS: Pagina[] = [
+  { n: 1, nombre: 'Página 1 · Indicadores' },
+  { n: 2, nombre: 'Página 2 · Opciones' },
+  { n: 3, nombre: 'Página 3 · Detalle' },
+];
+export const paginaByN = (n: number) => PAGINAS.find(p => p.n === n);
 
 export const SETUP: EstudioSetup = {
   empresa: 'HIR Casa',
@@ -108,29 +125,40 @@ export const VARIABLES_DETALLE: VariableDetalle[] = [
 ];
 
 const GRUPOS_NPS = ['Detractor', 'Neutro', 'Promotor'];
+const OPC_ABCD = ['Opción A', 'Opción B', 'Opción C', 'Opción D'];
+const FACTORES = ['Precio', 'Rapidez', 'Atención', 'Ubicación'];
 
-// Encuesta base del estudio de QA "Pruebas Deuda Tecnica" (ambiente HIR Casa),
-// tal cual aparece en los frames de Figma del módulo Lógica: cada pregunta lleva
-// el nombre de su TIPO — es un estudio de pruebas con un ejemplo de cada tipo
-// para ejercitar el catálogo completo de condiciones (sección 7). Los pnum (P3,
-// P7, P9…) y los enunciados replican exactamente los nodos del diagrama de Figma.
+// Encuesta base del estudio de QA "Pruebas Deuda Tecnica": UN ejemplo de CADA
+// tipo de pregunta, en orden (P1..P17) y repartido en 3 páginas. Ejercita el
+// catálogo completo de condiciones (sección 7). Cada pregunta lleva el nombre
+// de su tipo para que el diagrama y las reglas sean legibles.
 export const PREGUNTAS: Pregunta[] = [
-  { id: 'p3_nps',        pnum: 'P3',  texto: 'NPS',                 tipo: 'NPS', escala: [0, 10], grupos: GRUPOS_NPS },
-  { id: 'p7_matriz',     pnum: 'P7',  texto: 'MATRIZ',             tipo: 'matriz', escala: [1, 5], filas: ['Rapidez', 'Amabilidad', 'Claridad de la información'] },
-  { id: 'p9_abierta',    pnum: 'P9',  texto: 'RESPUESTA ABIERTA',  tipo: 'texto_abierto', categorizable: true },
-  { id: 'p10_formulario', pnum: 'P10', texto: 'FORMULARIO',        tipo: 'formulario', campos: [
+  // ── Página 1 · Indicadores ──
+  { id: 'q_nps',    pnum: 'P1',  pagina: 1, texto: 'NPS',    tipo: 'NPS',  escala: [0, 10], grupos: GRUPOS_NPS },
+  { id: 'q_csat',   pnum: 'P2',  pagina: 1, texto: 'CSAT',   tipo: 'CSAT', escala: [1, 5],  grupos: ['Insatisfecho', 'Neutral', 'Satisfecho'] },
+  { id: 'q_ces',    pnum: 'P3',  pagina: 1, texto: 'CES',    tipo: 'CES',  escala: [1, 7],  grupos: ['Bajo esfuerzo', 'Neutral', 'Alto esfuerzo'] },
+  { id: 'q_cli',    pnum: 'P4',  pagina: 1, texto: 'CLI',    tipo: 'CLI',  escala: [1, 5],  grupos: ['Bajo', 'Medio', 'Alto'] },
+  { id: 'q_rating', pnum: 'P5',  pagina: 1, texto: 'Rating', tipo: 'rating', escala: [1, 5] },
+  // ── Página 2 · Opciones ──
+  { id: 'q_simple',   pnum: 'P6',  pagina: 2, texto: 'Selección simple',   tipo: 'seleccion_simple',   opciones: OPC_ABCD },
+  { id: 'q_multiple', pnum: 'P7',  pagina: 2, texto: 'Selección múltiple', tipo: 'seleccion_multiple', opciones: OPC_ABCD },
+  { id: 'q_dropdown', pnum: 'P8',  pagina: 2, texto: 'Dropdown',           tipo: 'dropdown',           opciones: OPC_ABCD },
+  { id: 'q_sino',     pnum: 'P9',  pagina: 2, texto: 'Sí / No',            tipo: 'si_no',              opciones: ['Sí', 'No'] },
+  { id: 'q_casilla',  pnum: 'P10', pagina: 2, texto: 'Casilla de verificación', tipo: 'casilla' },
+  // ── Página 3 · Detalle ──
+  { id: 'q_abierta', pnum: 'P11', pagina: 3, texto: 'Respuesta abierta', tipo: 'texto_abierto', categorizable: true },
+  { id: 'q_expr',    pnum: 'P12', pagina: 3, texto: 'Expresión',         tipo: 'expresion' },
+  { id: 'q_matriz',  pnum: 'P13', pagina: 3, texto: 'Matriz',            tipo: 'matriz', escala: [1, 5], filas: ['Rapidez', 'Amabilidad', 'Claridad de la información'] },
+  { id: 'q_form',    pnum: 'P14', pagina: 3, texto: 'Formulario',        tipo: 'formulario', campos: [
       { key: 'nombre', label: 'Nombre', tipo: 'texto' },
       { key: 'edad', label: 'Edad', tipo: 'numero' },
       { key: 'correo', label: 'Correo', tipo: 'correo' },
       { key: 'fecha_visita', label: 'Fecha de visita', tipo: 'fecha' },
       { key: 'sitio', label: 'Sitio web', tipo: 'url' },
     ] },
-  { id: 'p11_expresion', pnum: 'P11', texto: 'EXPRESIÓN',          tipo: 'expresion' },
-  { id: 'p12_simple',    pnum: 'P12', texto: 'SELECCIÓN SIMPLE',   tipo: 'seleccion_simple', opciones: ['Opción A', 'Opción B', 'Opción C', 'Opción D'] },
-  { id: 'p13_multiple',  pnum: 'P13', texto: 'SELECCIÓN MÚLTIPLE', tipo: 'seleccion_multiple', opciones: ['Opción A', 'Opción B', 'Opción C', 'Opción D'] },
-  { id: 'p18_maxdiff',   pnum: 'P18', texto: 'MAXDIFF',            tipo: 'maxdiff', opciones: ['Precio', 'Rapidez', 'Atención', 'Ubicación'] },
-  { id: 'p19_ranking',   pnum: 'P19', texto: 'RANKING',            tipo: 'ranking', opciones: ['Precio', 'Rapidez', 'Atención', 'Ubicación'] },
-  { id: 'p21_archivo',   pnum: 'P21', texto: 'SUBIR ARCHIVO',      tipo: 'cargar_archivo' },
+  { id: 'q_maxdiff', pnum: 'P15', pagina: 3, texto: 'MaxDiff',       tipo: 'maxdiff', opciones: FACTORES },
+  { id: 'q_ranking', pnum: 'P16', pagina: 3, texto: 'Ranking',       tipo: 'ranking', opciones: FACTORES },
+  { id: 'q_archivo', pnum: 'P17', pagina: 3, texto: 'Subir archivo', tipo: 'cargar_archivo' },
 ];
 
 // Tres despedidas del estudio de pruebas (Figma). "Despedida A" es el cierre por
@@ -143,20 +171,27 @@ export const DESPEDIDAS: Despedida[] = [
 ];
 
 // El flujo lineal vigente del estudio (orden de Estructura), de arriba hacia
-// abajo. Las etiquetas replican exactamente los nodos del diagrama de Figma.
+// abajo: Bienvenida → P1..P17 (agrupadas por página) → Despedida A.
 export const FLUJO: FlujoNodo[] = [
   { id: 'n0',  tipo: 'bienvenida', label: 'Bienvenida' },
-  { id: 'n1',  tipo: 'pregunta',   label: 'P3 NPS',              refId: 'p3_nps' },
-  { id: 'n2',  tipo: 'pregunta',   label: 'P7 MATRIZ',           refId: 'p7_matriz' },
-  { id: 'n3',  tipo: 'pregunta',   label: 'P9 RESPUESTA ABIERTA', refId: 'p9_abierta' },
-  { id: 'n4',  tipo: 'pregunta',   label: 'P10 FORMULARIO',      refId: 'p10_formulario' },
-  { id: 'n5',  tipo: 'pregunta',   label: 'P11 EXPRESIÓN',       refId: 'p11_expresion' },
-  { id: 'n6',  tipo: 'pregunta',   label: 'P12 SELECCIÓN SIMPLE - Porro a...', refId: 'p12_simple' },
-  { id: 'n7',  tipo: 'pregunta',   label: 'P13 SELECCIÓN MÚLTIPLE', refId: 'p13_multiple' },
-  { id: 'n8',  tipo: 'pregunta',   label: 'P18 MAXDIFF',         refId: 'p18_maxdiff' },
-  { id: 'n9',  tipo: 'pregunta',   label: 'P19 RANKING',         refId: 'p19_ranking' },
-  { id: 'n10', tipo: 'pregunta',   label: 'P21 SUBIR ARCHIVO',   refId: 'p21_archivo' },
-  { id: 'n11', tipo: 'despedida',  label: 'Despedida A',         refId: 'desp_a' },
+  { id: 'n1',  tipo: 'pregunta',   label: 'P1 NPS',                 refId: 'q_nps',      pagina: 1 },
+  { id: 'n2',  tipo: 'pregunta',   label: 'P2 CSAT',                refId: 'q_csat',     pagina: 1 },
+  { id: 'n3',  tipo: 'pregunta',   label: 'P3 CES',                 refId: 'q_ces',      pagina: 1 },
+  { id: 'n4',  tipo: 'pregunta',   label: 'P4 CLI',                 refId: 'q_cli',      pagina: 1 },
+  { id: 'n5',  tipo: 'pregunta',   label: 'P5 Rating',              refId: 'q_rating',   pagina: 1 },
+  { id: 'n6',  tipo: 'pregunta',   label: 'P6 Selección simple',    refId: 'q_simple',   pagina: 2 },
+  { id: 'n7',  tipo: 'pregunta',   label: 'P7 Selección múltiple',  refId: 'q_multiple', pagina: 2 },
+  { id: 'n8',  tipo: 'pregunta',   label: 'P8 Dropdown',            refId: 'q_dropdown', pagina: 2 },
+  { id: 'n9',  tipo: 'pregunta',   label: 'P9 Sí / No',             refId: 'q_sino',     pagina: 2 },
+  { id: 'n10', tipo: 'pregunta',   label: 'P10 Casilla',            refId: 'q_casilla',  pagina: 2 },
+  { id: 'n11', tipo: 'pregunta',   label: 'P11 Respuesta abierta',  refId: 'q_abierta',  pagina: 3 },
+  { id: 'n12', tipo: 'pregunta',   label: 'P12 Expresión',          refId: 'q_expr',     pagina: 3 },
+  { id: 'n13', tipo: 'pregunta',   label: 'P13 Matriz',             refId: 'q_matriz',   pagina: 3 },
+  { id: 'n14', tipo: 'pregunta',   label: 'P14 Formulario',         refId: 'q_form',     pagina: 3 },
+  { id: 'n15', tipo: 'pregunta',   label: 'P15 MaxDiff',            refId: 'q_maxdiff',  pagina: 3 },
+  { id: 'n16', tipo: 'pregunta',   label: 'P16 Ranking',            refId: 'q_ranking',  pagina: 3 },
+  { id: 'n17', tipo: 'pregunta',   label: 'P17 Subir archivo',      refId: 'q_archivo',  pagina: 3 },
+  { id: 'n18', tipo: 'despedida',  label: 'Despedida A',            refId: 'desp_a' },
 ];
 
 // Helpers compartidos
@@ -165,7 +200,8 @@ export const despedidaById = (id: string) => DESPEDIDAS.find(d => d.id === id);
 export const variableByKey = (key: string) => VARIABLES_DETALLE.find(v => v.key === key);
 
 export const SIMULATED_RESPONSES: Record<string, string | number> = {
-  p3_nps: 4,
-  p9_abierta: 'El proceso de trámite fue más largo de lo esperado y no recibí suficiente comunicación durante el proceso.',
-  p12_simple: 'Opción B',
+  q_nps: 4,
+  q_csat: 3,
+  q_abierta: 'El proceso de trámite fue más largo de lo esperado y no recibí suficiente comunicación durante el proceso.',
+  q_simple: 'Opción B',
 };

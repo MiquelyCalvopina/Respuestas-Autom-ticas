@@ -75,6 +75,20 @@ export function nodosConLogica(reglas: Regla[]): Set<string> {
   return set;
 }
 
+/** Números de página que alguna regla apunta como destino ("Mostrar › la página").
+ *  Los destinos de página se guardan como "pag_<n>". */
+export function paginasConLogica(reglas: Regla[]): Set<number> {
+  const set = new Set<number>();
+  reglas.forEach(r => {
+    const c = r.consecuencia;
+    if (c.destinoClase === 'pagina' && c.destino?.startsWith('pag_')) {
+      const n = Number(c.destino.slice(4));
+      if (!Number.isNaN(n)) set.add(n);
+    }
+  });
+  return set;
+}
+
 /** Reglas de un momento. */
 export function reglasDeMomento(reglas: Regla[], momento: Momento): Regla[] {
   return reglas.filter(r => r.momento === momento);

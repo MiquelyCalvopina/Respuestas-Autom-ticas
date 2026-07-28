@@ -1,6 +1,6 @@
 import { Select, Input, InputNumber, Segmented, Tooltip, Button, Tag, Popconfirm } from 'antd';
 import {
-  PREGUNTAS, VARIABLES_DETALLE, DESPEDIDAS, FLUJO, ESTUDIO,
+  PREGUNTAS, VARIABLES_DETALLE, DESPEDIDAS, FLUJO, ESTUDIO, PAGINAS,
   preguntaById, variableByKey, Pregunta,
 } from '@/app/data/estudio';
 import { BoxIcon, BoxIconName } from './boxicons';
@@ -323,6 +323,7 @@ export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloquead
   const preguntasPosteriores = FLUJO.filter((n, i) => n.tipo === 'pregunta' && i > iMomento).map(n => ({ value: n.refId!, label: `${preguntaById(n.refId!)!.pnum} · ${preguntaById(n.refId!)!.texto.slice(0, 22)}` }));
   const todasPreguntas = PREGUNTAS.map(q => ({ value: q.id, label: `${q.pnum} · ${q.texto.slice(0, 22)}` }));
   const despedidas = DESPEDIDAS.map(d => ({ value: d.id, label: d.nombre }));
+  const paginas = PAGINAS.map(p => ({ value: `pag_${p.n}`, label: p.nombre }));
   const paginaUnica = ESTUDIO.totalPaginas <= 1;
 
   const CONS_HELP: Record<ConsecuenciaTipo, string> = {
@@ -456,7 +457,7 @@ export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloquead
                   ]} />
                 {borrador.consecuencia.destinoClase !== 'pagina'
                   ? <Select showSearch optionFilterProp="label" placeholder="Pregunta a mostrar" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })} options={todasPreguntas} />
-                  : <Select disabled placeholder="Página" />}
+                  : <Select showSearch optionFilterProp="label" placeholder="Página a mostrar" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })} options={paginas} />}
               </div>
             ) : borrador.consecuencia.tipo === 'ir_a' ? (
               <Select showSearch optionFilterProp="label" style={{ width: '100%' }} placeholder="Pregunta destino (no puede retroceder)" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })} options={preguntasPosteriores} />
