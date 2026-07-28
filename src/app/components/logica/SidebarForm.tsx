@@ -1,4 +1,4 @@
-import { Select, Input, InputNumber, Segmented, Tooltip, Button, Tag } from 'antd';
+import { Select, Input, InputNumber, Segmented, Tooltip, Button, Tag, Popconfirm } from 'antd';
 import {
   PREGUNTAS, VARIABLES_DETALLE, DESPEDIDAS, FLUJO, ESTUDIO,
   preguntaById, variableByKey, Pregunta,
@@ -362,7 +362,15 @@ export default function SidebarForm({ borrador, modoForm, reglas, onChange, onGu
                       <span style={{ fontFamily: FONT, fontSize: 14, color: T85, flex: 1 }}>se cumple que…</span>
                     </>}
                 <RoundIconBtn icon="bx-git-branch" rotate={90} title="Agregar sub-condición" onClick={() => addHija(gi)} />
-                {borrador.grupos.length > 1 && <RoundIconBtn icon="bx-trash" danger title="Eliminar condición" onClick={() => delGrupo(gi)} />}
+                {borrador.grupos.length > 1 && (
+                  <Popconfirm
+                    title="¿Eliminar esta condición?"
+                    okText="Sí, eliminar" cancelText="Cancelar" okButtonProps={{ danger: true }}
+                    onConfirm={() => delGrupo(gi)}
+                  >
+                    <span><RoundIconBtn icon="bx-trash" danger title="Eliminar condición" /></span>
+                  </Popconfirm>
+                )}
               </CardHeader>
               <CondBody>
                 <CondFields c={g.condiciones[0]} momento={momento} onChange={(p) => updateCond(gi, 0, p)} />
@@ -372,7 +380,13 @@ export default function SidebarForm({ borrador, modoForm, reglas, onChange, onGu
                     <CardHeader>
                       <YOToggle value={g.conectoresHijas[k] ?? 'O'} onChange={(v) => setConectorHija(gi, k, v)} />
                       <span style={{ fontFamily: FONT, fontSize: 14, color: T85, flex: 1 }}>se cumple que…</span>
-                      <RoundIconBtn icon="bx-trash" danger title="Eliminar sub-condición" onClick={() => delHija(gi, k + 1)} />
+                      <Popconfirm
+                        title="¿Eliminar esta sub-condición?"
+                        okText="Sí, eliminar" cancelText="Cancelar" okButtonProps={{ danger: true }}
+                        onConfirm={() => delHija(gi, k + 1)}
+                      >
+                        <span><RoundIconBtn icon="bx-trash" danger title="Eliminar sub-condición" /></span>
+                      </Popconfirm>
                     </CardHeader>
                     <CondBody>
                       <CondFields c={h} momento={momento} onChange={(p) => updateCond(gi, k + 1, p)} />
