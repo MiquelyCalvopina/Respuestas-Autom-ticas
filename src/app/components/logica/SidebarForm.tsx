@@ -6,7 +6,7 @@ import {
 import { BoxIcon, BoxIconName } from './boxicons';
 import { Regla, Condicion, GrupoCondicion, Consecuencia, ConsecuenciaTipo, Momento, Conector } from './types';
 import {
-  operadoresPregunta, operadoresVariable, subSelectorDe, condicionLista, tieneModoNotaGrupo,
+  operadoresPregunta, operadoresVariable, subSelectorDe, condicionLista,
   errorCondicion, esDominioValido, seleccionMultiple,
   SIN_VALOR, RANGO, LISTA_TAGS,
 } from './catalog';
@@ -106,7 +106,7 @@ function ValorControl({ c, q, onChange }: { c: Condicion; q?: Pregunta; onChange
 
   const esVariable = c.fuente === 'variable';
   const varTipo = esVariable ? variableByKey(c.campo)?.tipo : undefined;
-  const esNumero = varTipo === 'numero' || (q && ['NPS', 'CSAT', 'CES', 'CLI', 'rating'].includes(q.tipo)) || (q?.tipo === 'matriz' && c.modoMatriz === 'nota') || (q?.tipo === 'formulario' && q.campos?.find(f => f.key === c.subTipo)?.tipo === 'numero');
+  const esNumero = varTipo === 'numero' || (q && ['NPS', 'CSAT', 'CES', 'CLI', 'rating'].includes(q.tipo)) || (q?.tipo === 'matriz') || (q?.tipo === 'formulario' && q.campos?.find(f => f.key === c.subTipo)?.tipo === 'numero');
   const esFecha = varTipo === 'fecha' || (q?.tipo === 'formulario' && q.campos?.find(f => f.key === c.subTipo)?.tipo === 'fecha');
 
   if (q?.tipo === 'casilla') {
@@ -155,11 +155,6 @@ function ValorControl({ c, q, onChange }: { c: Condicion; q?: Pregunta; onChange
   // Simple vs. múltiple según el estándar (indicador/matriz "Es igual a" y modo
   // grupo → múltiple; opción simple / dropdown / sí-no / maxdiff → simple).
   const multiSel = q ? seleccionMultiple(q, c) : false;
-  const modoGrupo = c.modoMatriz === 'grupo' && !!q?.grupos;
-  if (modoGrupo) {
-    const opts = (q!.grupos ?? []).concat('No aplica').map(g => ({ value: g, label: g }));
-    return <Select mode="multiple" showSearch optionFilterProp="label" style={fieldWide} value={c.valores} onChange={(v) => onChange({ valores: v as string[] })} options={opts} placeholder="Elige uno o más grupos" />;
-  }
   if (q?.opciones && (q.tipo.startsWith('seleccion') || q.tipo === 'dropdown' || q.tipo === 'si_no' || q.tipo === 'maxdiff' || q.tipo === 'ranking') && c.subTipo !== 'comentario') {
     // Opciones del usuario + adicionales del estándar según el tipo.
     const extras = q.tipo === 'seleccion_multiple' ? ['Otro', 'Ninguna de las anteriores', 'Seleccionar todas']
@@ -196,7 +191,6 @@ function CondFields({ c, momento, onChange }: { c: Condicion; momento: Momento; 
   const varTipo = c.fuente === 'variable' ? variableByKey(c.campo)?.tipo : undefined;
   const sub = q ? subSelectorDe(q) : null;
   const esMatriz = q?.tipo === 'matriz';
-  const conModo = q ? tieneModoNotaGrupo(q) : false;
   const operadores = c.fuente === 'variable' ? (varTipo ? operadoresVariable(varTipo) : []) : (q ? operadoresPregunta(q, c) : []);
   const error = errorCondicion(c, q);
   const lista = condicionLista(c, q) && !error;
@@ -221,14 +215,8 @@ function CondFields({ c, momento, onChange }: { c: Condicion; momento: Momento; 
           value={c.filaMatriz} onChange={(v) => onChange({ filaMatriz: v as string, operador: '', valor: '', valorB: '', valores: [] })}
           options={(q?.filas ?? []).map(f => ({ value: f, label: f }))} />
       )}
-      {/* Segmented Por nota/grupo */}
-      {conModo && (!esMatriz || !!c.filaMatriz) && (
-        <div style={fieldNarrow}>
-          <Segmented block value={c.modoMatriz ?? 'nota'}
-            onChange={(v) => onChange({ modoMatriz: v as 'nota' | 'grupo', operador: '', valor: '', valorB: '', valores: [] })}
-            options={[{ value: 'nota', label: 'Por nota' }, { value: 'grupo', label: 'Por grupo' }]} />
-        </div>
-      )}
+      {/* Sin control "Por nota/Por grupo": en Lógica no se puede distinguir el
+          grupo (se calcula post-sesión); las condiciones son siempre por nota. */}
       {/* Sub-selector */}
       {sub && (
         <Select showSearch optionFilterProp="label" style={fieldWide} placeholder={sub.label}

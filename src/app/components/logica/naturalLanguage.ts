@@ -47,13 +47,6 @@ function condicionSegs(c: Condicion): Seg[] {
     out.push(r(valorLabel(c)));
     return out;
   }
-  // Matriz por grupo: "... es Promotor"
-  if (c.modoMatriz === 'grupo') {
-    out.push(s(` ${c.operador.toLowerCase()} `));
-    out.push(r(valorLabel(c)));
-    return out;
-  }
-
   out.push(s(` ${c.operador.toLowerCase()}`));
   if (!SIN_VALOR.has(c.operador)) {
     out.push(s(' '));

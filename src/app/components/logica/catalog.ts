@@ -15,7 +15,6 @@ import { Condicion } from './types';
 export const OPS = {
   // preguntas — indicadores/escala (NPS, CSAT, CES, CLI, Rating y Matriz "Por nota")
   escala:   ['Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'Está vacía', 'No está vacía'],
-  grupo:    ['Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
   abierta:  ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
   abiertaCat: ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'Está vacía', 'No está vacía'],
   simple:   ['Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
@@ -71,24 +70,19 @@ export function subSelectorDe(q: Pregunta): { label: string; opciones: SubOpcion
   }
 }
 
-/** Preguntas de indicador (con grupos configurados) que exponen "Por nota"/"Por grupo". */
-export function tieneModoNotaGrupo(q: Pregunta): boolean {
-  return q.tipo === 'matriz' || (!!q.grupos && ['NPS', 'CSAT', 'CES', 'CLI'].includes(q.tipo));
-}
-
 // ── Resolución de operadores según pregunta + estado de sub-selectores ─────────
 export function operadoresPregunta(q: Pregunta, c: Condicion): string[] {
   switch (q.tipo) {
     case 'NPS': case 'CSAT': case 'CES': case 'CLI':
-      // segmented Por nota/Por grupo; sin elegir, se asume "nota"
-      return c.modoMatriz === 'grupo' ? [...OPS.grupo] : [...OPS.escala];
+      // En Lógica no se distingue el grupo (se calcula post-sesión): SIEMPRE
+      // se opera por nota. No hay control "Por nota/Por grupo".
+      return [...OPS.escala];
     case 'rating':
-      // Rating es una escala como NPS/CSAT pero SIN modo grupo (no tiene un
-      // indicador con grupos atado): siempre operadores de escala.
+      // Rating es una escala como NPS/CSAT (y tampoco tiene grupo atado).
       return [...OPS.escala];
     case 'matriz':
       if (!c.filaMatriz) return [];
-      return c.modoMatriz === 'grupo' ? [...OPS.grupo] : [...OPS.escala];
+      return [...OPS.escala]; // por nota (sin grupo)
     case 'texto_abierto':
       return q.categorizable ? [...OPS.abiertaCat] : [...OPS.abierta];
     case 'expresion':
@@ -123,7 +117,6 @@ export function operadoresVariable(tipo: VariableTipo): string[] {
  *  → múltiple; modo "Grupo" → múltiple; Opción múltiple → múltiple; Opción
  *  simple / Dropdown / Sí-No / MaxDiff → simple; mayor/menor → simple. */
 export function seleccionMultiple(q: Pregunta, c: Condicion): boolean {
-  if (c.modoMatriz === 'grupo') return true;
   const igual = c.operador === 'Es igual a' || c.operador === 'No es igual a';
   const contiene = c.operador === 'Contiene' || c.operador === 'No contiene';
   switch (q.tipo) {
@@ -190,7 +183,7 @@ function tipoDelValor(c: Condicion, q?: Pregunta): VariableTipo | 'url' | 'texto
   }
   if (c.subTipo === 'comentario') return 'texto';
   if (['NPS', 'CSAT', 'CES', 'CLI', 'rating'].includes(q.tipo)) return 'numero';
-  if (q.tipo === 'matriz') return c.modoMatriz === 'grupo' ? 'texto' : 'numero';
+  if (q.tipo === 'matriz') return 'numero'; // solo por nota
   return 'texto';
 }
 
