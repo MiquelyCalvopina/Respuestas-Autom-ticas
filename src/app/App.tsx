@@ -15,7 +15,7 @@ export default function App() {
   const [step, setStep] = useState<Step>('logica');
 
   return (
-    <ConfigProvider locale={esES}>
+    <ConfigProvider locale={esES} theme={{ token: { borderRadius: 8 } }}>
       <AntApp>
         <div className="w-full h-screen overflow-hidden relative">
           <Toaster position="bottom-right" richColors />
