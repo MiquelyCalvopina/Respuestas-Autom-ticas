@@ -1,6 +1,6 @@
 import { Select, Input, InputNumber, Segmented, Tooltip, Button, Tag, Popconfirm } from 'antd';
 import {
-  PREGUNTAS, VARIABLES_DETALLE, DESPEDIDAS, FLUJO, ESTUDIO, PAGINAS,
+  PREGUNTAS, VARIABLES_DETALLE, DESPEDIDAS, ESTUDIO, PAGINAS,
   preguntaById, variableByKey, Pregunta,
 } from '@/app/data/estudio';
 import { BoxIcon, BoxIconName } from './boxicons';
@@ -11,7 +11,7 @@ import {
   SIN_VALOR, RANGO, LISTA_TAGS,
 } from './catalog';
 import { emptyCondicion, emptyGrupo, uid } from './seed';
-import { nodoDeMomento, momentoDeRegla } from './derive';
+import { momentoDeRegla, preguntasAfectables, paginasAfectables, errorDestino } from './derive';
 import { SidebarHeader } from './SidebarHeader';
 
 const FONT = "'Roboto', sans-serif";
@@ -310,21 +310,44 @@ export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloquead
   const qDe = (c: Condicion) => (c.fuente === 'response' ? preguntaById(c.campo) : undefined);
   const todasCompletas = borrador.grupos.every(g => g.condiciones.every(c => condicionLista(c, qDe(c))));
   const todasValidas = borrador.grupos.every(g => g.condiciones.every(c => !errorCondicion(c, qDe(c))));
-  const consecuenciaOk = borrador.consecuencia.tipo === 'mostrar'
-    ? (!!borrador.consecuencia.destino || borrador.consecuencia.destinoClase === 'pagina')
-    : !!borrador.consecuencia.destino;
+  // Una regla solo puede afectar lo que el encuestado aún no ha visto: la
+  // pregunta que la dispara y su página ya se mostraron.
+  const errDestino = errorDestino(borrador);
+  const consecuenciaOk = !!borrador.consecuencia.destino && !errDestino;
   const puedeGuardar = todasCompletas && todasValidas && consecuenciaOk;
   const motivoBloqueo = !todasValidas ? 'Corrige las condiciones no válidas'
     : !todasCompletas ? 'Completa todas las condiciones'
-    : !consecuenciaOk ? 'Elige el destino de la consecuencia' : '';
+    : errDestino ? 'Corrige el destino de la consecuencia'
+    : !borrador.consecuencia.destino ? 'Elige el destino de la consecuencia' : '';
 
-  const nodoMomento = nodoDeMomento(momento);
-  const iMomento = nodoMomento ? FLUJO.indexOf(nodoMomento) : -1;
-  const preguntasPosteriores = FLUJO.filter((n, i) => n.tipo === 'pregunta' && i > iMomento).map(n => ({ value: n.refId!, label: `${preguntaById(n.refId!)!.pnum} · ${preguntaById(n.refId!)!.texto.slice(0, 22)}` }));
-  const todasPreguntas = PREGUNTAS.map(q => ({ value: q.id, label: `${q.pnum} · ${q.texto.slice(0, 22)}` }));
+  // Opciones de destino, ya acotadas al alcance permitido por el momento.
+  const opcPregunta = (id: string) => {
+    const q = preguntaById(id)!;
+    return { value: id, label: `${q.pnum} · ${q.texto.slice(0, 22)}` };
+  };
+  const preguntasPosteriores = preguntasAfectables(momento).map(n => opcPregunta(n.refId!));
+  const paginasPosibles = paginasAfectables(momento).map(p => ({ value: `pag_${p.n}`, label: p.nombre }));
+  // Si el destino guardado quedó fuera de alcance (p. ej. al cambiar la pregunta
+  // disparadora), se muestra como opción deshabilitada para que se lea el nombre
+  // en vez del valor crudo — el error explica por qué no es válido.
+  const conDestinoInvalido = <T extends { value: string; label: string }>(opts: T[], label: string) => {
+    const d = borrador.consecuencia.destino;
+    return d && !opts.some(o => o.value === d)
+      ? [...opts, { value: d, label, disabled: true } as unknown as T]
+      : opts;
+  };
+  const nombrePaginaDe = (destino?: string) => {
+    const n = Number((destino ?? '').replace('pag_', ''));
+    return PAGINAS.find(p => p.n === n)?.nombre ?? `Página ${n}`;
+  };
   const despedidas = DESPEDIDAS.map(d => ({ value: d.id, label: d.nombre }));
-  const paginas = PAGINAS.map(p => ({ value: `pag_${p.n}`, label: p.nombre }));
-  const paginaUnica = ESTUDIO.totalPaginas <= 1;
+  // "la página" se deshabilita si el estudio tiene una sola página o si no queda
+  // ninguna página posterior a la pregunta que dispara la regla.
+  const sinPaginasPosibles = paginasPosibles.length === 0;
+  const paginaDeshabilitada = ESTUDIO.totalPaginas <= 1 || sinPaginasPosibles;
+  const motivoPaginaDeshabilitada = ESTUDIO.totalPaginas <= 1
+    ? 'No puedes ocultar la única página del estudio — dejaría un camino sin ninguna pregunta visible.'
+    : 'No quedan páginas posteriores a la pregunta que dispara esta regla: su página y las anteriores ya se mostraron.';
 
   const CONS_HELP: Record<ConsecuenciaTipo, string> = {
     mostrar: 'La pregunta o página será visible únicamente si se cumple la condición.',
@@ -446,25 +469,43 @@ export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloquead
                 { value: 'obligatoria', label: 'Hacer pregunta obligatoria' },
                 { value: 'terminar', label: 'Terminar encuesta' },
               ]} />
-            {/* Destino */}
+            {/* Destino — acotado a lo que el encuestado aún no ha visto */}
             {borrador.consecuencia.tipo === 'mostrar' ? (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 8, width: '100%' }}>
                 <Select value={borrador.consecuencia.destinoClase ?? 'pregunta'}
                   onChange={(v) => setCons({ destinoClase: v as 'pregunta' | 'pagina', destino: undefined })}
                   options={[
                     { value: 'pregunta', label: 'la pregunta' },
-                    { value: 'pagina', label: paginaUnica ? <Tooltip title="No puedes ocultar la única página del estudio — dejaría un camino sin ninguna pregunta visible.">la página</Tooltip> : 'la página', disabled: paginaUnica },
+                    { value: 'pagina', label: paginaDeshabilitada ? <Tooltip title={motivoPaginaDeshabilitada}>la página</Tooltip> : 'la página', disabled: paginaDeshabilitada },
                   ]} />
                 {borrador.consecuencia.destinoClase !== 'pagina'
-                  ? <Select showSearch optionFilterProp="label" placeholder="Pregunta a mostrar" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })} options={todasPreguntas} />
-                  : <Select showSearch optionFilterProp="label" placeholder="Página a mostrar" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })} options={paginas} />}
+                  ? <Select showSearch optionFilterProp="label" placeholder="Pregunta a mostrar" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })}
+                      options={conDestinoInvalido(preguntasPosteriores, preguntaById(borrador.consecuencia.destino ?? '')?.pnum ?? (borrador.consecuencia.destino ?? ''))} />
+                  : <Select showSearch optionFilterProp="label" placeholder="Página a mostrar" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })}
+                      options={conDestinoInvalido(paginasPosibles, nombrePaginaDe(borrador.consecuencia.destino))} />}
               </div>
             ) : borrador.consecuencia.tipo === 'ir_a' ? (
               <Select showSearch optionFilterProp="label" style={{ width: '100%' }} placeholder="Pregunta destino (no puede retroceder)" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })} options={preguntasPosteriores} />
             ) : borrador.consecuencia.tipo === 'obligatoria' ? (
-              <Select showSearch optionFilterProp="label" style={{ width: '100%' }} placeholder="Pregunta que se vuelve obligatoria" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })} options={todasPreguntas} />
+              <Select showSearch optionFilterProp="label" style={{ width: '100%' }} placeholder="Pregunta que se vuelve obligatoria" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })} options={preguntasPosteriores} />
             ) : (
               <Select showSearch optionFilterProp="label" style={{ width: '100%' }} placeholder="Despedida" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })} options={despedidas} />
+            )}
+            {/* Error de alcance: el destino ya se mostró (p. ej. su propia página) */}
+            {errDestino && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4, width: '100%' }}>
+                <BoxIcon name="bx-error-circle" size={14} color="#ff4d4f" style={{ marginTop: 2 }} />
+                <span style={{ fontFamily: FONT, fontSize: 13, color: '#ff4d4f', lineHeight: '18px' }}>{errDestino}</span>
+              </div>
+            )}
+            {/* Aviso cuando la regla no puede afectar nada posterior */}
+            {preguntasPosteriores.length === 0 && borrador.consecuencia.tipo !== 'terminar' && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4, width: '100%' }}>
+                <BoxIcon name="bx-info-circle" size={14} color={T45} style={{ marginTop: 2 }} />
+                <span style={{ fontFamily: FONT, fontSize: 12, color: T45, lineHeight: '17px' }}>
+                  Esta es la última pregunta del flujo: no hay preguntas posteriores que afectar. Usa “Terminar encuesta”.
+                </span>
+              </div>
             )}
           </CondBody>
         </div>

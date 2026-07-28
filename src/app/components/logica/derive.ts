@@ -2,7 +2,7 @@
 // Todo se recalcula en vivo (despedidas huérfanas, indicadores del canvas,
 // destino por defecto) — nunca se guarda un valor "congelado".
 
-import { FLUJO, DESPEDIDAS, PREGUNTAS, Despedida } from '@/app/data/estudio';
+import { FLUJO, DESPEDIDAS, PREGUNTAS, PAGINAS, Despedida, Pagina, preguntaById } from '@/app/data/estudio';
 import { Regla, Momento } from './types';
 
 /** Momento (cuándo se evalúa) derivado del contenido de la regla: la pregunta
@@ -73,6 +73,65 @@ export function nodosConLogica(reglas: Regla[]): Set<string> {
     }
   });
   return set;
+}
+
+// ── Alcance de los destinos según el momento de la regla ──────────────────────
+// Regla de oro: una regla solo puede afectar lo que el encuestado AÚN no ha
+// visto. Cuando la regla se dispara al responder Pn, esa pregunta y su página
+// ya se mostraron, así que no pueden ser destino de "Mostrar" ni volverse
+// obligatorias: solo lo que viene después. Las reglas de inicio (variables, antes
+// de la primera pregunta) sí pueden afectar cualquier pregunta o página.
+
+/** Página de la pregunta disparadora del momento (null si es una regla de inicio). */
+export function paginaDeMomento(momento: Momento): number | null {
+  if (momento === 'inicio') return null;
+  return preguntaById(momento)?.pagina ?? null;
+}
+
+/** Preguntas que la regla puede afectar (posteriores al momento). */
+export function preguntasAfectables(momento: Momento) {
+  const i = indiceMomento(momento);
+  return FLUJO.filter((n, k) => n.tipo === 'pregunta' && k > i);
+}
+
+/** Páginas que la regla puede mostrar/ocultar: solo las posteriores a la página
+ *  de la pregunta disparadora (todas si es una regla de inicio). */
+export function paginasAfectables(momento: Momento): Pagina[] {
+  const pag = paginaDeMomento(momento);
+  return pag == null ? [...PAGINAS] : PAGINAS.filter(p => p.n > pag);
+}
+
+/** ¿El destino elegido es válido para el momento de la regla?
+ *  Devuelve el motivo del problema, o null si es válido. */
+export function errorDestino(r: Regla): string | null {
+  const c = r.consecuencia;
+  if (!c.destino) return null; // incompleto, no inválido
+  const momento = momentoDeRegla(r);
+
+  if (c.tipo === 'mostrar' && c.destinoClase === 'pagina') {
+    const n = Number(c.destino.replace('pag_', ''));
+    const pagMomento = paginaDeMomento(momento);
+    if (pagMomento != null && n <= pagMomento) {
+      return n === pagMomento
+        ? 'No puedes mostrar u ocultar la página donde está la pregunta que dispara la regla: ya se mostró.'
+        : 'No puedes mostrar u ocultar una página anterior a la pregunta que dispara la regla.';
+    }
+    return null;
+  }
+
+  if (c.tipo === 'mostrar' || c.tipo === 'obligatoria' || c.tipo === 'ir_a') {
+    if (momento === 'inicio') return null;
+    if (c.destino === momento) {
+      return c.tipo === 'obligatoria'
+        ? 'No puedes hacer obligatoria la misma pregunta que dispara la regla.'
+        : 'No puedes mostrar u ocultar la misma pregunta que dispara la regla: ya se mostró.';
+    }
+    const permitidas = new Set(preguntasAfectables(momento).map(n => n.refId));
+    if (!permitidas.has(c.destino)) {
+      return 'Solo puedes afectar preguntas posteriores a la que dispara la regla.';
+    }
+  }
+  return null;
 }
 
 /** Números de página que alguna regla apunta como destino ("Mostrar › la página").
