@@ -1,13 +1,13 @@
 import { Select, Input, InputNumber, Segmented, Tooltip, Button, Tag, Popconfirm } from 'antd';
 import {
-  PREGUNTAS, VARIABLES_DETALLE, CANAL_RESPUESTA_VALORES, DESPEDIDAS, ESTUDIO, PAGINAS,
+  PREGUNTAS, VARIABLES_DETALLE, CANAL_RESPUESTA_VALORES, MEDIOS_ENLACE_PERSONAL, CAMPANAS_ENLACE_GENERICO, DESPEDIDAS, ESTUDIO, PAGINAS,
   preguntaById, variableByKey, esCondicionable, esRespondible, Pregunta,
 } from '@/app/data/estudio';
 import { BoxIcon, BoxIconName } from './boxicons';
 import { Regla, Condicion, GrupoCondicion, Consecuencia, ConsecuenciaTipo, Momento, Conector } from './types';
 import {
   operadoresPregunta, operadoresVariable, subSelectorDe, condicionLista,
-  errorCondicion, esDominioValido, seleccionMultiple, normalizarDominio,
+  errorCondicion, esDominioValido, seleccionMultiple, normalizarDominio, requiereDetalleCanal,
   SIN_VALOR, RANGO, LISTA_TAGS,
 } from './catalog';
 import { emptyCondicion, emptyGrupo, uid } from './seed';
@@ -124,10 +124,23 @@ function ValorControl({ c, q, onChange }: { c: Condicion; q?: Pregunta; onChange
 
   // Variable especial de lista cerrada (canal de respuesta): Es igual a / No
   // es igual a contra los medios posibles, no texto libre (estándar US138).
+  // "Enlace personal"/"Enlace genérico" son ambiguos solos: piden precisar el
+  // medio o la campaña específica (US44) en un segundo select.
   if (varTipo === 'canal') {
-    return <Select showSearch optionFilterProp="label" style={fieldWide} value={c.valor || undefined}
-      onChange={(v) => onChange({ valor: v as string })}
-      options={CANAL_RESPUESTA_VALORES.map(v => ({ value: v, label: v }))} placeholder="Elige un canal" />;
+    const detalle = requiereDetalleCanal(c.valor);
+    return (
+      <>
+        <Select showSearch optionFilterProp="label" style={fieldWide} value={c.valor || undefined}
+          onChange={(v) => onChange({ valor: v as string, valorDetalle: undefined })}
+          options={CANAL_RESPUESTA_VALORES.map(v => ({ value: v, label: v }))} placeholder="Elige un canal" />
+        {detalle && (
+          <Select showSearch optionFilterProp="label" style={fieldWide} value={c.valorDetalle || undefined}
+            onChange={(v) => onChange({ valorDetalle: v as string })}
+            options={(c.valor === 'Enlace personal' ? MEDIOS_ENLACE_PERSONAL : CAMPANAS_ENLACE_GENERICO).map(v => ({ value: v, label: v }))}
+            placeholder={c.valor === 'Enlace personal' ? 'Elige el medio' : 'Elige la campaña'} />
+        )}
+      </>
+    );
   }
 
   if (RANGO.has(c.operador)) {
@@ -216,7 +229,7 @@ function CondFields({ c, bloqueada, onChange }: { c: Condicion; bloqueada: boole
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, width: '100%' }}>
       {/* Fuente */}
       <Select style={fieldNarrow} disabled={fuenteLocked} value={c.fuente}
-        onChange={(v) => onChange({ fuente: v as 'response' | 'variable', campo: '', filaMatriz: undefined, modoMatriz: undefined, subTipo: undefined, operador: '', valor: '', valorB: '', valores: [] })}
+        onChange={(v) => onChange({ fuente: v as 'response' | 'variable', campo: '', filaMatriz: undefined, modoMatriz: undefined, subTipo: undefined, operador: '', valor: '', valorB: '', valores: [], valorDetalle: undefined })}
         options={[{ value: 'response', label: 'La respuesta a' }, { value: 'variable', label: 'La variable' }]} />
       {/* Pregunta / variable — libre incluso con foco: el foco solo ancla en qué
           momento vive la regla (ver guardarForm), no restringe de dónde puede
@@ -224,7 +237,7 @@ function CondFields({ c, bloqueada, onChange }: { c: Condicion; bloqueada: boole
           y de variables dentro de la misma regla. */}
       <Select showSearch optionFilterProp="label" style={fieldWide} value={c.campo || undefined}
         placeholder={c.fuente === 'variable' ? 'Selecciona una variable…' : 'Selecciona una pregunta…'}
-        onChange={(v) => onChange({ campo: v as string, filaMatriz: undefined, modoMatriz: undefined, subTipo: undefined, operador: '', valor: '', valorB: '', valores: [] })}
+        onChange={(v) => onChange({ campo: v as string, filaMatriz: undefined, modoMatriz: undefined, subTipo: undefined, operador: '', valor: '', valorB: '', valores: [], valorDetalle: undefined })}
         options={c.fuente === 'variable' ? [
           { label: 'Variables del estudio', options: VARIABLES_DETALLE.filter(v => !v.especial).map(v => ({ value: v.key, label: v.label })) },
           { label: 'Variables especiales', options: VARIABLES_DETALLE.filter(v => v.especial).map(v => ({ value: v.key, label: v.label })) },
@@ -232,7 +245,7 @@ function CondFields({ c, bloqueada, onChange }: { c: Condicion; bloqueada: boole
       {/* Matriz fila */}
       {esMatriz && (
         <Select showSearch optionFilterProp="label" style={fieldWide} placeholder="Atributo/fila"
-          value={c.filaMatriz} onChange={(v) => onChange({ filaMatriz: v as string, operador: '', valor: '', valorB: '', valores: [] })}
+          value={c.filaMatriz} onChange={(v) => onChange({ filaMatriz: v as string, operador: '', valor: '', valorB: '', valores: [], valorDetalle: undefined })}
           options={(q?.filas ?? []).map(f => ({ value: f, label: f }))} />
       )}
       {/* Sin control "Por nota/Por grupo": en Lógica no se puede distinguir el
@@ -240,13 +253,13 @@ function CondFields({ c, bloqueada, onChange }: { c: Condicion; bloqueada: boole
       {/* Sub-selector */}
       {sub && (
         <Select showSearch optionFilterProp="label" style={fieldWide} placeholder={sub.label}
-          value={c.subTipo} onChange={(v) => onChange({ subTipo: v as string, operador: '', valor: '', valorB: '', valores: [] })}
+          value={c.subTipo} onChange={(v) => onChange({ subTipo: v as string, operador: '', valor: '', valorB: '', valores: [], valorDetalle: undefined })}
           options={sub.opciones} />
       )}
       {/* Operador */}
       {mostrarOperador && (
         <Select showSearch optionFilterProp="label" style={fieldNarrow} placeholder="Condición…"
-          value={c.operador || undefined} onChange={(v) => onChange({ operador: v as string, valor: '', valorB: '', valores: [] })}
+          value={c.operador || undefined} onChange={(v) => onChange({ operador: v as string, valor: '', valorB: '', valores: [], valorDetalle: undefined })}
           options={operadores.map(o => ({ value: o, label: o }))} />
       )}
       {/* Valor */}

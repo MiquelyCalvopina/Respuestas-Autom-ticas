@@ -127,6 +127,12 @@ export function operadoresVariable(tipo: VariableTipo): string[] {
   return { texto: OPS.varTexto, numero: OPS.varNumero, fecha: OPS.varFecha, correo: OPS.varCorreo, canal: OPS.varCanal }[tipo].slice();
 }
 
+/** ¿El valor elegido de "Canal de respuesta" es ambiguo por sí solo y exige
+ *  precisar el medio o la campaña específica (US44)? */
+export function requiereDetalleCanal(valor: string): boolean {
+  return valor === 'Enlace personal' || valor === 'Enlace genérico';
+}
+
 /** ¿El control de valor (sobre opciones/escala) debe ser select MÚLTIPLE (OR)?
  *  Según el estándar: indicadores/escala y matriz en "Es igual a"/"No es igual a"
  *  → múltiple; modo "Grupo" → múltiple; Opción múltiple → múltiple; Opción
@@ -154,7 +160,13 @@ export function condicionLista(c: Condicion, preguntaTipo?: Pregunta): boolean {
   if (RANGO.has(c.operador)) return c.valor.trim() !== '' && c.valorB.trim() !== '';
   if (LISTA_TAGS.has(c.operador)) return c.valores.length > 0;
   if (MULTI_IGUALDAD.has(c.operador) && c.valores.length > 0) return true;
-  return c.valor.trim() !== '';
+  if (!c.valor.trim()) return false;
+  // Canal de respuesta: "Enlace personal"/"Enlace genérico" no bastan solos,
+  // falta precisar el medio o la campaña (US44).
+  if (c.fuente === 'variable' && variableByKey(c.campo)?.tipo === 'canal' && requiereDetalleCanal(c.valor)) {
+    return !!c.valorDetalle?.trim();
+  }
+  return true;
 }
 
 // ── Validadores de formato ─────────────────────────────────────────────────────

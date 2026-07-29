@@ -147,8 +147,19 @@ export const VARIABLES_DETALLE: VariableDetalle[] = [
 ];
 
 /** Lista cerrada de valores de "Canal de respuesta" (US138 · variables
- *  especiales): los medios por los que puede llegar una respuesta. */
+ *  especiales): los medios por los que puede llegar una respuesta.
+ *  "Enlace personal" y "Enlace genérico" son ambiguos por sí solos —requieren
+ *  precisar el medio o la campaña (US44, ver abajo)— antes de poder guardar
+ *  la condición. */
 export const CANAL_RESPUESTA_VALORES = ['WhatsApp', 'Correo electrónico', 'Enlace personal', 'Enlace genérico'];
+
+/** US44 · cuando el canal de respuesta es un Enlace personal, el medio
+ *  específico por el que se envió ese enlace individual. */
+export const MEDIOS_ENLACE_PERSONAL = ['Correo electrónico', 'SMS', 'WhatsApp', 'Llamada', 'App', 'Web'];
+
+/** US44 · cuando el canal de respuesta es un Enlace genérico, la campaña
+ *  específica a la que pertenece (ejemplo de campañas configuradas en el estudio). */
+export const CAMPANAS_ENLACE_GENERICO = ['Campaña Postventa Q1', 'Campaña Referidos', 'Campaña Reactivación de clientes'];
 
 const GRUPOS_NPS = ['Detractor', 'Neutro', 'Promotor'];
 const OPC_ABCD = ['Opción A', 'Opción B', 'Opción C', 'Opción D'];

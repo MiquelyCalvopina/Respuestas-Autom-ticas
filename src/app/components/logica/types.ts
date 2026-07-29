@@ -20,6 +20,9 @@ export interface Condicion {
   valor: string;
   /** segundo valor para operadores de rango ("Está entre") */
   valorB: string;
+  /** Detalle del valor cuando este requiere precisar más (Canal de respuesta,
+   *  US44: "Enlace personal" → qué medio; "Enlace genérico" → qué campaña). */
+  valorDetalle?: string;
   /** valores múltiples (igualdad OR, tags de lista/dominios) */
   valores: string[];
 }

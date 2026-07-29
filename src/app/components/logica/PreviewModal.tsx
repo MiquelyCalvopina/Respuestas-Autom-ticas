@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Modal, Button, Input, InputNumber, Radio, Checkbox, Select, Rate, Alert, Tag } from 'antd';
 import {
-  ESTUDIO, PREGUNTAS, VARIABLES_DETALLE, CANAL_RESPUESTA_VALORES, despedidaById, paginaByN, preguntaById, Pregunta,
+  ESTUDIO, PREGUNTAS, VARIABLES_DETALLE, CANAL_RESPUESTA_VALORES, MEDIOS_ENLACE_PERSONAL, CAMPANAS_ENLACE_GENERICO, despedidaById, paginaByN, preguntaById, Pregunta,
 } from '@/app/data/estudio';
 import { BoxIcon } from './boxicons';
 import { Regla } from './types';
+import { requiereDetalleCanal } from './catalog';
 import {
   Respuestas, Variables, Paso, primerPaso, siguientePaso,
   respuestaCompleta,
@@ -187,10 +188,21 @@ export default function PreviewModal({ abierto, reglas, destinos, onCerrar }: Pr
                 {VARIABLES_DETALLE.map(v => (
                   <div key={v.key} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span style={{ fontSize: 11, color: T45 }}>{v.label}</span>
-                    {v.tipo === 'canal'
-                      ? <Select size="small" allowClear value={vars[v.key] || undefined} onChange={x => setVars(s => ({ ...s, [v.key]: x ?? '' }))}
+                    {v.tipo === 'canal' ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <Select size="small" allowClear value={vars[v.key] || undefined}
+                          onChange={x => setVars(s => ({ ...s, [v.key]: x ?? '', [`${v.key}_detalle`]: '' }))}
                           options={CANAL_RESPUESTA_VALORES.map(c => ({ value: c, label: c }))} placeholder="Sin definir" />
-                      : <Input size="small" value={vars[v.key] ?? ''} onChange={e => setVars(s => ({ ...s, [v.key]: e.target.value }))} />}
+                        {requiereDetalleCanal(vars[v.key] ?? '') && (
+                          <Select size="small" allowClear value={vars[`${v.key}_detalle`] || undefined}
+                            onChange={x => setVars(s => ({ ...s, [`${v.key}_detalle`]: x ?? '' }))}
+                            options={(vars[v.key] === 'Enlace personal' ? MEDIOS_ENLACE_PERSONAL : CAMPANAS_ENLACE_GENERICO).map(o => ({ value: o, label: o }))}
+                            placeholder={vars[v.key] === 'Enlace personal' ? 'Medio' : 'Campaña'} />
+                        )}
+                      </div>
+                    ) : (
+                      <Input size="small" value={vars[v.key] ?? ''} onChange={e => setVars(s => ({ ...s, [v.key]: e.target.value }))} />
+                    )}
                   </div>
                 ))}
               </div>

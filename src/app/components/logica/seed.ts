@@ -9,7 +9,7 @@ let reglaSeq = 0;
 export const nuevoCodigoRegla = () => `L-${String(++reglaSeq).padStart(4, '0')}`;
 
 export function emptyCondicion(fuente: 'response' | 'variable' = 'response'): Condicion {
-  return { id: uid('c'), fuente, campo: '', filaMatriz: undefined, modoMatriz: undefined, subTipo: undefined, operador: '', valor: '', valorB: '', valores: [] };
+  return { id: uid('c'), fuente, campo: '', filaMatriz: undefined, modoMatriz: undefined, subTipo: undefined, operador: '', valor: '', valorB: '', valores: [], valorDetalle: undefined };
 }
 
 export function emptyGrupo(): GrupoCondicion {

@@ -119,6 +119,11 @@ function valorSegs(c: Condicion): Seg[] {
   const q = c.fuente === 'response' ? preguntaById(c.campo) : undefined;
   // Casilla: estado, sin comillas
   if (q?.tipo === 'casilla') return [val(c.valor === 'no_acepto' ? 'No aceptó' : 'Aceptó')];
+  // Canal de respuesta con detalle (Enlace personal/genérico, US44): se lee
+  // el canal y su precisión juntos, ej. "Enlace genérico · Campaña Referidos".
+  if (c.fuente === 'variable' && variableByKey(c.campo)?.tipo === 'canal' && c.valorDetalle) {
+    return [val(`"${c.valor} · ${c.valorDetalle}"`)];
+  }
   // Rango: "6 y 8"
   if (RANGO.has(c.operador)) return [val(`${c.valor}`), plain(' y '), val(`${c.valorB}`)];
   // Múltiples (igualdad OR, listas, dominios): comillas y comas

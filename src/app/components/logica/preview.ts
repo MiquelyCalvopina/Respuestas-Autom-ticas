@@ -56,6 +56,16 @@ export function evaluarCondicion(c: Condicion, resp: Respuestas, vars: Variables
   const esVar = c.fuente === 'variable';
   const bruto: Respuesta = esVar ? vars[c.campo] : resp[claveRespuesta(c)];
 
+  // Canal de respuesta: si el valor elegido tiene detalle (Enlace personal/
+  // genérico → medio o campaña específicos, US44), deben coincidir ambas partes.
+  if (esVar && variableByKey(c.campo)?.tipo === 'canal') {
+    const base = norm(comoTexto(bruto));
+    const coincideBase = base === norm(c.valor);
+    const coincideDetalle = !c.valorDetalle || norm(comoTexto(vars[`${c.campo}_detalle`])) === norm(c.valorDetalle);
+    const igual = coincideBase && coincideDetalle;
+    return c.operador === 'Es igual a' ? igual : !igual;
+  }
+
   // Interacción: independiente del contenido.
   if (RESPONDIDO.has(c.operador)) {
     const hubo = esVar ? bruto !== undefined && bruto !== '' : respondida(bruto);
