@@ -1,13 +1,31 @@
-import { Button, Popconfirm } from 'antd';
+import { useState } from 'react';
+import { Button, Popconfirm, Tooltip } from 'antd';
 import { preguntaById } from '@/app/data/estudio';
-import { BoxIcon } from './boxicons';
+import { BoxIcon, BoxIconName } from './boxicons';
 import { EmptyIllustration } from './EmptyIllustration';
 import { SidebarHeader } from './SidebarHeader';
-import { Regla, Seleccion } from './types';
-import { Seg, condicionResumen, consecuenciaResumen } from './naturalLanguage';
+import { Regla, Seleccion, ConsecuenciaTipo } from './types';
+import { Seg, narrarRegla } from './naturalLanguage';
 import { momentosConReglas, reglasDeMomento } from './derive';
 
 const FONT = "'Roboto', sans-serif";
+// Golden Purple 6 — color que los usuarios ya reconocen para las referencias a
+// la estructura del estudio (preguntas, variables, campos, páginas, despedidas).
+const REF = '#722ed1';
+const T85 = 'rgba(0,0,0,0.85)';
+const T65 = 'rgba(0,0,0,0.65)';
+
+// Solo el ícono se colorea por tipo de consecuencia (igual que las flechas del
+// diagrama); el verbo va en negro para no convertir la fila en un arcoíris.
+const CONS_ICONO: Record<ConsecuenciaTipo, { icon: BoxIconName; color: string }> = {
+  mostrar:     { icon: 'bx-show', color: 'rgba(0,0,0,0.45)' },
+  ir_a:        { icon: 'bx-subdirectory-right', color: '#1890ff' },
+  obligatoria: { icon: 'bx-lock-alt', color: '#d48806' },
+  terminar:    { icon: 'bx-flag', color: '#ff4d4f' },
+};
+
+/** Máximo de condiciones visibles antes de colapsar el resto. */
+const MAX_VISIBLES = 3;
 
 interface Props {
   reglas: Regla[];
@@ -20,10 +38,27 @@ interface Props {
 function SegText({ segs }: { segs: Seg[] }) {
   return (
     <>
-      {segs.map((seg, i) => (
-        <span key={i} style={seg.ref ? { color: '#1890ff', fontWeight: 500 } : undefined}>{seg.t}</span>
-      ))}
+      {segs.map((seg, i) => {
+        const style: React.CSSProperties | undefined =
+          seg.kind === 'ref' ? { color: REF, fontWeight: 500 }
+          : seg.kind === 'valor' ? { color: T85 }
+          : seg.kind === 'op' ? { color: T65 }
+          : undefined;
+        const el = <span key={i} style={style}>{seg.t}</span>;
+        // El texto del usuario se trunca en la fila; el completo va en tooltip.
+        return seg.full ? <Tooltip key={i} title={seg.full}>{el}</Tooltip> : el;
+      })}
     </>
+  );
+}
+
+/** Chip de conector Y/O al inicio de una línea de condición. */
+function ConectorChip({ valor }: { valor: 'Y' | 'O' }) {
+  return (
+    <span style={{
+      flexShrink: 0, fontFamily: FONT, fontSize: 11, fontWeight: 500, lineHeight: '16px',
+      color: 'rgba(0,0,0,0.45)', background: 'rgba(0,0,0,0.04)', borderRadius: 4, padding: '0 5px',
+    }}>{valor}</span>
   );
 }
 
@@ -31,7 +66,9 @@ function tituloMomento(momento: string): string {
   if (momento === 'inicio') return 'AL INICIAR LA ENCUESTA';
   const q = preguntaById(momento);
   if (!q) return momento.toUpperCase();
-  const enunciado = q.texto.length > 34 ? q.texto.slice(0, 34) + '…' : q.texto;
+  const texto = (q.texto ?? '').trim();
+  if (!texto) return `AL RESPONDER ${q.pnum}`;
+  const enunciado = texto.length > 34 ? texto.slice(0, 34) + '…' : texto;
   return `AL RESPONDER ${q.pnum} ${enunciado}`.toUpperCase();
 }
 
@@ -47,24 +84,64 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 }
 
 function ReglaRow({ regla, onEditar, onEliminar }: { regla: Regla; onEditar: () => void; onEliminar: () => void }) {
+  const [expandido, setExpandido] = useState(false);
+  const n = narrarRegla(regla);
+  // Hasta MAX_VISIBLES se muestran completas; si hay más, se ven las 2 primeras
+  // y el resto queda tras "+ N condiciones más".
+  const colapsable = n.condiciones.length > MAX_VISIBLES;
+  const ocultas = colapsable ? n.condiciones.length - (MAX_VISIBLES - 1) : 0;
+  const visibles = !colapsable || expandido ? n.condiciones : n.condiciones.slice(0, MAX_VISIBLES - 1);
+  const icono = CONS_ICONO[n.consecuencia.tipo];
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', border: '1px solid #f0f0f0', borderRadius: 8, background: '#fff' }}>
-      <div style={{ flex: 1, minWidth: 0, fontFamily: FONT, fontSize: 13, lineHeight: '20px', color: 'rgba(0,0,0,0.85)' }}>
-        <span style={{ color: 'rgba(0,0,0,0.45)' }}>Si </span>
-        <SegText segs={condicionResumen(regla)} />
-        <span style={{ color: 'rgba(0,0,0,0.45)' }}>, </span>
-        <SegText segs={consecuenciaResumen(regla)} />
-        <span style={{ color: 'rgba(0,0,0,0.45)' }}>.</span>
+      {/* Una línea por condición + una de consecuencia */}
+      <div style={{ flex: 1, minWidth: 0, fontFamily: FONT, fontSize: 13, lineHeight: '20px', color: T85, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {visibles.map((l, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 6, paddingLeft: l.nivel * 14 }}>
+            {i === 0 && l.nivel === 0
+              ? <span style={{ flexShrink: 0, color: 'rgba(0,0,0,0.45)' }}>Si</span>
+              : l.conector ? <ConectorChip valor={l.conector} /> : null}
+            <span style={{ minWidth: 0 }}><SegText segs={l.segs} /></span>
+          </div>
+        ))}
+
+        {/* Colapso cuando hay más de MAX_VISIBLES condiciones */}
+        {ocultas > 0 && (
+          <button
+            type="button" onClick={() => setExpandido(x => !x)}
+            style={{ alignSelf: 'flex-start', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', color: '#1890ff', fontFamily: FONT, fontSize: 12 }}
+          >
+            {expandido ? 'Ver menos' : `+ ${ocultas} ${ocultas === 1 ? 'condición más' : 'condiciones más'}`}
+          </button>
+        )}
+
+        {/* Consecuencia */}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+          <span style={{ flexShrink: 0, color: 'rgba(0,0,0,0.45)' }}>entonces</span>
+          <BoxIcon name={icono.icon} size={14} color={icono.color} style={{ alignSelf: 'flex-start', marginTop: 3 }} />
+          <span style={{ minWidth: 0 }}>
+            <span style={{ fontWeight: 500 }}>{n.consecuencia.verbo}</span>
+            <span> </span>
+            <SegText segs={n.consecuencia.destino} />
+          </span>
+        </div>
       </div>
-      <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-        <IconBtn icon="bx-pencil" onClick={onEditar} label="Editar regla" />
-        <Popconfirm
-          title="¿Seguro que quieres eliminar esta regla?"
-          okText="Sí, eliminar" cancelText="Cancelar" okButtonProps={{ danger: true }}
-          onConfirm={onEliminar}
-        >
-          <span><IconBtn icon="bx-trash" danger label="Eliminar regla" /></span>
-        </Popconfirm>
+
+      {/* Acciones + código de la regla (visible para soporte) */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 2 }}>
+          <IconBtn icon="bx-pencil" onClick={onEditar} label="Editar regla" />
+          <Popconfirm
+            title="¿Seguro que quieres eliminar esta regla?"
+            okText="Sí, eliminar" cancelText="Cancelar" okButtonProps={{ danger: true }}
+            onConfirm={onEliminar}
+          >
+            <span><IconBtn icon="bx-trash" danger label="Eliminar regla" /></span>
+          </Popconfirm>
+        </div>
+        <Tooltip title="Identificador de la regla, útil para soporte">
+          <span style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(0,0,0,0.25)', whiteSpace: 'nowrap', paddingRight: 2 }}>{regla.codigo}</span>
+        </Tooltip>
       </div>
     </div>
   );

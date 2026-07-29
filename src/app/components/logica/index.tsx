@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { App } from 'antd';
 import { Regla, Seleccion, SidebarModo, Momento, DestinosPorMomento } from './types';
-import { emptyGrupo, uid } from './seed';
+import { emptyGrupo, uid, nuevoCodigoRegla } from './seed';
 import { reglasDeMomento, preguntasSinAcceso, destinoCalculado, momentoDeRegla } from './derive';
 import Canvas from './Canvas';
 import SidebarList from './SidebarList';
@@ -31,7 +31,7 @@ function nuevoBorrador(sel: Seleccion): Regla {
     c0.fuente = 'response';
   }
   const momento: Momento = sel.tipo === 'pregunta' ? sel.preguntaId : 'inicio';
-  return { id: uid('r'), momento, grupos: [g], consecuencia: { tipo: 'mostrar', destinoClase: 'pregunta' } };
+  return { id: uid('r'), codigo: nuevoCodigoRegla(), momento, grupos: [g], consecuencia: { tipo: 'mostrar', destinoClase: 'pregunta' } };
 }
 
 export default function LogicaModule() {

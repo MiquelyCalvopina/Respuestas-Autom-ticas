@@ -51,6 +51,8 @@ export type Momento = 'inicio' | string;
 
 export interface Regla {
   id: string;
+  /** código visible para soporte, ej. "L-0007". Se asigna al crear la regla. */
+  codigo: string;
   momento: Momento;
   grupos: GrupoCondicion[];
   consecuencia: Consecuencia;
