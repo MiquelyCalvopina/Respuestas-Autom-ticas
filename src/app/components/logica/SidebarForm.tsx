@@ -1,13 +1,13 @@
 import { Select, Input, InputNumber, Segmented, Tooltip, Button, Tag, Popconfirm } from 'antd';
 import {
   PREGUNTAS, VARIABLES_DETALLE, DESPEDIDAS, ESTUDIO, PAGINAS,
-  preguntaById, variableByKey, Pregunta,
+  preguntaById, variableByKey, esCondicionable, esRespondible, Pregunta,
 } from '@/app/data/estudio';
 import { BoxIcon, BoxIconName } from './boxicons';
 import { Regla, Condicion, GrupoCondicion, Consecuencia, ConsecuenciaTipo, Momento, Conector } from './types';
 import {
   operadoresPregunta, operadoresVariable, subSelectorDe, condicionLista,
-  errorCondicion, esDominioValido, seleccionMultiple,
+  errorCondicion, esDominioValido, seleccionMultiple, normalizarDominio,
   SIN_VALOR, RANGO, LISTA_TAGS,
 } from './catalog';
 import { emptyCondicion, emptyGrupo, uid } from './seed';
@@ -142,7 +142,9 @@ function ValorControl({ c, q, onChange }: { c: Condicion; q?: Pregunta; onChange
 
   if (LISTA_TAGS.has(c.operador)) {
     const esDominio = c.operador.includes('dominios');
-    return <Select mode="tags" style={fieldWide} value={c.valores} onChange={(v) => onChange({ valores: v as string[] })}
+    return <Select mode="tags" style={fieldWide} value={c.valores}
+      // En dominios se agrega el "@" inicial si falta (igual que Alertas).
+      onChange={(v) => onChange({ valores: (v as string[]).map(x => (esDominio ? normalizarDominio(x) : x)) })}
       placeholder={esDominio ? 'Escribe un dominio y Enter (ej. @gmail.com)' : 'Escribe un valor y Enter'} tokenSeparators={[',', ';']} open={false} suffixIcon={null}
       tagRender={(props) => {
         const invalido = esDominio ? !esDominioValido(String(props.value)) : !String(props.value).trim();
@@ -210,7 +212,7 @@ function CondFields({ c, bloqueada, onChange }: { c: Condicion; bloqueada: boole
       <Select showSearch optionFilterProp="label" style={fieldWide} value={c.campo || undefined}
         placeholder={c.fuente === 'variable' ? 'Selecciona una variable…' : 'Selecciona una pregunta…'}
         onChange={(v) => onChange({ campo: v as string, filaMatriz: undefined, modoMatriz: undefined, subTipo: undefined, operador: '', valor: '', valorB: '', valores: [] })}
-        options={c.fuente === 'variable' ? VARIABLES_DETALLE.map(v => ({ value: v.key, label: v.label })) : PREGUNTAS.map(p => ({ value: p.id, label: labelPregunta(p) }))} />
+        options={c.fuente === 'variable' ? VARIABLES_DETALLE.map(v => ({ value: v.key, label: v.label })) : PREGUNTAS.filter(esCondicionable).map(p => ({ value: p.id, label: labelPregunta(p) }))} />
       {/* Matriz fila */}
       {esMatriz && (
         <Select showSearch optionFilterProp="label" style={fieldWide} placeholder="Atributo/fila"
@@ -326,6 +328,11 @@ export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloquead
     return { value: id, label: `${q.pnum} · ${q.texto.slice(0, 22)}` };
   };
   const preguntasPosteriores = preguntasAfectables(momento).map(n => opcPregunta(n.refId!));
+  // "Hacer obligatoria" solo aplica a preguntas que se responden: una Expresión
+  // es un elemento de presentación, no tiene respuesta que exigir.
+  const preguntasObligables = preguntasAfectables(momento)
+    .filter(n => { const q = preguntaById(n.refId!); return !!q && esRespondible(q); })
+    .map(n => opcPregunta(n.refId!));
   const paginasPosibles = paginasAfectables(momento).map(p => ({ value: `pag_${p.n}`, label: p.nombre }));
   // Si el destino guardado quedó fuera de alcance (p. ej. al cambiar la pregunta
   // disparadora), se muestra como opción deshabilitada para que se lea el nombre
@@ -487,7 +494,7 @@ export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloquead
             ) : borrador.consecuencia.tipo === 'ir_a' ? (
               <Select showSearch optionFilterProp="label" style={{ width: '100%' }} placeholder="Pregunta destino (no puede retroceder)" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })} options={preguntasPosteriores} />
             ) : borrador.consecuencia.tipo === 'obligatoria' ? (
-              <Select showSearch optionFilterProp="label" style={{ width: '100%' }} placeholder="Pregunta que se vuelve obligatoria" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })} options={preguntasPosteriores} />
+              <Select showSearch optionFilterProp="label" style={{ width: '100%' }} placeholder="Pregunta que se vuelve obligatoria" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })} options={preguntasObligables} />
             ) : (
               <Select showSearch optionFilterProp="label" style={{ width: '100%' }} placeholder="Despedida" value={borrador.consecuencia.destino} onChange={(v) => setCons({ destino: v as string })} options={despedidas} />
             )}

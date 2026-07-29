@@ -56,6 +56,7 @@ export function subSelectorDe(q: Pregunta): { label: string; opciones: SubOpcion
       return { label: 'Campo del formulario', opciones: (q.campos ?? []).map(c => ({ value: c.key, label: c.label })) };
     case 'seleccion_simple':
     case 'seleccion_multiple':
+    case 'seleccion_imagenes':
     case 'dropdown':
     case 'si_no':
       return { label: 'Evaluar', opciones: [{ value: 'opcion', label: 'La opción elegida' }, { value: 'comentario', label: 'El comentario' }] };
@@ -86,9 +87,9 @@ export function operadoresPregunta(q: Pregunta, c: Condicion): string[] {
     case 'texto_abierto':
       return q.categorizable ? [...OPS.abiertaCat] : [...OPS.abierta];
     case 'expresion':
-      // Una Expresión es una captura de texto libre: mismos operadores que una
-      // respuesta abierta sin categorización.
-      return [...OPS.abierta];
+      // "Expresión" es un elemento de presentación: no se responde, así que no
+      // hay respuesta que evaluar. Solo puede ser destino de una consecuencia.
+      return [];
     case 'formulario': {
       const campo = (q.campos ?? []).find(f => f.key === c.subTipo);
       if (!campo) return [];
@@ -97,7 +98,8 @@ export function operadoresPregunta(q: Pregunta, c: Condicion): string[] {
     case 'seleccion_simple': case 'dropdown': case 'si_no':
       if (c.subTipo === 'comentario') return q.categorizable ? [...OPS.comentarioSimpleCat] : [...OPS.comentarioSimple];
       return [...OPS.simple];
-    case 'seleccion_multiple':
+    // El estándar agrupa "Opción múltiple / Selección de imágenes": mismo set.
+    case 'seleccion_multiple': case 'seleccion_imagenes':
       if (c.subTipo === 'comentario') return q.categorizable ? [...OPS.comentarioMultipleCat] : [...OPS.comentarioMultiple];
       return [...OPS.multiple];
     case 'casilla':   return [...OPS.casilla];
@@ -122,7 +124,7 @@ export function seleccionMultiple(q: Pregunta, c: Condicion): boolean {
   switch (q.tipo) {
     case 'NPS': case 'CSAT': case 'CES': case 'CLI': case 'rating': case 'matriz':
       return igual; // "Por nota": igualdad → múltiple; comparaciones → simple
-    case 'seleccion_multiple':
+    case 'seleccion_multiple': case 'seleccion_imagenes':
       return igual || contiene;
     default:
       return false; // seleccion_simple, dropdown, si_no, maxdiff → select simple
@@ -143,6 +145,15 @@ export function condicionLista(c: Condicion, preguntaTipo?: Pregunta): boolean {
 }
 
 // ── Validadores de formato ─────────────────────────────────────────────────────
+/** Normaliza un dominio agregando el "@" inicial si falta (mismo comportamiento
+ *  que Alertas): "gmail.com" → "@gmail.com". Deja intacto lo que no parezca un
+ *  dominio para que la validación pueda marcarlo en rojo. */
+export function normalizarDominio(v: string): string {
+  const t = v.trim();
+  if (!t) return t;
+  return t.startsWith('@') ? t : `@${t}`;
+}
+
 /** Dominio válido, con o sin "@" inicial (ej. gmail.com, @sub.example.co.uk). */
 export function esDominioValido(v: string): boolean {
   const d = v.trim().replace(/^@/, '');

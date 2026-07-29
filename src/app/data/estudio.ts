@@ -11,11 +11,22 @@ export interface EstudioSetup {
   descripcion: string;
 }
 
+// Los 18 tipos de pregunta del catálogo. "expresion" es un elemento de
+// presentación (no se responde): puede ser destino de una consecuencia pero
+// NO puede usarse como fuente de una condición — ver esCondicionable().
 export type PreguntaTipo =
   | 'NPS' | 'CSAT' | 'CES' | 'CLI' | 'rating'
   | 'texto_abierto' | 'expresion'
-  | 'seleccion_simple' | 'seleccion_multiple' | 'dropdown' | 'si_no'
+  | 'seleccion_simple' | 'seleccion_multiple' | 'seleccion_imagenes' | 'dropdown' | 'si_no'
   | 'matriz' | 'formulario' | 'casilla' | 'maxdiff' | 'ranking' | 'cargar_archivo';
+
+/** ¿La pregunta puede usarse como FUENTE de una condición?
+ *  "Expresión" no se responde (es un elemento de presentación), así que no hay
+ *  respuesta que evaluar: solo puede ser destino de una consecuencia. */
+export const esCondicionable = (q: Pregunta) => q.tipo !== 'expresion';
+
+/** ¿La pregunta puede volverse obligatoria? Solo si se responde. */
+export const esRespondible = (q: Pregunta) => q.tipo !== 'expresion';
 
 export interface CampoFormulario {
   key: string;
@@ -140,25 +151,26 @@ export const PREGUNTAS: Pregunta[] = [
   { id: 'q_cli',    pnum: 'P4',  pagina: 1, texto: 'CLI',    tipo: 'CLI',  escala: [1, 5],  grupos: ['Bajo', 'Medio', 'Alto'] },
   { id: 'q_rating', pnum: 'P5',  pagina: 1, texto: 'Rating', tipo: 'rating', escala: [1, 5] },
   // ── Página 2 · Opciones ──
-  { id: 'q_simple',   pnum: 'P6',  pagina: 2, texto: 'Selección simple',   tipo: 'seleccion_simple',   opciones: OPC_ABCD },
-  { id: 'q_multiple', pnum: 'P7',  pagina: 2, texto: 'Selección múltiple', tipo: 'seleccion_multiple', opciones: OPC_ABCD },
-  { id: 'q_dropdown', pnum: 'P8',  pagina: 2, texto: 'Dropdown',           tipo: 'dropdown',           opciones: OPC_ABCD },
-  { id: 'q_sino',     pnum: 'P9',  pagina: 2, texto: 'Sí / No',            tipo: 'si_no',              opciones: ['Sí', 'No'] },
-  { id: 'q_casilla',  pnum: 'P10', pagina: 2, texto: 'Casilla de verificación', tipo: 'casilla' },
+  { id: 'q_simple',   pnum: 'P6',  pagina: 2, texto: 'Selección simple',    tipo: 'seleccion_simple',    opciones: OPC_ABCD },
+  { id: 'q_multiple', pnum: 'P7',  pagina: 2, texto: 'Selección múltiple',  tipo: 'seleccion_multiple',  opciones: OPC_ABCD },
+  { id: 'q_imagenes', pnum: 'P8',  pagina: 2, texto: 'Selección de imágenes', tipo: 'seleccion_imagenes', opciones: ['Imagen 1', 'Imagen 2', 'Imagen 3'] },
+  { id: 'q_dropdown', pnum: 'P9',  pagina: 2, texto: 'Dropdown',            tipo: 'dropdown',            opciones: OPC_ABCD },
+  { id: 'q_sino',     pnum: 'P10', pagina: 2, texto: 'Sí / No',             tipo: 'si_no',               opciones: ['Sí', 'No'] },
+  { id: 'q_casilla',  pnum: 'P11', pagina: 2, texto: 'Casilla de verificación', tipo: 'casilla' },
   // ── Página 3 · Detalle ──
-  { id: 'q_abierta', pnum: 'P11', pagina: 3, texto: 'Respuesta abierta', tipo: 'texto_abierto', categorizable: true },
-  { id: 'q_expr',    pnum: 'P12', pagina: 3, texto: 'Expresión',         tipo: 'expresion' },
-  { id: 'q_matriz',  pnum: 'P13', pagina: 3, texto: 'Matriz',            tipo: 'matriz', escala: [1, 5], filas: ['Rapidez', 'Amabilidad', 'Claridad de la información'] },
-  { id: 'q_form',    pnum: 'P14', pagina: 3, texto: 'Formulario',        tipo: 'formulario', campos: [
+  { id: 'q_abierta', pnum: 'P12', pagina: 3, texto: 'Respuesta abierta', tipo: 'texto_abierto', categorizable: true },
+  { id: 'q_expr',    pnum: 'P13', pagina: 3, texto: 'Expresión',         tipo: 'expresion' },
+  { id: 'q_matriz',  pnum: 'P14', pagina: 3, texto: 'Matriz',            tipo: 'matriz', escala: [1, 5], filas: ['Rapidez', 'Amabilidad', 'Claridad de la información'] },
+  { id: 'q_form',    pnum: 'P15', pagina: 3, texto: 'Formulario',        tipo: 'formulario', campos: [
       { key: 'nombre', label: 'Nombre', tipo: 'texto' },
       { key: 'edad', label: 'Edad', tipo: 'numero' },
       { key: 'correo', label: 'Correo', tipo: 'correo' },
       { key: 'fecha_visita', label: 'Fecha de visita', tipo: 'fecha' },
       { key: 'sitio', label: 'Sitio web', tipo: 'url' },
     ] },
-  { id: 'q_maxdiff', pnum: 'P15', pagina: 3, texto: 'MaxDiff',       tipo: 'maxdiff', opciones: FACTORES },
-  { id: 'q_ranking', pnum: 'P16', pagina: 3, texto: 'Ranking',       tipo: 'ranking', opciones: FACTORES },
-  { id: 'q_archivo', pnum: 'P17', pagina: 3, texto: 'Subir archivo', tipo: 'cargar_archivo' },
+  { id: 'q_maxdiff', pnum: 'P16', pagina: 3, texto: 'MaxDiff',       tipo: 'maxdiff', opciones: FACTORES },
+  { id: 'q_ranking', pnum: 'P17', pagina: 3, texto: 'Ranking',       tipo: 'ranking', opciones: FACTORES },
+  { id: 'q_archivo', pnum: 'P18', pagina: 3, texto: 'Subir archivo', tipo: 'cargar_archivo' },
 ];
 
 // Tres despedidas del estudio de pruebas (Figma). "Despedida A" es el cierre por
@@ -181,17 +193,18 @@ export const FLUJO: FlujoNodo[] = [
   { id: 'n5',  tipo: 'pregunta',   label: 'P5 Rating',              refId: 'q_rating',   pagina: 1 },
   { id: 'n6',  tipo: 'pregunta',   label: 'P6 Selección simple',    refId: 'q_simple',   pagina: 2 },
   { id: 'n7',  tipo: 'pregunta',   label: 'P7 Selección múltiple',  refId: 'q_multiple', pagina: 2 },
-  { id: 'n8',  tipo: 'pregunta',   label: 'P8 Dropdown',            refId: 'q_dropdown', pagina: 2 },
-  { id: 'n9',  tipo: 'pregunta',   label: 'P9 Sí / No',             refId: 'q_sino',     pagina: 2 },
-  { id: 'n10', tipo: 'pregunta',   label: 'P10 Casilla',            refId: 'q_casilla',  pagina: 2 },
-  { id: 'n11', tipo: 'pregunta',   label: 'P11 Respuesta abierta',  refId: 'q_abierta',  pagina: 3 },
-  { id: 'n12', tipo: 'pregunta',   label: 'P12 Expresión',          refId: 'q_expr',     pagina: 3 },
-  { id: 'n13', tipo: 'pregunta',   label: 'P13 Matriz',             refId: 'q_matriz',   pagina: 3 },
-  { id: 'n14', tipo: 'pregunta',   label: 'P14 Formulario',         refId: 'q_form',     pagina: 3 },
-  { id: 'n15', tipo: 'pregunta',   label: 'P15 MaxDiff',            refId: 'q_maxdiff',  pagina: 3 },
-  { id: 'n16', tipo: 'pregunta',   label: 'P16 Ranking',            refId: 'q_ranking',  pagina: 3 },
-  { id: 'n17', tipo: 'pregunta',   label: 'P17 Subir archivo',      refId: 'q_archivo',  pagina: 3 },
-  { id: 'n18', tipo: 'despedida',  label: 'Despedida A',            refId: 'desp_a' },
+  { id: 'n8',  tipo: 'pregunta',   label: 'P8 Selección de imágenes', refId: 'q_imagenes', pagina: 2 },
+  { id: 'n9',  tipo: 'pregunta',   label: 'P9 Dropdown',            refId: 'q_dropdown', pagina: 2 },
+  { id: 'n10', tipo: 'pregunta',   label: 'P10 Sí / No',            refId: 'q_sino',     pagina: 2 },
+  { id: 'n11', tipo: 'pregunta',   label: 'P11 Casilla',            refId: 'q_casilla',  pagina: 2 },
+  { id: 'n12', tipo: 'pregunta',   label: 'P12 Respuesta abierta',  refId: 'q_abierta',  pagina: 3 },
+  { id: 'n13', tipo: 'pregunta',   label: 'P13 Expresión',          refId: 'q_expr',     pagina: 3 },
+  { id: 'n14', tipo: 'pregunta',   label: 'P14 Matriz',             refId: 'q_matriz',   pagina: 3 },
+  { id: 'n15', tipo: 'pregunta',   label: 'P15 Formulario',         refId: 'q_form',     pagina: 3 },
+  { id: 'n16', tipo: 'pregunta',   label: 'P16 MaxDiff',            refId: 'q_maxdiff',  pagina: 3 },
+  { id: 'n17', tipo: 'pregunta',   label: 'P17 Ranking',            refId: 'q_ranking',  pagina: 3 },
+  { id: 'n18', tipo: 'pregunta',   label: 'P18 Subir archivo',      refId: 'q_archivo',  pagina: 3 },
+  { id: 'n19', tipo: 'despedida',  label: 'Despedida A',            refId: 'desp_a' },
 ];
 
 // Helpers compartidos
