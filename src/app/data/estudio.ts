@@ -50,18 +50,23 @@ export interface Pregunta {
   filas?: string[];
   /** campos de un Formulario */
   campos?: CampoFormulario[];
-  /** true si la pregunta tiene categorización de comentarios activa (habilita "Habla de") */
-  categorizable?: boolean;
   /** grupos del indicador (ej. Detractor/Neutro/Promotor) para NPS/CSAT/CES/CLI */
   grupos?: string[];
 }
 
-export type VariableTipo = 'texto' | 'numero' | 'fecha' | 'correo';
+// 'canal' es un tipo especial: se resuelve como Texto pero con su control de
+// valor sobreescrito por una lista cerrada (ver CANAL_RESPUESTA_VALORES), tal
+// como documenta el catálogo estándar de condiciones para variables especiales.
+export type VariableTipo = 'texto' | 'numero' | 'fecha' | 'correo' | 'canal';
 
 export interface VariableDetalle {
   key: string;
   label: string;
   tipo: VariableTipo;
+  /** true = variable especial del sistema (canal de respuesta, dispositivo,
+   *  etc. del catálogo estándar), no una variable creada por el cliente en el
+   *  estudio. Se usa solo para agruparlas en el selector de Lógica. */
+  especial?: boolean;
 }
 
 export interface Despedida {
@@ -123,7 +128,12 @@ export const VARIABLES = [
 ];
 
 // Variables tipadas — las usa Lógica para resolver operadores por tipo (sección 7.2).
-// Mismas claves que VARIABLES, con su tipo y etiqueta legible.
+// Las primeras 8 comparten claves con VARIABLES (variables propias del estudio,
+// creadas por el cliente). "canal_respuesta" es distinta: es una variable
+// ESPECIAL del sistema —documentada en el catálogo estándar de condiciones
+// (US138) junto con dispositivo, plataforma, etc.— que no vive en VARIABLES
+// porque no la crea el cliente, la resuelve la plataforma. No confundir con
+// "canal", la variable de texto libre que el cliente puede crear en su estudio.
 export const VARIABLES_DETALLE: VariableDetalle[] = [
   { key: 'nombre_preferido',   label: 'Nombre de preferencia', tipo: 'texto' },
   { key: 'correo_electronico', label: 'Correo electrónico',    tipo: 'correo' },
@@ -133,7 +143,12 @@ export const VARIABLES_DETALLE: VariableDetalle[] = [
   { key: 'identificador',      label: 'Identificador',         tipo: 'texto' },
   { key: 'numero_credito',     label: 'Número de crédito',     tipo: 'numero' },
   { key: 'fecha_entrega',      label: 'Fecha de entrega',      tipo: 'fecha' },
+  { key: 'canal_respuesta',    label: 'Canal de respuesta',    tipo: 'canal', especial: true },
 ];
+
+/** Lista cerrada de valores de "Canal de respuesta" (US138 · variables
+ *  especiales): los medios por los que puede llegar una respuesta. */
+export const CANAL_RESPUESTA_VALORES = ['WhatsApp', 'Correo electrónico', 'Enlace personal', 'Enlace genérico'];
 
 const GRUPOS_NPS = ['Detractor', 'Neutro', 'Promotor'];
 const OPC_ABCD = ['Opción A', 'Opción B', 'Opción C', 'Opción D'];
@@ -158,7 +173,7 @@ export const PREGUNTAS: Pregunta[] = [
   { id: 'q_sino',     pnum: 'P10', pagina: 2, texto: 'Sí / No',             tipo: 'si_no',               opciones: ['Sí', 'No'] },
   { id: 'q_casilla',  pnum: 'P11', pagina: 2, texto: 'Casilla de verificación', tipo: 'casilla' },
   // ── Página 3 · Detalle ──
-  { id: 'q_abierta', pnum: 'P12', pagina: 3, texto: 'Respuesta abierta', tipo: 'texto_abierto', categorizable: true },
+  { id: 'q_abierta', pnum: 'P12', pagina: 3, texto: 'Respuesta abierta', tipo: 'texto_abierto' },
   { id: 'q_expr',    pnum: 'P13', pagina: 3, texto: 'Expresión',         tipo: 'expresion' },
   { id: 'q_matriz',  pnum: 'P14', pagina: 3, texto: 'Matriz',            tipo: 'matriz', escala: [1, 5], filas: ['Rapidez', 'Amabilidad', 'Claridad de la información'] },
   { id: 'q_form',    pnum: 'P15', pagina: 3, texto: 'Formulario',        tipo: 'formulario', campos: [

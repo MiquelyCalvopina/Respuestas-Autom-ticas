@@ -5,10 +5,8 @@
 // puede distinguir "no se respondió" (no hubo interacción) de "está vacía"
 // (respondió con contenido vacío).
 //
-// Alcance del prototipo: evalúa todos los operadores del catálogo salvo
-// "Habla de" / "No habla de", que dependen de los modelos de categorización y
-// no se pueden resolver en el navegador; esas condiciones se tratan como no
-// cumplidas y se avisa en la previsualización.
+// Evalúa todos los operadores del catálogo de Lógica (no existe "Habla de":
+// la categorización solo aplica a respuestas ya procesadas).
 
 import { FLUJO, PREGUNTAS, preguntaById, variableByKey } from '@/app/data/estudio';
 import { Regla, Condicion, Momento } from './types';
@@ -19,8 +17,6 @@ export type Respuesta = string | string[] | undefined;
 export type Respuestas = Record<string, Respuesta>;
 /** Valores de las variables cargadas con la interacción. */
 export type Variables = Record<string, string>;
-
-const CATEGORIZACION = new Set(['Habla de', 'No habla de']);
 
 /** ¿Hubo interacción con esta pregunta? */
 function respondida(v: Respuesta): boolean {
@@ -56,7 +52,6 @@ export function claveRespuesta(c: Condicion): string {
 /** Evalúa una condición contra las respuestas y variables de la simulación. */
 export function evaluarCondicion(c: Condicion, resp: Respuestas, vars: Variables): boolean {
   if (!c.operador) return false;
-  if (CATEGORIZACION.has(c.operador)) return false; // no evaluable en el prototipo
 
   const esVar = c.fuente === 'variable';
   const bruto: Respuesta = esVar ? vars[c.campo] : resp[claveRespuesta(c)];
@@ -126,11 +121,6 @@ export function evaluarRegla(r: Regla, resp: Respuestas, vars: Variables): boole
       return conector === 'Y' ? acum && actual : acum || actual;
     }, false as boolean);
   });
-}
-
-/** ¿La regla tiene alguna condición que el prototipo no puede evaluar? */
-export function tieneCondicionNoEvaluable(r: Regla): boolean {
-  return r.grupos.some(g => g.condiciones.some(c => CATEGORIZACION.has(c.operador)));
 }
 
 export interface EstadoPregunta {

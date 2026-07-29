@@ -1,13 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Modal, Button, Input, InputNumber, Radio, Checkbox, Select, Rate, Alert, Tag } from 'antd';
 import {
-  ESTUDIO, PREGUNTAS, VARIABLES_DETALLE, despedidaById, paginaByN, preguntaById, Pregunta,
+  ESTUDIO, PREGUNTAS, VARIABLES_DETALLE, CANAL_RESPUESTA_VALORES, despedidaById, paginaByN, preguntaById, Pregunta,
 } from '@/app/data/estudio';
 import { BoxIcon } from './boxicons';
 import { Regla } from './types';
 import {
   Respuestas, Variables, Paso, primerPaso, siguientePaso,
-  respuestaCompleta, tieneCondicionNoEvaluable,
+  respuestaCompleta,
 } from './preview';
 
 const FONT = "'Roboto', sans-serif";
@@ -136,8 +136,6 @@ export default function PreviewModal({ abierto, reglas, destinos, onCerrar }: Pr
   const [iniciado, setIniciado] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const noEvaluables = useMemo(() => reglas.filter(tieneCondicionNoEvaluable).length, [reglas]);
-
   function reiniciar() {
     setResp({}); setVars({}); setPaso(null); setHistorial([]); setIniciado(false); setError(null);
   }
@@ -176,12 +174,6 @@ export default function PreviewModal({ abierto, reglas, destinos, onCerrar }: Pr
       }
     >
       <div style={{ fontFamily: FONT }}>
-        {/* Aviso de alcance del simulador */}
-        {noEvaluables > 0 && (
-          <Alert type="warning" showIcon style={{ marginBottom: 12 }}
-            message={`${noEvaluables} regla${noEvaluables > 1 ? 's' : ''} usa${noEvaluables > 1 ? 'n' : ''} "Habla de", que depende de los modelos de categorización: en la previsualización se trata como no cumplida.`} />
-        )}
-
         {!iniciado && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <p style={{ fontSize: 14, color: T85, margin: 0 }}>
@@ -192,10 +184,13 @@ export default function PreviewModal({ abierto, reglas, destinos, onCerrar }: Pr
                 Variables de la interacción (las reglas del inicio se evalúan sobre estas):
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {VARIABLES_DETALLE.slice(0, 4).map(v => (
+                {VARIABLES_DETALLE.map(v => (
                   <div key={v.key} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span style={{ fontSize: 11, color: T45 }}>{v.label}</span>
-                    <Input size="small" value={vars[v.key] ?? ''} onChange={e => setVars(s => ({ ...s, [v.key]: e.target.value }))} />
+                    {v.tipo === 'canal'
+                      ? <Select size="small" allowClear value={vars[v.key] || undefined} onChange={x => setVars(s => ({ ...s, [v.key]: x ?? '' }))}
+                          options={CANAL_RESPUESTA_VALORES.map(c => ({ value: c, label: c }))} placeholder="Sin definir" />
+                      : <Input size="small" value={vars[v.key] ?? ''} onChange={e => setVars(s => ({ ...s, [v.key]: e.target.value }))} />}
                   </div>
                 ))}
               </div>

@@ -1,6 +1,6 @@
 import { Select, Input, InputNumber, Segmented, Tooltip, Button, Tag, Popconfirm } from 'antd';
 import {
-  PREGUNTAS, VARIABLES_DETALLE, DESPEDIDAS, ESTUDIO, PAGINAS,
+  PREGUNTAS, VARIABLES_DETALLE, CANAL_RESPUESTA_VALORES, DESPEDIDAS, ESTUDIO, PAGINAS,
   preguntaById, variableByKey, esCondicionable, esRespondible, Pregunta,
 } from '@/app/data/estudio';
 import { BoxIcon, BoxIconName } from './boxicons';
@@ -122,6 +122,14 @@ function ValorControl({ c, q, onChange }: { c: Condicion; q?: Pregunta; onChange
     );
   }
 
+  // Variable especial de lista cerrada (canal de respuesta): Es igual a / No
+  // es igual a contra los medios posibles, no texto libre (estándar US138).
+  if (varTipo === 'canal') {
+    return <Select showSearch optionFilterProp="label" style={fieldWide} value={c.valor || undefined}
+      onChange={(v) => onChange({ valor: v as string })}
+      options={CANAL_RESPUESTA_VALORES.map(v => ({ value: v, label: v }))} placeholder="Elige un canal" />;
+  }
+
   if (RANGO.has(c.operador)) {
     // Escala de pregunta → dos selects simples con las opciones (estándar).
     // Fecha → dos date pickers. Número (formulario/variable) → dos number inputs.
@@ -191,7 +199,7 @@ function ValorControl({ c, q, onChange }: { c: Condicion; q?: Pregunta; onChange
 }
 
 // ── Campos de una condición (flujo flex-wrap dentro del cuerpo de la tarjeta) ──
-function CondFields({ c, bloqueada, campoFijo, onChange }: { c: Condicion; bloqueada: boolean; campoFijo?: boolean; onChange: (patch: Partial<Condicion>) => void }) {
+function CondFields({ c, bloqueada, onChange }: { c: Condicion; bloqueada: boolean; onChange: (patch: Partial<Condicion>) => void }) {
   const fuenteLocked = bloqueada;
   const q = c.fuente === 'response' ? preguntaById(c.campo) : undefined;
   const varTipo = c.fuente === 'variable' ? variableByKey(c.campo)?.tipo : undefined;
@@ -210,11 +218,17 @@ function CondFields({ c, bloqueada, campoFijo, onChange }: { c: Condicion; bloqu
       <Select style={fieldNarrow} disabled={fuenteLocked} value={c.fuente}
         onChange={(v) => onChange({ fuente: v as 'response' | 'variable', campo: '', filaMatriz: undefined, modoMatriz: undefined, subTipo: undefined, operador: '', valor: '', valorB: '', valores: [] })}
         options={[{ value: 'response', label: 'La respuesta a' }, { value: 'variable', label: 'La variable' }]} />
-      {/* Pregunta / variable */}
-      <Select showSearch optionFilterProp="label" style={fieldWide} value={c.campo || undefined} disabled={campoFijo}
+      {/* Pregunta / variable — libre incluso con foco: el foco solo ancla en qué
+          momento vive la regla (ver guardarForm), no restringe de dónde puede
+          venir cada condición. Así se pueden mezclar condiciones de preguntas
+          y de variables dentro de la misma regla. */}
+      <Select showSearch optionFilterProp="label" style={fieldWide} value={c.campo || undefined}
         placeholder={c.fuente === 'variable' ? 'Selecciona una variable…' : 'Selecciona una pregunta…'}
         onChange={(v) => onChange({ campo: v as string, filaMatriz: undefined, modoMatriz: undefined, subTipo: undefined, operador: '', valor: '', valorB: '', valores: [] })}
-        options={c.fuente === 'variable' ? VARIABLES_DETALLE.map(v => ({ value: v.key, label: v.label })) : PREGUNTAS.filter(esCondicionable).map(p => ({ value: p.id, label: labelPregunta(p) }))} />
+        options={c.fuente === 'variable' ? [
+          { label: 'Variables del estudio', options: VARIABLES_DETALLE.filter(v => !v.especial).map(v => ({ value: v.key, label: v.label })) },
+          { label: 'Variables especiales', options: VARIABLES_DETALLE.filter(v => v.especial).map(v => ({ value: v.key, label: v.label })) },
+        ] : PREGUNTAS.filter(esCondicionable).map(p => ({ value: p.id, label: labelPregunta(p) }))} />
       {/* Matriz fila */}
       {esMatriz && (
         <Select showSearch optionFilterProp="label" style={fieldWide} placeholder="Atributo/fila"
@@ -273,8 +287,11 @@ const cardStyle: React.CSSProperties = { border: `1px solid ${BORDER}`, borderRa
 // ── Formulario ─────────────────────────────────────────────────────────────
 export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloqueada, momentoFijo, onChange, onGuardar, onCancelar, onVerEjemplos }: Props) {
   // Momento derivado del contenido (no del foco): la pregunta de la 1ª condición
-  // o "inicio" si es por variable / aún sin elegir.
+  // o "inicio" si es por variable / aún sin elegir. Si hay foco (momentoFijo),
+  // ese es el momento real al guardar —incluso si la 1ª condición termina
+  // siendo de variable—, así que es el que se muestra en el encabezado.
   const momento = momentoDeRegla(borrador);
+  const momentoMostrado: Momento = (momentoFijo ?? momento) as Momento;
   const primeraEsRespuesta = borrador.grupos[0]?.condiciones[0]?.fuente === 'response' && !!borrador.grupos[0]?.condiciones[0]?.campo;
 
   function setGrupos(grupos: GrupoCondicion[]) { onChange({ ...borrador, grupos }); }
@@ -315,8 +332,11 @@ export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloquead
   const todasCompletas = borrador.grupos.every(g => g.condiciones.every(c => condicionLista(c, qDe(c))));
   const todasValidas = borrador.grupos.every(g => g.condiciones.every(c => !errorCondicion(c, qDe(c))));
   // Una regla solo puede afectar lo que el encuestado aún no ha visto: la
-  // pregunta que la dispara y su página ya se mostraron.
-  const errDestino = errorDestino(borrador);
+  // pregunta que la dispara y su página ya se mostraron. Se valida contra el
+  // momento anclado (foco), no el derivado del contenido: con foco, la regla
+  // se guardará en momentoFijo aunque su 1ª condición termine siendo de
+  // variable (mezcla de condiciones, ítem 5).
+  const errDestino = errorDestino(borrador, momentoFijo ?? undefined);
   const consecuenciaOk = !!borrador.consecuencia.destino && !errDestino;
   const puedeGuardar = todasCompletas && todasValidas && consecuenciaOk;
   const motivoBloqueo = !todasValidas ? 'Corrige las condiciones no válidas'
@@ -324,18 +344,18 @@ export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloquead
     : errDestino ? 'Corrige el destino de la consecuencia'
     : !borrador.consecuencia.destino ? 'Elige el destino de la consecuencia' : '';
 
-  // Opciones de destino, ya acotadas al alcance permitido por el momento.
+  // Opciones de destino, ya acotadas al alcance permitido por el momento anclado.
   const opcPregunta = (id: string) => {
     const q = preguntaById(id)!;
     return { value: id, label: `${q.pnum} · ${q.texto.slice(0, 22)}` };
   };
-  const preguntasPosteriores = preguntasAfectables(momento).map(n => opcPregunta(n.refId!));
+  const preguntasPosteriores = preguntasAfectables(momentoMostrado).map(n => opcPregunta(n.refId!));
   // "Hacer obligatoria" solo aplica a preguntas que se responden: una Expresión
   // es un elemento de presentación, no tiene respuesta que exigir.
-  const preguntasObligables = preguntasAfectables(momento)
+  const preguntasObligables = preguntasAfectables(momentoMostrado)
     .filter(n => { const q = preguntaById(n.refId!); return !!q && esRespondible(q); })
     .map(n => opcPregunta(n.refId!));
-  const paginasPosibles = paginasAfectables(momento).map(p => ({ value: `pag_${p.n}`, label: p.nombre }));
+  const paginasPosibles = paginasAfectables(momentoMostrado).map(p => ({ value: `pag_${p.n}`, label: p.nombre }));
   // Si el destino guardado quedó fuera de alcance (p. ej. al cambiar la pregunta
   // disparadora), se muestra como opción deshabilitada para que se lea el nombre
   // en vez del valor crudo — el error explica por qué no es válido.
@@ -372,8 +392,8 @@ export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloquead
         onVolver={onCancelar}
         title={modoForm === 'crear' ? 'Nueva regla' : 'Editar regla'}
         subtitle={
-          fuenteBloqueada || primeraEsRespuesta
-            ? <>Editando en <span style={{ color: T85 }}>{tituloMomento(momento)}</span></>
+          fuenteBloqueada || momentoFijo || primeraEsRespuesta
+            ? <>Editando en <span style={{ color: T85 }}>{tituloMomento(momentoMostrado)}</span></>
             : <span style={{ color: T45 }}>Regla del estudio</span>
         }
         right={
@@ -415,7 +435,7 @@ export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloquead
                 )}
               </CardHeader>
               <CondBody>
-                <CondFields c={g.condiciones[0]} bloqueada={fuenteBloqueada} campoFijo={gi === 0 && !!momentoFijo} onChange={(p) => updateCond(gi, 0, p)} />
+                <CondFields c={g.condiciones[0]} bloqueada={fuenteBloqueada} onChange={(p) => updateCond(gi, 0, p)} />
                 {/* Sub-condiciones anidadas */}
                 {g.condiciones.slice(1).map((h, k) => (
                   <div key={h.id} style={{ ...cardStyle, marginLeft: 16 }}>

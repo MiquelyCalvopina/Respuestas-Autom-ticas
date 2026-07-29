@@ -13,6 +13,10 @@
 //     pregunta (la vio y la contestó, o la dejó pasar).
 //   - "Está vacía" / "No está vacía": si el contenido de la respuesta está vacío.
 // Son cosas distintas: se puede haber respondido dejando el campo vacío.
+//
+// NO existe "Habla de" / "No habla de" en Lógica: la categorización de
+// comentarios se calcula sobre respuestas ya procesadas y el front no la tiene
+// disponible durante la sesión. Ese operador vive en Alertas/Tickets, no aquí.
 
 import { Pregunta, VariableTipo, variableByKey } from '@/app/data/estudio';
 import { Condicion } from './types';
@@ -22,15 +26,12 @@ export const OPS = {
   // preguntas — indicadores/escala (NPS, CSAT, CES, CLI, Rating y Matriz "Por nota")
   escala:   ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'Está vacía', 'No está vacía'],
   abierta:  ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
-  abiertaCat: ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'Está vacía', 'No está vacía'],
   simple:   ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
   multiple: ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
   // Comentario de Opción SIMPLE (incluye tags de lista)
   comentarioSimple:    ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
-  comentarioSimpleCat: ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'Está vacía', 'No está vacía'],
   // Comentario de Opción MÚLTIPLE (sin tags de lista)
   comentarioMultiple:    ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
-  comentarioMultipleCat: ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'Está vacía', 'No está vacía'],
   casilla:  ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a'], // sin vacía: siempre tiene estado
   maxdiff:  ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
   ranking:  ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
@@ -46,6 +47,10 @@ export const OPS = {
   varNumero: ['Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'Está vacía', 'No está vacía'],
   varFecha:  ['Es igual a', 'No es igual a', 'Es después de', 'Es antes de', 'Está entre', 'Está vacía', 'No está vacía'],
   varCorreo: ['Contiene', 'No contiene', 'Pertenece a los dominios', 'No pertenece a los dominios', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  // Variables especiales de lista cerrada (canal de respuesta, dispositivo,
+  // plataforma…): solo igualdad, sin controles de texto libre ni "vacía"
+  // (siempre se conoce, no depende de que el encuestado responda algo).
+  varCanal: ['Es igual a', 'No es igual a'],
 } as const;
 
 export const SIN_VALOR = new Set(['Está vacía', 'No está vacía', 'Se respondió', 'No se respondió']);
@@ -53,7 +58,7 @@ export const SIN_VALOR = new Set(['Está vacía', 'No está vacía', 'Se respond
 export const RESPONDIDO = new Set(['Se respondió', 'No se respondió']);
 export const RANGO = new Set(['Está entre']);
 export const LISTA_TAGS = new Set(['Está en la lista', 'No está en la lista', 'Pertenece a los dominios', 'No pertenece a los dominios']);
-export const MULTI_IGUALDAD = new Set(['Es igual a', 'No es igual a', 'Contiene', 'No contiene', 'Habla de', 'No habla de']);
+export const MULTI_IGUALDAD = new Set(['Es igual a', 'No es igual a', 'Contiene', 'No contiene']);
 
 // ── Sub-selectores (segundo control, entre pregunta y operador) ────────────────
 export type SubOpcion = { value: string; label: string };
@@ -93,7 +98,7 @@ export function operadoresPregunta(q: Pregunta, c: Condicion): string[] {
       if (!c.filaMatriz) return [];
       return [...OPS.escala]; // por nota (sin grupo)
     case 'texto_abierto':
-      return q.categorizable ? [...OPS.abiertaCat] : [...OPS.abierta];
+      return [...OPS.abierta];
     case 'expresion':
       // "Expresión" es un elemento de presentación: no se responde, así que no
       // hay respuesta que evaluar. Solo puede ser destino de una consecuencia.
@@ -104,11 +109,11 @@ export function operadoresPregunta(q: Pregunta, c: Condicion): string[] {
       return { texto: OPS.campoTexto, numero: OPS.campoNumero, correo: OPS.campoCorreo, fecha: OPS.campoFecha, url: OPS.campoUrl }[campo.tipo].slice();
     }
     case 'seleccion_simple': case 'dropdown': case 'si_no':
-      if (c.subTipo === 'comentario') return q.categorizable ? [...OPS.comentarioSimpleCat] : [...OPS.comentarioSimple];
+      if (c.subTipo === 'comentario') return [...OPS.comentarioSimple];
       return [...OPS.simple];
     // El estándar agrupa "Opción múltiple / Selección de imágenes": mismo set.
     case 'seleccion_multiple': case 'seleccion_imagenes':
-      if (c.subTipo === 'comentario') return q.categorizable ? [...OPS.comentarioMultipleCat] : [...OPS.comentarioMultiple];
+      if (c.subTipo === 'comentario') return [...OPS.comentarioMultiple];
       return [...OPS.multiple];
     case 'casilla':   return [...OPS.casilla];
     case 'maxdiff':   return c.subTipo ? [...OPS.maxdiff] : [];
@@ -119,7 +124,7 @@ export function operadoresPregunta(q: Pregunta, c: Condicion): string[] {
 }
 
 export function operadoresVariable(tipo: VariableTipo): string[] {
-  return { texto: OPS.varTexto, numero: OPS.varNumero, fecha: OPS.varFecha, correo: OPS.varCorreo }[tipo].slice();
+  return { texto: OPS.varTexto, numero: OPS.varNumero, fecha: OPS.varFecha, correo: OPS.varCorreo, canal: OPS.varCanal }[tipo].slice();
 }
 
 /** ¿El control de valor (sobre opciones/escala) debe ser select MÚLTIPLE (OR)?

@@ -138,49 +138,25 @@ function valorSegs(c: Condicion): Seg[] {
 }
 
 // ── Sujeto de la condición ───────────────────────────────────────────────────
-/** Segmentos del sujeto. Si la condición es sobre la MISMA pregunta que dispara
- *  la regla (`momento`), no se repite su enunciado —ya está en el encabezado del
- *  grupo— y se usa una lectura corta y natural ("la respuesta", "el campo X"). */
-function sujetoSegs(c: Condicion, momento?: Momento): Seg[] {
+/** Segmentos del sujeto. SIEMPRE nombra la pregunta o variable de origen —en una
+ *  encuesta real hay varias preguntas del mismo tipo (varios formularios, NPS,
+ *  etc.), así que aunque la condición sea sobre la misma pregunta que dispara la
+ *  regla, omitir su referencia sería ambiguo para quien lee la lista de reglas. */
+function sujetoSegs(c: Condicion): Seg[] {
   if (c.fuente === 'variable') return [plain('la variable '), refCondicion(c)];
 
-  // "Se respondió" / "No se respondió" hablan de la interacción con la pregunta,
-  // no del contenido: el sujeto es la pregunta ("P5 no se respondió"), y si es
-  // la misma del momento no hace falta sujeto ("Si no se respondió, …").
-  if (RESPONDIDO.has(c.operador)) {
-    const esDelMomento = !!momento && momento !== 'inicio' && c.campo === momento;
-    return esDelMomento ? [] : [refCondicion(c)];
-  }
+  // "Se respondió" / "No se respondió" hablan de la interacción con la pregunta:
+  // el sujeto es siempre la pregunta ("P5 no se respondió").
+  if (RESPONDIDO.has(c.operador)) return [refCondicion(c)];
 
   const q = preguntaById(c.campo);
-  const esLaDelMomento = !!momento && momento !== 'inicio' && c.campo === momento;
-  if (!q || !esLaDelMomento) {
-    // Otra pregunta (o sin contexto): se nombra completa.
-    if (q && c.subTipo === 'comentario') return [refCondicion(c)]; // el ref ya dice "› el comentario"
-    return [plain('la respuesta a '), refCondicion(c)];
-  }
-
-  // Misma pregunta del momento: forma corta.
-  if (q.tipo === 'formulario' && c.subTipo) {
-    const i = (q.campos ?? []).findIndex(f => f.key === c.subTipo);
-    const label = limpio((q.campos ?? [])[i]?.label) || `campo ${i >= 0 ? i + 1 : '?'}`;
-    return [plain('el campo '), ref(trunc(label), label)];
-  }
-  if (q.tipo === 'matriz' && c.filaMatriz) {
-    const nombre = limpio(c.filaMatriz) || `fila ${(q.filas ?? []).indexOf(c.filaMatriz) + 1}`;
-    return [plain('la fila '), ref(trunc(nombre), nombre)];
-  }
-  if (q.tipo === 'maxdiff' && c.subTipo) {
-    return [plain(c.subTipo === 'mas' ? 'lo más importante' : 'lo menos importante')];
-  }
-  if (q.tipo === 'ranking' && c.subTipo) return [plain(`la posición ${c.subTipo}`)];
-  if (c.subTipo === 'comentario') return [plain('el comentario')];
-  return [plain('la respuesta')];
+  if (q && c.subTipo === 'comentario') return [refCondicion(c)]; // el ref ya dice "› el comentario"
+  return [plain('la respuesta a '), refCondicion(c)];
 }
 
 /** Una condición → "la respuesta a P1 · … es menor o igual a 6". */
 export function condicionSegs(c: Condicion, momento?: Momento): Seg[] {
-  const out: Seg[] = [...sujetoSegs(c, momento)];
+  const out: Seg[] = [...sujetoSegs(c)];
   if (!c.operador) { out.push(plain(' …')); return out; }
 
   // Casilla: vocabulario propio. "No es igual a Aceptó" es equivalente a

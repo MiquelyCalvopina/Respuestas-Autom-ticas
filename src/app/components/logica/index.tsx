@@ -116,9 +116,12 @@ export default function LogicaModule({ previewAbierto = false, onCerrarPreview }
   }
   function guardarForm() {
     if (!borrador) return;
-    // El momento se deriva del contenido (pregunta de la 1ª condición, o inicio
-    // si es por variable). No se toca el foco: el filtro lo controlan las cajas.
-    const reglaFinal: Regla = { ...borrador, momento: momentoDeRegla(borrador) };
+    // El momento es el foco con el que se creó/edita la regla (momentoFijo) si
+    // existe; solo se deriva del contenido cuando no hay foco (pregunta de la
+    // 1ª condición, o inicio si es por variable). Anclar al foco permite
+    // mezclar condiciones de preguntas y variables en la misma regla sin que,
+    // al guardar, desaparezca del foco donde el usuario la está creando.
+    const reglaFinal: Regla = { ...borrador, momento: momentoFijo ?? momentoDeRegla(borrador) };
     setReglas(prev => prev.some(r => r.id === reglaFinal.id)
       ? prev.map(r => r.id === reglaFinal.id ? reglaFinal : r)
       : [...prev, reglaFinal]);

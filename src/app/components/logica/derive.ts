@@ -102,11 +102,15 @@ export function paginasAfectables(momento: Momento): Pagina[] {
 }
 
 /** ¿El destino elegido es válido para el momento de la regla?
- *  Devuelve el motivo del problema, o null si es válido. */
-export function errorDestino(r: Regla): string | null {
+ *  Devuelve el motivo del problema, o null si es válido.
+ *  `momentoAncla` permite validar contra el momento real de guardado (el foco
+ *  con el que se creó la regla) en vez del derivado del contenido en vivo —
+ *  necesario ahora que la 1ª condición puede ser de variable sin perder el
+ *  anclaje a la pregunta con foco (mezcla de condiciones, ítem 5). */
+export function errorDestino(r: Regla, momentoAncla?: Momento): string | null {
   const c = r.consecuencia;
   if (!c.destino) return null; // incompleto, no inválido
-  const momento = momentoDeRegla(r);
+  const momento = momentoAncla ?? momentoDeRegla(r);
 
   if (c.tipo === 'mostrar' && c.destinoClase === 'pagina') {
     const n = Number(c.destino.replace('pag_', ''));
