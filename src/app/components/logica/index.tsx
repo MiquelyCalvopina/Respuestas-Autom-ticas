@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { App } from 'antd';
 import { Regla, Seleccion, SidebarModo, Momento, DestinosPorMomento } from './types';
 import { emptyGrupo, uid, nuevoCodigoRegla } from './seed';
-import { reglasDeMomento, preguntasSinAcceso, destinoCalculado, momentoDeRegla } from './derive';
+import { reglasDeMomento, preguntasSinAcceso, preguntasHuerfanas, destinoCalculado, momentoDeRegla } from './derive';
 import Canvas from './Canvas';
 import SidebarList from './SidebarList';
 import SidebarForm from './SidebarForm';
@@ -130,8 +130,15 @@ export default function LogicaModule({ previewAbierto = false, onCerrarPreview }
     message.success(modoForm === 'crear' ? 'Regla creada' : 'Regla actualizada');
   }
 
-  // ── Barra de destino ─────────────────────────────────────────────────────────
-  const sinAcceso = editandoDestino && momentoActual ? preguntasSinAcceso(reglas, momentoActual, destinoPrueba, destinos) : [];
+  // ── Huérfanas ──────────────────────────────────────────────────────────────
+  // Huérfanas reales del estado guardado: siempre activo, no solo mientras se
+  // edita un destino. Eliminar una regla "Ir a la pregunta" (o cambiar su
+  // destino) puede dejar preguntas sin ningún camino de acceso igual que un
+  // destino por defecto mal elegido, así que el canvas debe reflejarlo siempre.
+  const sinAccesoReal = preguntasHuerfanas(reglas, destinos);
+  // Huérfanas de PRUEBA: solo mientras se edita la barra de destino, para
+  // validar el candidato antes de guardarlo (bloquea el botón "Guardar").
+  const sinAccesoPrueba = editandoDestino && momentoActual ? preguntasSinAcceso(reglas, momentoActual, destinoPrueba, destinos) : [];
   function iniciarEdicionDestino() {
     if (!momentoActual) return;
     // precarga el destino efectivo actual (personalizado o el calculado)
@@ -186,7 +193,7 @@ export default function LogicaModule({ previewAbierto = false, onCerrarPreview }
               destinoCustom={destinos[momentoActual]}
               editando={editandoDestino}
               destinoPrueba={destinoPrueba}
-              sinAcceso={sinAcceso}
+              sinAcceso={sinAccesoPrueba}
               onEditar={iniciarEdicionDestino}
               onCambioPrueba={setDestinoPrueba}
               onGuardar={guardarDestino}
@@ -198,7 +205,8 @@ export default function LogicaModule({ previewAbierto = false, onCerrarPreview }
         {/* Canvas — la línea informativa se muestra en todos los estados (incluido
             el vacío); si el usuario la cierra, no reaparece hasta la próxima sesión. */}
         <Canvas
-          reglas={reglas} seleccion={seleccion} onSelect={seleccionar} preguntasSinAcceso={sinAcceso}
+          reglas={reglas} seleccion={seleccion} onSelect={seleccionar}
+          preguntasSinAcceso={editandoDestino ? sinAccesoPrueba : sinAccesoReal}
           destinos={destinos} infoVisible={infoVisible} onDismissInfo={descartarInfo}
         />
       </div>
