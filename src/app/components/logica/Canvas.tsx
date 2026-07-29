@@ -1,5 +1,5 @@
 import { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import { FLUJO, DESPEDIDAS, FlujoNodo } from '@/app/data/estudio';
+import { FLUJO, DESPEDIDAS, FlujoNodo, preguntaById } from '@/app/data/estudio';
 import { BoxIcon } from './boxicons';
 import { Regla, Seleccion } from './types';
 import { nodosConLogica, momentoDeRegla, paginasConLogica } from './derive';
@@ -22,6 +22,13 @@ interface Props {
 function claveNodo(n: FlujoNodo): string {
   if (n.tipo === 'bienvenida') return 'bienvenida';
   return n.refId ?? n.id;
+}
+/** Etiqueta del nodo: pnum + enunciado real de la pregunta (nunca su tipo).
+ *  Bienvenida usa su propio label fijo del FLUJO. */
+function labelDeNodo(n: FlujoNodo): string {
+  if (n.tipo !== 'pregunta') return n.label;
+  const q = preguntaById(n.refId!);
+  return q ? `${q.pnum} · ${q.texto}` : n.label;
 }
 function estaSeleccionado(n: FlujoNodo, sel: Seleccion): boolean {
   if (sel.tipo === 'bienvenida') return n.tipo === 'bienvenida';
@@ -206,7 +213,7 @@ export default function Canvas({ reglas, seleccion, onSelect, preguntasSinAcceso
                     </div>
                   );
                 })()}
-                <Nodo nodeKey={key} label={n.label} sel={sel} tieneLogica={!!(conLogica.has(key))} orphan={orphan} clickable={seleccionable(n)} onClick={() => onSelect(selDe(n))} />
+                <Nodo nodeKey={key} label={labelDeNodo(n)} sel={sel} tieneLogica={!!(conLogica.has(key))} orphan={orphan} clickable={seleccionable(n)} onClick={() => onSelect(selDe(n))} />
                 {orphan && <span style={{ fontFamily: FONT, fontSize: 11, color: '#ff4d4f', marginTop: 4 }}>Sin camino de acceso</span>}
                 {(nextN || despA) && <Conector danger={!!(nextN && sinAcceso.has(nextN.refId ?? ''))} />}
               </div>
