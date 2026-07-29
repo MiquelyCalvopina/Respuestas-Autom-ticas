@@ -12,6 +12,8 @@ interface Props {
   onSelect: (s: Seleccion) => void;
   /** preguntas (ids) que el preview de destino por defecto marca sin acceso */
   preguntasSinAcceso: string[];
+  /** destinos por defecto personalizados por momento (se dibujan como flecha) */
+  destinos: Record<string, string | undefined>;
   /** línea informativa (sección 2) */
   infoVisible: boolean;
   onDismissInfo: () => void;
@@ -27,9 +29,9 @@ function estaSeleccionado(n: FlujoNodo, sel: Seleccion): boolean {
   return false;
 }
 
-type Flecha = { id: string; kind: 'ir_a' | 'terminar'; x1: number; y1: number; x2: number; y2: number; bow: number };
+type Flecha = { id: string; kind: 'ir_a' | 'terminar' | 'defecto'; x1: number; y1: number; x2: number; y2: number; bow: number };
 
-export default function Canvas({ reglas, seleccion, onSelect, preguntasSinAcceso, infoVisible, onDismissInfo }: Props) {
+export default function Canvas({ reglas, seleccion, onSelect, preguntasSinAcceso, destinos, infoVisible, onDismissInfo }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
   const conLogica = nodosConLogica(reglas);
   const pagsConLogica = paginasConLogica(reglas);
@@ -77,8 +79,19 @@ export default function Canvas({ reglas, seleccion, onSelect, preguntasSinAcceso
       out.push({ id: r.id, kind, x1: s.right, y1: s.midY, x2: t.right, y2: t.midY, bow: 28 + lane * 16 });
       lane = (lane + 1) % 5;
     });
+    // Destinos por defecto personalizados: el "en cualquier otro caso ir a"
+    // también es un salto, con el trazo del camino por defecto.
+    Object.entries(destinos).forEach(([momento, destino]) => {
+      if (!destino) return;
+      const srcKey = momento === 'inicio' ? 'bienvenida' : momento;
+      const s2 = pos(srcKey);
+      const t2 = pos(destino);
+      if (!s2 || !t2) return;
+      out.push({ id: `def-${momento}`, kind: 'defecto', x1: s2.right, y1: s2.midY, x2: t2.right, y2: t2.midY, bow: 28 + lane * 16 });
+      lane = (lane + 1) % 5;
+    });
     setFlechas(out);
-  }, [reglas, tick]);
+  }, [reglas, destinos, tick]);
 
   // Recalcular al redimensionar el panel.
   useEffect(() => {
@@ -231,9 +244,14 @@ function FlechasOverlay({ flechas }: { flechas: Flecha[] }) {
         <marker id="ah-terminar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
           <path d="M0 0 L7 4 L0 8 z" fill="#ff4d4f" />
         </marker>
+        <marker id="ah-defecto" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+          <path d="M0 0 L7 4 L0 8 z" fill="#8c8c8c" />
+        </marker>
       </defs>
       {flechas.map(f => {
-        const color = f.kind === 'ir_a' ? '#1890ff' : '#ff4d4f';
+        // Gris = camino por defecto (no condicional); azul = salto condicional;
+        // rojo punteado = corte del flujo.
+        const color = f.kind === 'ir_a' ? '#1890ff' : f.kind === 'terminar' ? '#ff4d4f' : '#8c8c8c';
         const cx = Math.max(f.x1, f.x2) + f.bow + 12;
         const d = `M ${f.x1} ${f.y1} C ${cx} ${f.y1}, ${cx} ${f.y2}, ${f.x2 + 6} ${f.y2}`;
         return (

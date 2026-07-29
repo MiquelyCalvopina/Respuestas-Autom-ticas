@@ -7,6 +7,12 @@
 // contestada. Por eso, a diferencia de RA (que trabaja sobre answers.data ya
 // guardado), aquí las preguntas exponen tanto "Está vacía" como "No está vacía".
 // La Casilla es la excepción (siempre está contestada: solo igualdad).
+//
+// Distinción clave que solo Lógica puede hacer (evalúa en vivo):
+//   - "Se respondió" / "No se respondió": si el encuestado interactuó con la
+//     pregunta (la vio y la contestó, o la dejó pasar).
+//   - "Está vacía" / "No está vacía": si el contenido de la respuesta está vacío.
+// Son cosas distintas: se puede haber respondido dejando el campo vacío.
 
 import { Pregunta, VariableTipo, variableByKey } from '@/app/data/estudio';
 import { Condicion } from './types';
@@ -14,27 +20,27 @@ import { Condicion } from './types';
 // ── Sets de operadores ────────────────────────────────────────────────────────
 export const OPS = {
   // preguntas — indicadores/escala (NPS, CSAT, CES, CLI, Rating y Matriz "Por nota")
-  escala:   ['Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'Está vacía', 'No está vacía'],
-  abierta:  ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
-  abiertaCat: ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'Está vacía', 'No está vacía'],
-  simple:   ['Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
-  multiple: ['Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  escala:   ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'Está vacía', 'No está vacía'],
+  abierta:  ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  abiertaCat: ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'Está vacía', 'No está vacía'],
+  simple:   ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  multiple: ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
   // Comentario de Opción SIMPLE (incluye tags de lista)
-  comentarioSimple:    ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
-  comentarioSimpleCat: ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'Está vacía', 'No está vacía'],
+  comentarioSimple:    ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  comentarioSimpleCat: ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'Está vacía', 'No está vacía'],
   // Comentario de Opción MÚLTIPLE (sin tags de lista)
-  comentarioMultiple:    ['Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
-  comentarioMultipleCat: ['Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'Está vacía', 'No está vacía'],
-  casilla:  ['Es igual a', 'No es igual a'], // siempre contestada: sin vacía/no vacía
-  maxdiff:  ['Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
-  ranking:  ['Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
-  archivo:  ['Fue contestada', 'No fue contestada'], // no está en el estándar; se conserva
+  comentarioMultiple:    ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  comentarioMultipleCat: ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Habla de', 'No habla de', 'Está vacía', 'No está vacía'],
+  casilla:  ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a'], // sin vacía: siempre tiene estado
+  maxdiff:  ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  ranking:  ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  archivo:  ['Se respondió', 'No se respondió'], // subir archivo: solo interacción
   // campos de formulario
-  campoTexto:  ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
-  campoNumero: ['Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'Está vacía', 'No está vacía'],
-  campoCorreo: ['Contiene', 'No contiene', 'Pertenece a los dominios', 'No pertenece a los dominios', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
-  campoFecha:  ['Es igual a', 'No es igual a', 'Es después de', 'Es antes de', 'Está entre', 'Está vacía', 'No está vacía'],
-  campoUrl:    ['Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  campoTexto:  ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  campoNumero: ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'Está vacía', 'No está vacía'],
+  campoCorreo: ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Pertenece a los dominios', 'No pertenece a los dominios', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
+  campoFecha:  ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a', 'Es después de', 'Es antes de', 'Está entre', 'Está vacía', 'No está vacía'],
+  campoUrl:    ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
   // variables (igual que preguntas en Lógica: exponen "Está vacía" y "No está vacía")
   varTexto:  ['Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
   varNumero: ['Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'Está vacía', 'No está vacía'],
@@ -42,7 +48,9 @@ export const OPS = {
   varCorreo: ['Contiene', 'No contiene', 'Pertenece a los dominios', 'No pertenece a los dominios', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
 } as const;
 
-export const SIN_VALOR = new Set(['Está vacía', 'No está vacía', 'Fue contestada', 'No fue contestada']);
+export const SIN_VALOR = new Set(['Está vacía', 'No está vacía', 'Se respondió', 'No se respondió']);
+/** Operadores de interacción: el sujeto es la PREGUNTA, no su respuesta. */
+export const RESPONDIDO = new Set(['Se respondió', 'No se respondió']);
 export const RANGO = new Set(['Está entre']);
 export const LISTA_TAGS = new Set(['Está en la lista', 'No está en la lista', 'Pertenece a los dominios', 'No pertenece a los dominios']);
 export const MULTI_IGUALDAD = new Set(['Es igual a', 'No es igual a', 'Contiene', 'No contiene', 'Habla de', 'No habla de']);

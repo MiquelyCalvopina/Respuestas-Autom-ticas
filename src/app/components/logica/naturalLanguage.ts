@@ -16,7 +16,7 @@ import {
   preguntaById, despedidaById, variableByKey, paginaByN, DESPEDIDAS, PAGINAS, Pregunta,
 } from '@/app/data/estudio';
 import { Regla, Condicion, GrupoCondicion, Conector, ConsecuenciaTipo, Momento } from './types';
-import { SIN_VALOR, RANGO } from './catalog';
+import { SIN_VALOR, RANGO, RESPONDIDO } from './catalog';
 
 // ── Segmentos ────────────────────────────────────────────────────────────────
 export type SegKind = 'ref' | 'valor' | 'op';
@@ -144,6 +144,14 @@ function valorSegs(c: Condicion): Seg[] {
 function sujetoSegs(c: Condicion, momento?: Momento): Seg[] {
   if (c.fuente === 'variable') return [plain('la variable '), refCondicion(c)];
 
+  // "Se respondió" / "No se respondió" hablan de la interacción con la pregunta,
+  // no del contenido: el sujeto es la pregunta ("P5 no se respondió"), y si es
+  // la misma del momento no hace falta sujeto ("Si no se respondió, …").
+  if (RESPONDIDO.has(c.operador)) {
+    const esDelMomento = !!momento && momento !== 'inicio' && c.campo === momento;
+    return esDelMomento ? [] : [refCondicion(c)];
+  }
+
   const q = preguntaById(c.campo);
   const esLaDelMomento = !!momento && momento !== 'inicio' && c.campo === momento;
   if (!q || !esLaDelMomento) {
@@ -187,7 +195,7 @@ export function condicionSegs(c: Condicion, momento?: Momento): Seg[] {
     return out;
   }
 
-  out.push(plain(' '), op(c.operador.toLowerCase()));
+  out.push(plain(out.length ? ' ' : ''), op(c.operador.toLowerCase()));
   if (!SIN_VALOR.has(c.operador)) {
     out.push(plain(' '), ...valorSegs(c));
   }

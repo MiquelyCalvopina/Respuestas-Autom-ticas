@@ -160,25 +160,73 @@ export function momentosConReglas(reglas: Regla[]): Momento[] {
   return orden.filter(m => reglas.some(r => r.momento === m));
 }
 
-/** Simulación de validación de destino por defecto: dado un destino de prueba
- *  para un momento, ¿qué preguntas quedarían sin ningún camino de acceso?
- *  Modelo simplificado del prototipo: si el destino salta por encima de
- *  preguntas intermedias y ninguna regla del estudio las alcanza como destino,
- *  esas preguntas quedan huérfanas. */
-export function preguntasSinAcceso(reglas: Regla[], momento: Momento, destinoPruebaId: string | undefined): string[] {
-  if (!destinoPruebaId) return [];
-  const iMomento = indiceMomento(momento);
-  const nodoDestino = FLUJO.find(n => (n.refId ?? n.id) === destinoPruebaId);
-  if (iMomento < 0 || !nodoDestino) return [];
-  const iDestino = FLUJO.indexOf(nodoDestino);
-  if (iDestino <= iMomento + 1) return []; // no salta nada
-  // preguntas estrictamente entre momento y destino
-  const saltadas = FLUJO.slice(iMomento + 1, iDestino).filter(n => n.tipo === 'pregunta');
-  // una pregunta saltada tiene acceso si alguna regla la apunta como destino (mostrar/ir_a)
-  const alcanzadas = new Set<string>();
-  reglas.forEach(r => {
+// ── Alcanzabilidad real del flujo ─────────────────────────────────────────────
+// Una pregunta está huérfana solo si NINGÚN camino desde Bienvenida llega a
+// ella. No basta con mirar si el destino por defecto la salta: quien tome otra
+// rama puede volver al flujo lineal más adelante y alcanzarla.
+//
+// Ejemplo que el modelo anterior fallaba: P1 tiene una regla "Ir a P2" y su
+// destino por defecto es P4. P3 NO queda huérfana, porque quien pasa por P2
+// continúa a P3 por el flujo normal.
+
+/** Clave de nodo del FLUJO (bienvenida | preguntaId | despedidaId). */
+function claveFlujo(n: { tipo: string; id: string; refId?: string }): string {
+  return n.tipo === 'bienvenida' ? 'bienvenida' : (n.refId ?? n.id);
+}
+
+/** Salidas posibles de un nodo: su destino por defecto (personalizado o el
+ *  siguiente en Estructura) más los destinos de sus reglas "Ir a la pregunta". */
+function salidasDe(
+  clave: string,
+  reglas: Regla[],
+  destinos: Record<string, string | undefined>,
+): string[] {
+  const i = FLUJO.findIndex(n => claveFlujo(n) === clave);
+  if (i < 0) return [];
+  const momento: Momento = clave === 'bienvenida' ? 'inicio' : clave;
+  const out = new Set<string>();
+
+  // Destino por defecto: el personalizado si existe, si no el siguiente nodo.
+  const custom = destinos[momento];
+  if (custom) out.add(custom);
+  else if (i + 1 < FLUJO.length) out.add(claveFlujo(FLUJO[i + 1]));
+
+  // Saltos explícitos de las reglas de este momento.
+  reglas.filter(r => r.momento === momento).forEach(r => {
     const c = r.consecuencia;
-    if ((c.tipo === 'mostrar' || c.tipo === 'ir_a' || c.tipo === 'obligatoria') && c.destino) alcanzadas.add(c.destino);
+    if (c.tipo === 'ir_a' && c.destino) out.add(c.destino);
+    // "Terminar encuesta" no continúa el flujo: corta.
   });
-  return saltadas.filter(n => !alcanzadas.has(n.refId!)).map(n => n.refId!);
+  return [...out];
+}
+
+/** Preguntas que ningún camino desde Bienvenida alcanza, dados los destinos
+ *  por defecto vigentes. */
+export function preguntasHuerfanas(
+  reglas: Regla[],
+  destinos: Record<string, string | undefined>,
+): string[] {
+  const visitados = new Set<string>();
+  const cola = ['bienvenida'];
+  while (cola.length) {
+    const actual = cola.shift()!;
+    if (visitados.has(actual)) continue;
+    visitados.add(actual);
+    salidasDe(actual, reglas, destinos).forEach(s => { if (!visitados.has(s)) cola.push(s); });
+  }
+  return FLUJO
+    .filter(n => n.tipo === 'pregunta' && !visitados.has(n.refId!))
+    .map(n => n.refId!);
+}
+
+/** Simulación en vivo mientras se edita el destino por defecto de un momento:
+ *  qué preguntas quedarían sin ningún camino de acceso si se confirmara. */
+export function preguntasSinAcceso(
+  reglas: Regla[],
+  momento: Momento,
+  destinoPruebaId: string | undefined,
+  destinos: Record<string, string | undefined> = {},
+): string[] {
+  if (!destinoPruebaId) return [];
+  return preguntasHuerfanas(reglas, { ...destinos, [momento]: destinoPruebaId });
 }

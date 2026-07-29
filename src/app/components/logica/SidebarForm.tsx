@@ -26,6 +26,8 @@ interface Props {
   reglas: Regla[];
   /** true solo en reglas de inicio (foco en Bienvenida): fuente fija a variable */
   fuenteBloqueada: boolean;
+  /** id de pregunta al que queda fija la PRIMERA condición (foco activo), o null */
+  momentoFijo: string | null;
   onChange: (r: Regla) => void;
   onGuardar: () => void;
   onCancelar: () => void;
@@ -189,7 +191,7 @@ function ValorControl({ c, q, onChange }: { c: Condicion; q?: Pregunta; onChange
 }
 
 // ── Campos de una condición (flujo flex-wrap dentro del cuerpo de la tarjeta) ──
-function CondFields({ c, bloqueada, onChange }: { c: Condicion; bloqueada: boolean; onChange: (patch: Partial<Condicion>) => void }) {
+function CondFields({ c, bloqueada, campoFijo, onChange }: { c: Condicion; bloqueada: boolean; campoFijo?: boolean; onChange: (patch: Partial<Condicion>) => void }) {
   const fuenteLocked = bloqueada;
   const q = c.fuente === 'response' ? preguntaById(c.campo) : undefined;
   const varTipo = c.fuente === 'variable' ? variableByKey(c.campo)?.tipo : undefined;
@@ -209,7 +211,7 @@ function CondFields({ c, bloqueada, onChange }: { c: Condicion; bloqueada: boole
         onChange={(v) => onChange({ fuente: v as 'response' | 'variable', campo: '', filaMatriz: undefined, modoMatriz: undefined, subTipo: undefined, operador: '', valor: '', valorB: '', valores: [] })}
         options={[{ value: 'response', label: 'La respuesta a' }, { value: 'variable', label: 'La variable' }]} />
       {/* Pregunta / variable */}
-      <Select showSearch optionFilterProp="label" style={fieldWide} value={c.campo || undefined}
+      <Select showSearch optionFilterProp="label" style={fieldWide} value={c.campo || undefined} disabled={campoFijo}
         placeholder={c.fuente === 'variable' ? 'Selecciona una variable…' : 'Selecciona una pregunta…'}
         onChange={(v) => onChange({ campo: v as string, filaMatriz: undefined, modoMatriz: undefined, subTipo: undefined, operador: '', valor: '', valorB: '', valores: [] })}
         options={c.fuente === 'variable' ? VARIABLES_DETALLE.map(v => ({ value: v.key, label: v.label })) : PREGUNTAS.filter(esCondicionable).map(p => ({ value: p.id, label: labelPregunta(p) }))} />
@@ -269,7 +271,7 @@ function CardHeader({ children }: { children: React.ReactNode }) {
 const cardStyle: React.CSSProperties = { border: `1px solid ${BORDER}`, borderRadius: 8, overflow: 'hidden', width: '100%' };
 
 // ── Formulario ─────────────────────────────────────────────────────────────
-export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloqueada, onChange, onGuardar, onCancelar, onVerEjemplos }: Props) {
+export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloqueada, momentoFijo, onChange, onGuardar, onCancelar, onVerEjemplos }: Props) {
   // Momento derivado del contenido (no del foco): la pregunta de la 1ª condición
   // o "inicio" si es por variable / aún sin elegir.
   const momento = momentoDeRegla(borrador);
@@ -413,7 +415,7 @@ export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloquead
                 )}
               </CardHeader>
               <CondBody>
-                <CondFields c={g.condiciones[0]} bloqueada={fuenteBloqueada} onChange={(p) => updateCond(gi, 0, p)} />
+                <CondFields c={g.condiciones[0]} bloqueada={fuenteBloqueada} campoFijo={gi === 0 && !!momentoFijo} onChange={(p) => updateCond(gi, 0, p)} />
                 {/* Sub-condiciones anidadas */}
                 {g.condiciones.slice(1).map((h, k) => (
                   <div key={h.id} style={{ ...cardStyle, marginLeft: 16 }}>

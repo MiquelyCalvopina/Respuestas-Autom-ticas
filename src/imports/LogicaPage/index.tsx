@@ -6,6 +6,7 @@
 // El contenido interactivo (sidebar de reglas + canvas + barra de destino) vive
 // en el módulo src/app/components/logica, que este shell renderiza como Step
 // Content — igual que BoostersPage renderiza RespuestasAutomaticas dentro suyo.
+import { useState } from 'react';
 import svgPaths from '../BoostersPage/svg-6wl0e5bdid';
 import imgLogo from '../BoostersPage/c1a59b77699b503cff1b1dc54942368b615932ea.png';
 import imgImageAvatar from '../BoostersPage/03428a1137072a2d2c0da0ea370ebfd6aabfe00f.png';
@@ -216,12 +217,12 @@ function StudioStepper({ onGoPotenciadores }: { onGoPotenciadores?: () => void }
   );
 }
 
-function ToolBorder({ path, wide }: { path: string; wide?: boolean }) {
+function ToolBorder({ path, wide, onClick, title }: { path: string; wide?: boolean; onClick?: () => void; title?: string }) {
   // icon-button-circle Medium: caja 32px (ya coincidía), ícono 16px centrado
   // (antes 14x13.6px, tamaño nativo del asset de Figma) — spec "Controles".
   return (
     <button
-      type="button"
+      type="button" onClick={onClick} title={title} aria-label={title}
       className="border border-[#f0f0f0] border-solid content-stretch flex items-center justify-center p-[0.8px] relative rounded-[9999px] shrink-0 size-[32px] cursor-pointer transition-colors duration-150 ease-out active:duration-100 hover:bg-black/5 active:bg-black/10"
       data-name="Border"
     >
@@ -238,7 +239,7 @@ function ToolBorder({ path, wide }: { path: string; wide?: boolean }) {
   );
 }
 
-function Tools() {
+function Tools({ onPreview }: { onPreview?: () => void }) {
   // Ancho de contenido (antes fijo en 217.2px, el espacio sobrante que le
   // asignaba Figma) — así no le resta espacio al stepper en viewports angostos.
   return (
@@ -246,13 +247,13 @@ function Tools() {
       <div className="content-stretch flex gap-[12px] items-center relative shrink-0">
         <ToolBorder path={svgPaths.p27e78730} />
         <ToolBorder path={svgPaths.p2e358200} />
-        <ToolBorder path={svgPaths.p30d46a00} wide />
+        <ToolBorder path={svgPaths.p30d46a00} wide onClick={onPreview} title="Previsualizar la encuesta con las lógicas aplicadas" />
       </div>
     </div>
   );
 }
 
-function HorizontalNavigation({ onGoPotenciadores }: { onGoPotenciadores?: () => void }) {
+function HorizontalNavigation({ onGoPotenciadores, onPreview }: { onGoPotenciadores?: () => void; onPreview?: () => void }) {
   return (
     <div className="bg-white border-b-[0.8px] border-[rgba(0,0,0,0.06)] border-solid content-stretch flex items-center justify-between gap-3 px-[24px] relative shrink-0 w-full z-[2]" data-name="HorizontalNavigation">
       <div className="content-stretch flex items-center gap-2 relative shrink min-w-0 max-w-[362px]" data-name="Name + Back button">
@@ -261,7 +262,7 @@ function HorizontalNavigation({ onGoPotenciadores }: { onGoPotenciadores?: () =>
         <ActivoSwitch />
       </div>
       <StudioStepper onGoPotenciadores={onGoPotenciadores} />
-      <Tools />
+      <Tools onPreview={onPreview} />
     </div>
   );
 }
@@ -269,11 +270,13 @@ function HorizontalNavigation({ onGoPotenciadores }: { onGoPotenciadores?: () =>
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 function PageContent({ onGoPotenciadores }: { onGoPotenciadores?: () => void }) {
+  // El botón de ojito del topbar abre la previsualización de la encuesta.
+  const [preview, setPreview] = useState(false);
   return (
     <div className="bg-white border-[#f0f0f0] border-l border-t border-solid content-stretch flex flex-col h-full isolate items-start overflow-hidden rounded-tl-[20px] w-full" data-name="Page content">
-      <HorizontalNavigation onGoPotenciadores={onGoPotenciadores} />
+      <HorizontalNavigation onGoPotenciadores={onGoPotenciadores} onPreview={() => setPreview(true)} />
       {/* Contenido interactivo del módulo Lógica (sidebar + canvas + barra destino) */}
-      <LogicaModule />
+      <LogicaModule previewAbierto={preview} onCerrarPreview={() => setPreview(false)} />
     </div>
   );
 }

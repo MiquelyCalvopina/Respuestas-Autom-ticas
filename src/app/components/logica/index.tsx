@@ -8,6 +8,7 @@ import SidebarList from './SidebarList';
 import SidebarForm from './SidebarForm';
 import SidebarExamples from './SidebarExamples';
 import DefaultDestinationBar from './DefaultDestinationBar';
+import PreviewModal from './PreviewModal';
 
 function momentoDeSeleccion(sel: Seleccion): Momento | null {
   if (sel.tipo === 'bienvenida') return 'inicio';
@@ -34,7 +35,11 @@ function nuevoBorrador(sel: Seleccion): Regla {
   return { id: uid('r'), codigo: nuevoCodigoRegla(), momento, grupos: [g], consecuencia: { tipo: 'mostrar', destinoClase: 'pregunta' } };
 }
 
-export default function LogicaModule() {
+export default function LogicaModule({ previewAbierto = false, onCerrarPreview }: {
+  /** lo controla el botón de ojito del topbar del estudio */
+  previewAbierto?: boolean;
+  onCerrarPreview?: () => void;
+} = {}) {
   const { message } = App.useApp();
   // Arranca en el estado vacío (3.1.a) — primer contacto del usuario con el módulo.
   const [reglas, setReglas] = useState<Regla[]>([]);
@@ -46,6 +51,8 @@ export default function LogicaModule() {
   // Bienvenida o edición de una regla de inicio): antes de la primera pregunta
   // no hay respuestas. Sin foco NO se bloquea: se puede crear cualquier lógica.
   const [fuenteBloqueada, setFuenteBloqueada] = useState(false);
+  // Pregunta a la que queda fija la primera condición (foco activo al crear).
+  const [momentoFijo, setMomentoFijo] = useState<string | null>(null);
   const [destinos, setDestinos] = useState<DestinosPorMomento>({});
   // La barra informativa se descarta por sesión: si el usuario la cierra, no
   // vuelve a aparecer hasta la siguiente sesión (sessionStorage se limpia al
@@ -63,8 +70,12 @@ export default function LogicaModule() {
   const momentoActual = momentoDeSeleccion(seleccion);
 
   // ── Selección de nodo ──────────────────────────────────────────────────────
+  // Clic en el nodo ya seleccionado = deseleccionar (vuelve a "todas las reglas").
   function seleccionar(sel: Seleccion) {
-    setSeleccion(sel);
+    const mismo =
+      (sel.tipo === 'bienvenida' && seleccion.tipo === 'bienvenida') ||
+      (sel.tipo === 'pregunta' && seleccion.tipo === 'pregunta' && sel.preguntaId === seleccion.preguntaId);
+    setSeleccion(mismo ? { tipo: 'none' } : sel);
     setModo('lista');
     setBorrador(null);
     setEditandoDestino(false);
@@ -72,8 +83,11 @@ export default function LogicaModule() {
 
   // ── Crear / editar / eliminar reglas ─────────────────────────────────────────
   function crear() {
-    // El foco solo preselecciona/filtra; sin foco se crea cualquier lógica.
+    // Con foco, la PRIMERA condición queda fija a ese momento: si el usuario
+    // eligiera otra pregunta, al guardar la regla cambiaría de momento y
+    // desaparecería del foco donde la está creando.
     setFuenteBloqueada(seleccion.tipo === 'bienvenida');
+    setMomentoFijo(seleccion.tipo === 'pregunta' ? seleccion.preguntaId : null);
     setBorrador(nuevoBorrador(seleccion));
     setModoForm('crear');
     setModo('formulario');
@@ -86,6 +100,8 @@ export default function LogicaModule() {
     setModoForm('editar');
     // Solo las reglas de inicio (por variables) mantienen la fuente bloqueada.
     setFuenteBloqueada(r.momento === 'inicio');
+    // Al editar, la regla ya vive en un momento: no se puede mover de ahí.
+    setMomentoFijo(r.momento === 'inicio' ? null : r.momento);
     setModo('formulario');
   }
   function eliminar(id: string) {
@@ -112,7 +128,7 @@ export default function LogicaModule() {
   }
 
   // ── Barra de destino ─────────────────────────────────────────────────────────
-  const sinAcceso = editandoDestino && momentoActual ? preguntasSinAcceso(reglas, momentoActual, destinoPrueba) : [];
+  const sinAcceso = editandoDestino && momentoActual ? preguntasSinAcceso(reglas, momentoActual, destinoPrueba, destinos) : [];
   function iniciarEdicionDestino() {
     if (!momentoActual) return;
     // precarga el destino efectivo actual (personalizado o el calculado)
@@ -150,7 +166,7 @@ export default function LogicaModule() {
             )}
             {modo === 'formulario' && borrador && (
               <SidebarForm
-                borrador={borrador} modoForm={modoForm} reglas={reglas} fuenteBloqueada={fuenteBloqueada}
+                borrador={borrador} modoForm={modoForm} reglas={reglas} fuenteBloqueada={fuenteBloqueada} momentoFijo={momentoFijo}
                 onChange={setBorrador} onGuardar={guardarForm} onCancelar={() => { setModo('lista'); setBorrador(null); }}
                 onVerEjemplos={() => setModo('ejemplos')}
               />
@@ -180,9 +196,15 @@ export default function LogicaModule() {
             el vacío); si el usuario la cierra, no reaparece hasta la próxima sesión. */}
         <Canvas
           reglas={reglas} seleccion={seleccion} onSelect={seleccionar} preguntasSinAcceso={sinAcceso}
-          infoVisible={infoVisible} onDismissInfo={descartarInfo}
+          destinos={destinos} infoVisible={infoVisible} onDismissInfo={descartarInfo}
         />
       </div>
+
+      {/* Previsualización de la encuesta con las lógicas aplicadas */}
+      <PreviewModal
+        abierto={previewAbierto} reglas={reglas} destinos={destinos}
+        onCerrar={() => onCerrarPreview?.()}
+      />
     </div>
   );
 }
