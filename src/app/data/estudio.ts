@@ -156,36 +156,42 @@ const FACTORES = ['Precio', 'Rapidez', 'Atención', 'Ubicación'];
 
 // Encuesta base del estudio de QA "Pruebas Deuda Tecnica": UN ejemplo de CADA
 // tipo de pregunta, en orden (P1..P17) y repartido en 3 páginas. Ejercita el
-// catálogo completo de condiciones (sección 7). Cada pregunta lleva el nombre
-// de su tipo para que el diagrama y las reglas sean legibles.
+// catálogo completo de condiciones (sección 7).
+//
+// El enunciado (texto) de cada pregunta es una redacción real, distinta del
+// nombre de su tipo — a propósito, para poder verificar en cualquier parte del
+// código si se está usando el enunciado o el tipo (antes coincidían y eso
+// ocultaba el error). Cada enunciado menciona su tipo entre paréntesis solo
+// como ayuda de lectura para quien revisa el catálogo de condiciones, no
+// porque el dato real fuera a incluirlo.
 export const PREGUNTAS: Pregunta[] = [
   // ── Página 1 · Indicadores ──
-  { id: 'q_nps',    pnum: 'P1',  pagina: 1, texto: 'NPS',    tipo: 'NPS',  escala: [0, 10], grupos: GRUPOS_NPS },
-  { id: 'q_csat',   pnum: 'P2',  pagina: 1, texto: 'CSAT',   tipo: 'CSAT', escala: [1, 5],  grupos: ['Insatisfecho', 'Neutral', 'Satisfecho'] },
-  { id: 'q_ces',    pnum: 'P3',  pagina: 1, texto: 'CES',    tipo: 'CES',  escala: [1, 7],  grupos: ['Bajo esfuerzo', 'Neutral', 'Alto esfuerzo'] },
-  { id: 'q_cli',    pnum: 'P4',  pagina: 1, texto: 'CLI',    tipo: 'CLI',  escala: [1, 5],  grupos: ['Bajo', 'Medio', 'Alto'] },
-  { id: 'q_rating', pnum: 'P5',  pagina: 1, texto: 'Rating', tipo: 'rating', escala: [1, 5] },
+  { id: 'q_nps',    pnum: 'P1',  pagina: 1, texto: '¿Qué tan probable es que nos recomiendes con un amigo o familiar? (NPS)', tipo: 'NPS',  escala: [0, 10], grupos: GRUPOS_NPS },
+  { id: 'q_csat',   pnum: 'P2',  pagina: 1, texto: '¿Qué tan satisfecho quedaste con la atención recibida? (CSAT)', tipo: 'CSAT', escala: [1, 5],  grupos: ['Insatisfecho', 'Neutral', 'Satisfecho'] },
+  { id: 'q_ces',    pnum: 'P3',  pagina: 1, texto: '¿Qué tan fácil fue resolver tu trámite con nosotros? (CES)', tipo: 'CES',  escala: [1, 7],  grupos: ['Bajo esfuerzo', 'Neutral', 'Alto esfuerzo'] },
+  { id: 'q_cli',    pnum: 'P4',  pagina: 1, texto: '¿Qué tan leal te sientes hacia nuestra marca? (CLI)', tipo: 'CLI',  escala: [1, 5],  grupos: ['Bajo', 'Medio', 'Alto'] },
+  { id: 'q_rating', pnum: 'P5',  pagina: 1, texto: 'Califica con estrellas tu experiencia general (Rating)', tipo: 'rating', escala: [1, 5] },
   // ── Página 2 · Opciones ──
-  { id: 'q_simple',   pnum: 'P6',  pagina: 2, texto: 'Selección simple',    tipo: 'seleccion_simple',    opciones: OPC_ABCD },
-  { id: 'q_multiple', pnum: 'P7',  pagina: 2, texto: 'Selección múltiple',  tipo: 'seleccion_multiple',  opciones: OPC_ABCD },
-  { id: 'q_imagenes', pnum: 'P8',  pagina: 2, texto: 'Selección de imágenes', tipo: 'seleccion_imagenes', opciones: ['Imagen 1', 'Imagen 2', 'Imagen 3'] },
-  { id: 'q_dropdown', pnum: 'P9',  pagina: 2, texto: 'Dropdown',            tipo: 'dropdown',            opciones: OPC_ABCD },
-  { id: 'q_sino',     pnum: 'P10', pagina: 2, texto: 'Sí / No',             tipo: 'si_no',               opciones: ['Sí', 'No'] },
-  { id: 'q_casilla',  pnum: 'P11', pagina: 2, texto: 'Casilla de verificación', tipo: 'casilla' },
+  { id: 'q_simple',   pnum: 'P6',  pagina: 2, texto: '¿Cuál fue el motivo principal de tu visita? (Selección simple)', tipo: 'seleccion_simple',    opciones: OPC_ABCD },
+  { id: 'q_multiple', pnum: 'P7',  pagina: 2, texto: '¿Qué aspectos te gustaría que mejoráramos? (Selección múltiple)', tipo: 'seleccion_multiple',  opciones: OPC_ABCD },
+  { id: 'q_imagenes', pnum: 'P8',  pagina: 2, texto: '¿Cuál de estas imágenes representa mejor tu experiencia? (Selección de imágenes)', tipo: 'seleccion_imagenes', opciones: ['Imagen 1', 'Imagen 2', 'Imagen 3'] },
+  { id: 'q_dropdown', pnum: 'P9',  pagina: 2, texto: '¿En qué sucursal realizaste tu compra? (Dropdown)', tipo: 'dropdown',            opciones: OPC_ABCD },
+  { id: 'q_sino',     pnum: 'P10', pagina: 2, texto: '¿Recomendarías nuestro servicio a alguien más? (Sí/No)', tipo: 'si_no',               opciones: ['Sí', 'No'] },
+  { id: 'q_casilla',  pnum: 'P11', pagina: 2, texto: 'Acepto recibir comunicaciones sobre promociones (Casilla de verificación)', tipo: 'casilla' },
   // ── Página 3 · Detalle ──
-  { id: 'q_abierta', pnum: 'P12', pagina: 3, texto: 'Respuesta abierta', tipo: 'texto_abierto' },
-  { id: 'q_expr',    pnum: 'P13', pagina: 3, texto: 'Expresión',         tipo: 'expresion' },
-  { id: 'q_matriz',  pnum: 'P14', pagina: 3, texto: 'Matriz',            tipo: 'matriz', escala: [1, 5], filas: ['Rapidez', 'Amabilidad', 'Claridad de la información'] },
-  { id: 'q_form',    pnum: 'P15', pagina: 3, texto: 'Formulario',        tipo: 'formulario', campos: [
+  { id: 'q_abierta', pnum: 'P12', pagina: 3, texto: 'Cuéntanos qué podríamos mejorar (Respuesta abierta)', tipo: 'texto_abierto' },
+  { id: 'q_expr',    pnum: 'P13', pagina: 3, texto: 'Gracias por tus respuestas, ya casi terminamos (Expresión)', tipo: 'expresion' },
+  { id: 'q_matriz',  pnum: 'P14', pagina: 3, texto: 'Califica los siguientes aspectos de tu experiencia (Matriz)', tipo: 'matriz', escala: [1, 5], filas: ['Rapidez', 'Amabilidad', 'Claridad de la información'] },
+  { id: 'q_form',    pnum: 'P15', pagina: 3, texto: 'Déjanos tus datos de contacto (Formulario)', tipo: 'formulario', campos: [
       { key: 'nombre', label: 'Nombre', tipo: 'texto' },
       { key: 'edad', label: 'Edad', tipo: 'numero' },
       { key: 'correo', label: 'Correo', tipo: 'correo' },
       { key: 'fecha_visita', label: 'Fecha de visita', tipo: 'fecha' },
       { key: 'sitio', label: 'Sitio web', tipo: 'url' },
     ] },
-  { id: 'q_maxdiff', pnum: 'P16', pagina: 3, texto: 'MaxDiff',       tipo: 'maxdiff', opciones: FACTORES },
-  { id: 'q_ranking', pnum: 'P17', pagina: 3, texto: 'Ranking',       tipo: 'ranking', opciones: FACTORES },
-  { id: 'q_archivo', pnum: 'P18', pagina: 3, texto: 'Subir archivo', tipo: 'cargar_archivo' },
+  { id: 'q_maxdiff', pnum: 'P16', pagina: 3, texto: 'De estos factores, ¿cuál es el más y el menos importante para ti? (MaxDiff)', tipo: 'maxdiff', opciones: FACTORES },
+  { id: 'q_ranking', pnum: 'P17', pagina: 3, texto: 'Ordena estos factores de mayor a menor importancia (Ranking)', tipo: 'ranking', opciones: FACTORES },
+  { id: 'q_archivo', pnum: 'P18', pagina: 3, texto: 'Adjunta tu comprobante de pago (Subir archivo)', tipo: 'cargar_archivo' },
 ];
 
 // Tres despedidas del estudio de pruebas (Figma). "Despedida A" es el cierre por
