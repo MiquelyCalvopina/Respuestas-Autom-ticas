@@ -1,5 +1,5 @@
 import { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import { FLUJO, DESPEDIDAS, PAGINAS, FlujoNodo } from '@/app/data/estudio';
+import { FLUJO, DESPEDIDAS, FlujoNodo } from '@/app/data/estudio';
 import { BoxIcon } from './boxicons';
 import { Regla, Seleccion } from './types';
 import { nodosConLogica, momentoDeRegla, paginasConLogica } from './derive';
@@ -201,7 +201,7 @@ export default function Canvas({ reglas, seleccion, onSelect, preguntasSinAcceso
                     }}>
                       <BoxIcon name={marcada ? 'bx-git-branch' : 'bx-list-ul'} size={12} color={marcada ? '#1890ff' : 'rgba(0,0,0,0.45)'} />
                       <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, letterSpacing: 0.3, color: marcada ? '#1890ff' : 'rgba(0,0,0,0.45)', whiteSpace: 'nowrap' }}>
-                        {(PAGINAS.find(p => p.n === n.pagina)?.nombre ?? `Página ${n.pagina}`).toUpperCase()}
+                        {`PÁGINA ${n.pagina}`}
                       </span>
                     </div>
                   );

@@ -139,7 +139,7 @@ function ReglaRow({ regla, onEditar, onEliminar }: { regla: Regla; onEditar: () 
             <span><IconBtn icon="bx-trash" danger label="Eliminar regla" /></span>
           </Popconfirm>
         </div>
-        <Tooltip title="Identificador de la regla, útil para soporte">
+        <Tooltip title="ID de lógica">
           <span style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(0,0,0,0.25)', whiteSpace: 'nowrap', paddingRight: 2 }}>{regla.codigo}</span>
         </Tooltip>
       </div>
