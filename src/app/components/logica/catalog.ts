@@ -50,10 +50,10 @@ export const OPS = {
   varNumero: ['Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'Está vacía', 'No está vacía'],
   varFecha:  ['Es igual a', 'No es igual a', 'Es después de', 'Es antes de', 'Está entre', 'Está vacía', 'No está vacía'],
   varCorreo: ['Contiene', 'No contiene', 'Pertenece a los dominios', 'No pertenece a los dominios', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
-  // Variables especiales de lista cerrada (canal de respuesta, dispositivo,
-  // plataforma…): solo igualdad, sin controles de texto libre ni "vacía"
-  // (siempre se conoce, no depende de que el encuestado responda algo).
-  varCanal: ['Es igual a', 'No es igual a'],
+  // "El canal de respuesta" (fuente propia, no una variable): solo igualdad,
+  // sin controles de texto libre ni "vacía" (siempre se conoce, no depende de
+  // que el encuestado responda algo).
+  canal: ['Es igual a', 'No es igual a'],
 } as const;
 
 export const SIN_VALOR = new Set(['Está vacía', 'No está vacía', 'Se respondió', 'No se respondió']);
@@ -128,7 +128,12 @@ export function operadoresPregunta(q: Pregunta, c: Condicion): string[] {
 }
 
 export function operadoresVariable(tipo: VariableTipo): string[] {
-  return { texto: OPS.varTexto, numero: OPS.varNumero, fecha: OPS.varFecha, correo: OPS.varCorreo, canal: OPS.varCanal }[tipo].slice();
+  return { texto: OPS.varTexto, numero: OPS.varNumero, fecha: OPS.varFecha, correo: OPS.varCorreo }[tipo].slice();
+}
+
+/** Operadores de "El canal de respuesta": fijos, sin variantes por valor. */
+export function operadoresCanal(): string[] {
+  return [...OPS.canal];
 }
 
 /** ¿El valor elegido de "Canal de respuesta" es ambiguo por sí solo y exige
@@ -167,7 +172,7 @@ export function condicionLista(c: Condicion, preguntaTipo?: Pregunta): boolean {
   if (!c.valor.trim()) return false;
   // Canal de respuesta: "Enlace personal"/"Enlace genérico" no bastan solos,
   // falta precisar el medio o la campaña (US44).
-  if (c.fuente === 'variable' && variableByKey(c.campo)?.tipo === 'canal' && requiereDetalleCanal(c.valor)) {
+  if (c.fuente === 'canal' && requiereDetalleCanal(c.valor)) {
     return !!c.valorDetalle?.trim();
   }
   return true;

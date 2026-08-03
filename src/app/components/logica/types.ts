@@ -1,6 +1,6 @@
 // Modelo de datos del módulo Lógica.
 
-export type Fuente = 'response' | 'variable';
+export type Fuente = 'response' | 'variable' | 'canal';
 
 export type Conector = 'Y' | 'O';
 
@@ -8,6 +8,9 @@ export interface Condicion {
   id: string;
   fuente: Fuente;
   /** id de pregunta (q1…) o key de variable (canal…) */
+  /** irrelevante cuando fuente === 'canal': solo existe un canal de
+   *  respuesta por estudio, así que no hay nada que elegir — se fija a
+   *  'canal_respuesta' automáticamente (ver emptyCondicion en seed.ts). */
   campo: string;
   /** Matriz: atributo/fila seleccionada */
   filaMatriz?: string;

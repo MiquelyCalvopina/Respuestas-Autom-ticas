@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal, Button, Input, InputNumber, Radio, Checkbox, Select, Rate, Alert, Tag } from 'antd';
 import {
-  ESTUDIO, PREGUNTAS, VARIABLES_DETALLE, CANAL_RESPUESTA_VALORES, MEDIOS_ENLACE_PERSONAL, CAMPANAS_ENLACE_GENERICO, despedidaById, paginaByN, preguntaById, Pregunta,
+  ESTUDIO, PREGUNTAS, VARIABLES_DETALLE, CANAL_RESPUESTA_VALORES, CANAL_RESPUESTA_CAMPO, MEDIOS_ENLACE_PERSONAL, CAMPANAS_ENLACE_GENERICO, despedidaById, paginaByN, preguntaById, Pregunta,
 } from '@/app/data/estudio';
 import { BoxIcon } from './boxicons';
 import { Regla } from './types';
@@ -188,23 +188,25 @@ export default function PreviewModal({ abierto, reglas, destinos, onCerrar }: Pr
                 {VARIABLES_DETALLE.map(v => (
                   <div key={v.key} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span style={{ fontSize: 11, color: T45 }}>{v.label}</span>
-                    {v.tipo === 'canal' ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <Select size="small" allowClear value={vars[v.key] || undefined}
-                          onChange={x => setVars(s => ({ ...s, [v.key]: x ?? '', [`${v.key}_detalle`]: '' }))}
-                          options={CANAL_RESPUESTA_VALORES.map(c => ({ value: c, label: c }))} placeholder="Sin definir" />
-                        {requiereDetalleCanal(vars[v.key] ?? '') && (
-                          <Select size="small" allowClear value={vars[`${v.key}_detalle`] || undefined}
-                            onChange={x => setVars(s => ({ ...s, [`${v.key}_detalle`]: x ?? '' }))}
-                            options={(vars[v.key] === 'Enlace personal' ? MEDIOS_ENLACE_PERSONAL : CAMPANAS_ENLACE_GENERICO).map(o => ({ value: o, label: o }))}
-                            placeholder={vars[v.key] === 'Enlace personal' ? 'Medio' : 'Campaña'} />
-                        )}
-                      </div>
-                    ) : (
-                      <Input size="small" value={vars[v.key] ?? ''} onChange={e => setVars(s => ({ ...s, [v.key]: e.target.value }))} />
-                    )}
+                    <Input size="small" value={vars[v.key] ?? ''} onChange={e => setVars(s => ({ ...s, [v.key]: e.target.value }))} />
                   </div>
                 ))}
+              </div>
+            </div>
+            {/* "El canal de respuesta" no es una variable (es su propia fuente,
+                ver types.ts) — control aparte, no dentro del grid anterior. */}
+            <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 8, padding: 12 }}>
+              <p style={{ fontSize: 12, color: T45, margin: '0 0 8px 0' }}>El canal de respuesta:</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: 260 }}>
+                <Select size="small" allowClear value={vars[CANAL_RESPUESTA_CAMPO] || undefined}
+                  onChange={x => setVars(s => ({ ...s, [CANAL_RESPUESTA_CAMPO]: x ?? '', [`${CANAL_RESPUESTA_CAMPO}_detalle`]: '' }))}
+                  options={CANAL_RESPUESTA_VALORES.map(c => ({ value: c, label: c }))} placeholder="Sin definir" />
+                {requiereDetalleCanal(vars[CANAL_RESPUESTA_CAMPO] ?? '') && (
+                  <Select size="small" allowClear value={vars[`${CANAL_RESPUESTA_CAMPO}_detalle`] || undefined}
+                    onChange={x => setVars(s => ({ ...s, [`${CANAL_RESPUESTA_CAMPO}_detalle`]: x ?? '' }))}
+                    options={(vars[CANAL_RESPUESTA_CAMPO] === 'Enlace personal' ? MEDIOS_ENLACE_PERSONAL : CAMPANAS_ENLACE_GENERICO).map(o => ({ value: o, label: o }))}
+                    placeholder={vars[CANAL_RESPUESTA_CAMPO] === 'Enlace personal' ? 'Medio' : 'Campaña'} />
+                )}
               </div>
             </div>
             <Button type="primary" onClick={comenzar} icon={<BoxIcon name="bx-chevron-right" size={16} color="#fff" />}>

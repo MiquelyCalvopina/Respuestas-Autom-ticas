@@ -121,7 +121,7 @@ function valorSegs(c: Condicion): Seg[] {
   if (q?.tipo === 'casilla') return [val(c.valor === 'no_acepto' ? 'No aceptó' : 'Aceptó')];
   // Canal de respuesta con detalle (Enlace personal/genérico, US44): se lee
   // el canal y su precisión juntos, ej. "Enlace genérico · Campaña Referidos".
-  if (c.fuente === 'variable' && variableByKey(c.campo)?.tipo === 'canal' && c.valorDetalle) {
+  if (c.fuente === 'canal' && c.valorDetalle) {
     return [val(`"${c.valor} · ${c.valorDetalle}"`)];
   }
   // Rango: "6 y 8"
@@ -148,6 +148,10 @@ function valorSegs(c: Condicion): Seg[] {
  *  etc.), así que aunque la condición sea sobre la misma pregunta que dispara la
  *  regla, omitir su referencia sería ambiguo para quien lee la lista de reglas. */
 function sujetoSegs(c: Condicion): Seg[] {
+  // Única fuente sin selector de elemento (existe una sola por estudio): el
+  // sujeto completo ya incluye el artículo, sin prefijo "la variable"/"la
+  // respuesta a" delante.
+  if (c.fuente === 'canal') return [ref('el canal de respuesta')];
   if (c.fuente === 'variable') return [plain('la variable '), refCondicion(c)];
 
   // "Se respondió" / "No se respondió" hablan de la interacción con la pregunta:

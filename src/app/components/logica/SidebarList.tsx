@@ -165,12 +165,12 @@ export default function SidebarList({ reglas, seleccion, onCrear, onEditar, onEl
   let titulo: string, subtitulo: string;
   if (seleccion.tipo === 'bienvenida') {
     titulo = 'Al iniciar la encuesta';
-    subtitulo = 'Reglas que se evalúan antes de la primera pregunta, sobre variables cargadas con la interacción.';
+    subtitulo = 'Reglas que se evalúan antes de la primera pregunta, sobre variables o el canal de respuesta cargados con la interacción.';
   } else if (seleccion.tipo === 'pregunta') {
     const q = preguntaById(seleccion.preguntaId);
     const enunciado = q ? (q.texto.length > 40 ? q.texto.slice(0, 40) + '…' : q.texto) : '';
     titulo = `Al responder ${q?.pnum ?? ''} ${enunciado}`.trim();
-    subtitulo = 'Reglas que se evalúan cuando el encuestado responde esta pregunta. Pueden evaluar la respuesta o variables.';
+    subtitulo = 'Reglas que se evalúan cuando el encuestado responde esta pregunta. Pueden evaluar la respuesta, variables o el canal de respuesta.';
   } else {
     titulo = 'Reglas de lógica del estudio';
     // Figma (estado vacío): el subtítulo del encabezado es corto. Con reglas

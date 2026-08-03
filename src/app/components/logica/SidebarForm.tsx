@@ -1,12 +1,12 @@
 import { Select, Input, InputNumber, Segmented, Tooltip, Button, Tag, Popconfirm } from 'antd';
 import {
-  PREGUNTAS, VARIABLES_DETALLE, CANAL_RESPUESTA_VALORES, MEDIOS_ENLACE_PERSONAL, CAMPANAS_ENLACE_GENERICO, DESPEDIDAS, ESTUDIO, PAGINAS,
+  PREGUNTAS, VARIABLES_DETALLE, CANAL_RESPUESTA_VALORES, CANAL_RESPUESTA_CAMPO, MEDIOS_ENLACE_PERSONAL, CAMPANAS_ENLACE_GENERICO, DESPEDIDAS, ESTUDIO, PAGINAS,
   preguntaById, variableByKey, esCondicionable, esRespondible, Pregunta,
 } from '@/app/data/estudio';
 import { BoxIcon, BoxIconName } from './boxicons';
-import { Regla, Condicion, GrupoCondicion, Consecuencia, ConsecuenciaTipo, Momento, Conector } from './types';
+import { Regla, Condicion, Fuente, GrupoCondicion, Consecuencia, ConsecuenciaTipo, Momento, Conector } from './types';
 import {
-  operadoresPregunta, operadoresVariable, subSelectorDe, condicionLista,
+  operadoresPregunta, operadoresVariable, operadoresCanal, subSelectorDe, condicionLista,
   errorCondicion, esDominioValido, seleccionMultiple, normalizarDominio, requiereDetalleCanal,
   SIN_VALOR, RANGO, LISTA_TAGS,
 } from './catalog';
@@ -24,7 +24,9 @@ interface Props {
   borrador: Regla;
   modoForm: 'crear' | 'editar';
   reglas: Regla[];
-  /** true solo en reglas de inicio (foco en Bienvenida): fuente fija a variable */
+  /** true solo en reglas de inicio (foco en Bienvenida): "La respuesta a" no
+   *  es una opción válida (antes de la primera pregunta no hay respuestas) —
+   *  "La variable" y "El canal de respuesta" sí lo son. */
   fuenteBloqueada: boolean;
   /** id de pregunta al que queda fija la PRIMERA condición (foco activo), o null */
   momentoFijo: string | null;
@@ -122,11 +124,11 @@ function ValorControl({ c, q, onChange }: { c: Condicion; q?: Pregunta; onChange
     );
   }
 
-  // Variable especial de lista cerrada (canal de respuesta): Es igual a / No
+  // "El canal de respuesta" (fuente propia, no una variable): Es igual a / No
   // es igual a contra los medios posibles, no texto libre (estándar US138).
   // "Enlace personal"/"Enlace genérico" son ambiguos solos: piden precisar el
   // medio o la campaña específica (US44) en un segundo select.
-  if (varTipo === 'canal') {
+  if (c.fuente === 'canal') {
     const detalle = requiereDetalleCanal(c.valor);
     return (
       <>
@@ -213,35 +215,59 @@ function ValorControl({ c, q, onChange }: { c: Condicion; q?: Pregunta; onChange
 
 // ── Campos de una condición (flujo flex-wrap dentro del cuerpo de la tarjeta) ──
 function CondFields({ c, bloqueada, onChange }: { c: Condicion; bloqueada: boolean; onChange: (patch: Partial<Condicion>) => void }) {
-  const fuenteLocked = bloqueada;
+  // "Bloqueada" (reglas de inicio, foco en Bienvenida): antes de la primera
+  // pregunta no hay respuestas, así que "La respuesta a" no es una opción —
+  // pero "La variable" y "El canal de respuesta" sí son válidas ahí, ambas
+  // se cargan con la interacción antes de la primera pregunta.
+  const fuenteOpciones = bloqueada
+    ? [{ value: 'variable', label: 'La variable' }, { value: 'canal', label: 'El canal de respuesta' }]
+    : [{ value: 'response', label: 'La respuesta a' }, { value: 'variable', label: 'La variable' }, { value: 'canal', label: 'El canal de respuesta' }];
   const q = c.fuente === 'response' ? preguntaById(c.campo) : undefined;
   const varTipo = c.fuente === 'variable' ? variableByKey(c.campo)?.tipo : undefined;
+  const esCanal = c.fuente === 'canal';
   const sub = q ? subSelectorDe(q) : null;
   const esMatriz = q?.tipo === 'matriz';
-  const operadores = c.fuente === 'variable' ? (varTipo ? operadoresVariable(varTipo) : []) : (q ? operadoresPregunta(q, c) : []);
+  const operadores = esCanal ? operadoresCanal() : c.fuente === 'variable' ? (varTipo ? operadoresVariable(varTipo) : []) : (q ? operadoresPregunta(q, c) : []);
   const error = errorCondicion(c, q);
   const lista = condicionLista(c, q) && !error;
   const subResuelto = !sub || !!c.subTipo;
   const matrizResuelto = !esMatriz || !!c.filaMatriz;
   const mostrarOperador = !!c.campo && subResuelto && matrizResuelto && operadores.length > 0;
+  const limpiarCondicion = { filaMatriz: undefined, modoMatriz: undefined, subTipo: undefined, operador: '', valor: '', valorB: '', valores: [], valorDetalle: undefined };
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, width: '100%' }}>
       {/* Fuente */}
-      <Select style={fieldNarrow} disabled={fuenteLocked} value={c.fuente}
-        onChange={(v) => onChange({ fuente: v as 'response' | 'variable', campo: '', filaMatriz: undefined, modoMatriz: undefined, subTipo: undefined, operador: '', valor: '', valorB: '', valores: [], valorDetalle: undefined })}
-        options={[{ value: 'response', label: 'La respuesta a' }, { value: 'variable', label: 'La variable' }]} />
+      <Select style={fieldNarrow} value={c.fuente}
+        onChange={(v) => onChange({
+          fuente: v as Fuente,
+          // "El canal de respuesta" existe una sola vez: no hay selector de
+          // elemento, el campo se fija de inmediato (ver emptyCondicion).
+          campo: v === 'canal' ? CANAL_RESPUESTA_CAMPO : '',
+          ...limpiarCondicion,
+        })}
+        options={fuenteOpciones} />
       {/* Pregunta / variable — libre incluso con foco: el foco solo ancla en qué
           momento vive la regla (ver guardarForm), no restringe de dónde puede
-          venir cada condición. Así se pueden mezclar condiciones de preguntas
-          y de variables dentro de la misma regla. */}
-      <Select showSearch optionFilterProp="label" style={fieldWide} value={c.campo || undefined}
-        placeholder={c.fuente === 'variable' ? 'Selecciona una variable…' : 'Selecciona una pregunta…'}
-        onChange={(v) => onChange({ campo: v as string, filaMatriz: undefined, modoMatriz: undefined, subTipo: undefined, operador: '', valor: '', valorB: '', valores: [], valorDetalle: undefined })}
-        options={c.fuente === 'variable' ? [
-          { label: 'Variables del estudio', options: VARIABLES_DETALLE.filter(v => !v.especial).map(v => ({ value: v.key, label: v.label })) },
-          { label: 'Variables especiales', options: VARIABLES_DETALLE.filter(v => v.especial).map(v => ({ value: v.key, label: v.label })) },
-        ] : PREGUNTAS.filter(esCondicionable).map(p => ({ value: p.id, label: labelPregunta(p) }))} />
+          venir cada condición. Así se pueden mezclar condiciones de preguntas,
+          variables y canal de respuesta dentro de la misma regla. "El canal de
+          respuesta" no muestra este selector: existe una sola vez por estudio. */}
+      {!esCanal && (
+        <Select showSearch optionFilterProp="label" style={fieldWide} value={c.campo || undefined}
+          placeholder={c.fuente === 'variable' ? 'Selecciona una variable…' : 'Selecciona una pregunta…'}
+          onChange={(v) => onChange({ campo: v as string, ...limpiarCondicion })}
+          options={c.fuente === 'variable' ? (() => {
+            // "Especiales" (dispositivo, plataforma… US138) agrupadas aparte
+            // cuando existan; hoy ninguna variable de la lista lo es —"Canal de
+            // respuesta" ya no vive aquí, es su propia fuente— así que el grupo
+            // se omite en vez de mostrarse vacío.
+            const especiales = VARIABLES_DETALLE.filter(v => v.especial).map(v => ({ value: v.key, label: v.label }));
+            const normales = VARIABLES_DETALLE.filter(v => !v.especial).map(v => ({ value: v.key, label: v.label }));
+            return especiales.length
+              ? [{ label: 'Variables del estudio', options: normales }, { label: 'Variables especiales', options: especiales }]
+              : normales;
+          })() : PREGUNTAS.filter(esCondicionable).map(p => ({ value: p.id, label: labelPregunta(p) }))} />
+      )}
       {/* Matriz fila */}
       {esMatriz && (
         <Select showSearch optionFilterProp="label" style={fieldWide} placeholder="Atributo/fila"

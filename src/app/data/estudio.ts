@@ -56,18 +56,17 @@ export interface Pregunta {
   grupos?: string[];
 }
 
-// 'canal' es un tipo especial: se resuelve como Texto pero con su control de
-// valor sobreescrito por una lista cerrada (ver CANAL_RESPUESTA_VALORES), tal
-// como documenta el catálogo estándar de condiciones para variables especiales.
-export type VariableTipo = 'texto' | 'numero' | 'fecha' | 'correo' | 'canal';
+export type VariableTipo = 'texto' | 'numero' | 'fecha' | 'correo';
 
 export interface VariableDetalle {
   key: string;
   label: string;
   tipo: VariableTipo;
-  /** true = variable especial del sistema (canal de respuesta, dispositivo,
-   *  etc. del catálogo estándar), no una variable creada por el cliente en el
-   *  estudio. Se usa solo para agruparlas en el selector de Lógica. */
+  /** true = variable especial del sistema (dispositivo, plataforma, etc. del
+   *  catálogo estándar US138), no una variable creada por el cliente en el
+   *  estudio. Se usa solo para agruparlas en el selector de Lógica. "Canal de
+   *  respuesta" NO usa este campo — es su propia fuente (ver Fuente en
+   *  types.ts), no una variable. */
   especial?: boolean;
 }
 
@@ -130,12 +129,11 @@ export const VARIABLES = [
 ];
 
 // Variables tipadas — las usa Lógica para resolver operadores por tipo (sección 7.2).
-// Las primeras 8 comparten claves con VARIABLES (variables propias del estudio,
-// creadas por el cliente). "canal_respuesta" es distinta: es una variable
-// ESPECIAL del sistema —documentada en el catálogo estándar de condiciones
-// (US138) junto con dispositivo, plataforma, etc.— que no vive en VARIABLES
-// porque no la crea el cliente, la resuelve la plataforma. No confundir con
-// "canal", la variable de texto libre que el cliente puede crear en su estudio.
+// Comparten claves con VARIABLES (variables propias del estudio, creadas por
+// el cliente). No confundir "canal" (variable de texto libre que el cliente
+// puede crear en su estudio) con "canal de respuesta" (fuente propia de
+// Lógica, ver CANAL_RESPUESTA_VALORES y Fuente en types.ts — no es una
+// variable, la resuelve la plataforma, no la crea el cliente).
 export const VARIABLES_DETALLE: VariableDetalle[] = [
   { key: 'nombre_preferido',   label: 'Nombre de preferencia', tipo: 'texto' },
   { key: 'correo_electronico', label: 'Correo electrónico',    tipo: 'correo' },
@@ -145,14 +143,18 @@ export const VARIABLES_DETALLE: VariableDetalle[] = [
   { key: 'identificador',      label: 'Identificador',         tipo: 'texto' },
   { key: 'numero_credito',     label: 'Número de crédito',     tipo: 'numero' },
   { key: 'fecha_entrega',      label: 'Fecha de entrega',      tipo: 'fecha' },
-  { key: 'canal_respuesta',    label: 'Canal de respuesta',    tipo: 'canal', especial: true },
 ];
 
-/** Lista cerrada de valores de "Canal de respuesta" (US138 · variables
- *  especiales): los medios por los que puede llegar una respuesta.
- *  "Enlace personal" y "Enlace genérico" son ambiguos por sí solos —requieren
- *  precisar el medio o la campaña (US44, ver abajo)— antes de poder guardar
- *  la condición. */
+/** Clave interna fija de la condición "El canal de respuesta" — existe una
+ *  sola vez por estudio, así que no hay nada que elegir (a diferencia de
+ *  Pregunta/Variable, que sí requieren un selector de elemento). */
+export const CANAL_RESPUESTA_CAMPO = 'canal_respuesta';
+
+/** Lista cerrada de valores de "Canal de respuesta" (US138 · fuente propia de
+ *  Lógica, no una variable): los medios por los que puede llegar una
+ *  respuesta. "Enlace personal" y "Enlace genérico" son ambiguos por sí
+ *  solos —requieren precisar el medio o la campaña (US44, ver abajo)— antes
+ *  de poder guardar la condición. */
 export const CANAL_RESPUESTA_VALORES = ['WhatsApp', 'Correo electrónico', 'Enlace personal', 'Enlace genérico'];
 
 /** US44 · cuando el canal de respuesta es un Enlace personal, el medio

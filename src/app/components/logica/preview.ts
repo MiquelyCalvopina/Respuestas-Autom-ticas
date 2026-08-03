@@ -8,7 +8,7 @@
 // Evalúa todos los operadores del catálogo de Lógica (no existe "Habla de":
 // la categorización solo aplica a respuestas ya procesadas).
 
-import { FLUJO, PREGUNTAS, preguntaById, variableByKey } from '@/app/data/estudio';
+import { FLUJO, PREGUNTAS, preguntaById } from '@/app/data/estudio';
 import { Regla, Condicion, Momento } from './types';
 import { RESPONDIDO } from './catalog';
 
@@ -54,11 +54,12 @@ export function evaluarCondicion(c: Condicion, resp: Respuestas, vars: Variables
   if (!c.operador) return false;
 
   const esVar = c.fuente === 'variable';
-  const bruto: Respuesta = esVar ? vars[c.campo] : resp[claveRespuesta(c)];
+  const esCanal = c.fuente === 'canal';
+  const bruto: Respuesta = (esVar || esCanal) ? vars[c.campo] : resp[claveRespuesta(c)];
 
   // Canal de respuesta: si el valor elegido tiene detalle (Enlace personal/
   // genérico → medio o campaña específicos, US44), deben coincidir ambas partes.
-  if (esVar && variableByKey(c.campo)?.tipo === 'canal') {
+  if (esCanal) {
     const base = norm(comoTexto(bruto));
     const coincideBase = base === norm(c.valor);
     const coincideDetalle = !c.valorDetalle || norm(comoTexto(vars[`${c.campo}_detalle`])) === norm(c.valorDetalle);

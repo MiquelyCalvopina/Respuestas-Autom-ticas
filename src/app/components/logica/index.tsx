@@ -20,7 +20,8 @@ function nuevoBorrador(sel: Seleccion): Regla {
   const g = emptyGrupo();
   const c0 = g.condiciones[0];
   // Semilla de la primera condición según el foco (o sin foco):
-  // - Bienvenida: solo variables (al inicio no hay respuestas todavía).
+  // - Bienvenida: variable o canal de respuesta (al inicio no hay respuestas
+  //   todavía); arranca en variable, el usuario puede cambiar a canal.
   // - Pregunta: respuesta a esa pregunta, ya preseleccionada.
   // - Sin foco: respuesta (sin pregunta elegida); el usuario elige libremente.
   if (sel.tipo === 'bienvenida') {
@@ -47,9 +48,10 @@ export default function LogicaModule({ previewAbierto = false, onCerrarPreview }
   const [modo, setModo] = useState<SidebarModo>('lista');
   const [borrador, setBorrador] = useState<Regla | null>(null);
   const [modoForm, setModoForm] = useState<'crear' | 'editar'>('crear');
-  // La fuente se bloquea a "variable" solo en reglas de inicio (foco en
-  // Bienvenida o edición de una regla de inicio): antes de la primera pregunta
-  // no hay respuestas. Sin foco NO se bloquea: se puede crear cualquier lógica.
+  // "La respuesta a" se bloquea solo en reglas de inicio (foco en Bienvenida o
+  // edición de una regla de inicio): antes de la primera pregunta no hay
+  // respuestas — pero sí variables y canal de respuesta, ambos disponibles.
+  // Sin foco NO se bloquea: se puede crear cualquier lógica.
   const [fuenteBloqueada, setFuenteBloqueada] = useState(false);
   // Pregunta a la que queda fija la primera condición (foco activo al crear).
   const [momentoFijo, setMomentoFijo] = useState<string | null>(null);
