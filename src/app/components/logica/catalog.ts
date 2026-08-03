@@ -36,6 +36,9 @@ export const OPS = {
   maxdiff:  ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
   ranking:  ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
   archivo:  ['Se respondió', 'No se respondió'], // subir archivo: solo interacción
+  // Expresión: caso especial, se evalúa contra el enunciado configurado, no
+  // contra una respuesta (no hay ninguna). Un único operador, sin variantes.
+  expresion: ['Contiene'],
   // campos de formulario
   campoTexto:  ['Se respondió', 'No se respondió', 'Contiene', 'No contiene', 'Está en la lista', 'No está en la lista', 'Es igual a', 'No es igual a', 'Está vacía', 'No está vacía'],
   campoNumero: ['Se respondió', 'No se respondió', 'Es igual a', 'No es igual a', 'Es mayor que', 'Es mayor o igual a', 'Es menor que', 'Es menor o igual a', 'Está entre', 'Está vacía', 'No está vacía'],
@@ -101,8 +104,9 @@ export function operadoresPregunta(q: Pregunta, c: Condicion): string[] {
       return [...OPS.abierta];
     case 'expresion':
       // "Expresión" es un elemento de presentación: no se responde, así que no
-      // hay respuesta que evaluar. Solo puede ser destino de una consecuencia.
-      return [];
+      // hay respuesta que evaluar. Único caso especial: "Contiene" se evalúa
+      // contra su propio enunciado configurado, no contra una respuesta.
+      return [...OPS.expresion];
     case 'formulario': {
       const campo = (q.campos ?? []).find(f => f.key === c.subTipo);
       if (!campo) return [];

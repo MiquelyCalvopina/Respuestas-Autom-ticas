@@ -12,18 +12,20 @@ export interface EstudioSetup {
 }
 
 // Los 18 tipos de pregunta del catálogo. "expresion" es un elemento de
-// presentación (no se responde): puede ser destino de una consecuencia pero
-// NO puede usarse como fuente de una condición — ver esCondicionable().
+// presentación (no se responde), pero SÍ puede usarse como fuente de una
+// condición con un único operador ("Contiene"), evaluado contra su propio
+// enunciado configurado — no contra una respuesta, porque no existe ninguna.
+// Ver operadoresPregunta() en catalog.ts.
 export type PreguntaTipo =
   | 'NPS' | 'CSAT' | 'CES' | 'CLI' | 'rating'
   | 'texto_abierto' | 'expresion'
   | 'seleccion_simple' | 'seleccion_multiple' | 'seleccion_imagenes' | 'dropdown' | 'si_no'
   | 'matriz' | 'formulario' | 'casilla' | 'maxdiff' | 'ranking' | 'cargar_archivo';
 
-/** ¿La pregunta puede usarse como FUENTE de una condición?
- *  "Expresión" no se responde (es un elemento de presentación), así que no hay
- *  respuesta que evaluar: solo puede ser destino de una consecuencia. */
-export const esCondicionable = (q: Pregunta) => q.tipo !== 'expresion';
+/** ¿La pregunta puede usarse como FUENTE de una condición? Todas, incluida
+ *  "Expresión" (caso especial: solo el operador "Contiene", evaluado contra
+ *  su propio enunciado, no contra una respuesta — ver catalog.ts). */
+export const esCondicionable = (q: Pregunta) => true;
 
 /** ¿La pregunta puede volverse obligatoria? Solo si se responde. */
 export const esRespondible = (q: Pregunta) => q.tipo !== 'expresion';

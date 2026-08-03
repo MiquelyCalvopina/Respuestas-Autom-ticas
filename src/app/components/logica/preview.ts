@@ -66,6 +66,15 @@ export function evaluarCondicion(c: Condicion, resp: Respuestas, vars: Variables
     return c.operador === 'Es igual a' ? igual : !igual;
   }
 
+  // Expresión: no se responde, así que "Contiene" se evalúa contra su propio
+  // enunciado configurado, nunca contra una respuesta (no existe ninguna).
+  if (!esVar) {
+    const q = preguntaById(c.campo);
+    if (q?.tipo === 'expresion') {
+      return norm(q.texto).includes(norm(c.valor));
+    }
+  }
+
   // Interacción: independiente del contenido.
   if (RESPONDIDO.has(c.operador)) {
     const hubo = esVar ? bruto !== undefined && bruto !== '' : respondida(bruto);
