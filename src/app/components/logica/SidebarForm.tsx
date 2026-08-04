@@ -386,7 +386,8 @@ export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloquead
   // Opciones de destino, ya acotadas al alcance permitido por el momento anclado.
   const opcPregunta = (id: string) => {
     const q = preguntaById(id)!;
-    return { value: id, label: `${q.pnum} · ${q.texto.slice(0, 22)}` };
+    const cuerpo = q.texto.length > 22 ? q.texto.slice(0, 22).trimEnd() + '…' : q.texto;
+    return { value: id, label: `${q.pnum} · ${cuerpo}` };
   };
   const preguntasPosteriores = preguntasAfectables(momentoMostrado).map(n => opcPregunta(n.refId!));
   // "Hacer obligatoria" solo aplica a preguntas que se responden: una Expresión
