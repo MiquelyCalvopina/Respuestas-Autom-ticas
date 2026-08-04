@@ -384,10 +384,13 @@ export default function SidebarForm({ borrador, modoForm, reglas, fuenteBloquead
     : !borrador.consecuencia.destino ? 'Elige el destino de la consecuencia' : '';
 
   // Opciones de destino, ya acotadas al alcance permitido por el momento anclado.
+  // Sin corte manual: el enunciado completo va al label y el propio Select
+  // (option y valor seleccionado) lo trunca con CSS según el ancho real
+  // disponible — así se aprovecha el espacio real en vez de un límite fijo de
+  // caracteres, y el tooltip nativo al pasar el mouse muestra el texto completo.
   const opcPregunta = (id: string) => {
     const q = preguntaById(id)!;
-    const cuerpo = q.texto.length > 22 ? q.texto.slice(0, 22).trimEnd() + '…' : q.texto;
-    return { value: id, label: `${q.pnum} · ${cuerpo}` };
+    return { value: id, label: `${q.pnum} · ${q.texto}` };
   };
   const preguntasPosteriores = preguntasAfectables(momentoMostrado).map(n => opcPregunta(n.refId!));
   // "Hacer obligatoria" solo aplica a preguntas que se responden: una Expresión
