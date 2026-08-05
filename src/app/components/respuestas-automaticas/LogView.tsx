@@ -5,40 +5,22 @@ import { AutoResponse } from './types';
 import { describeRecipientSource } from './data';
 
 // ─── Modelo de una ejecución del potenciador ─────────────────────────────────
-type LogStatus = 'enviado' | 'no_enviado' | 'error';
-interface NpsScore { label: string; value: number }
+// Esto es el log de un JOB de envío — no un resumen de la respuesta de la encuesta. Por eso
+// sus campos son los de la ejecución (regla, remitente, asunto, destinatario, resultado) y no
+// datos del contenido de la encuesta (NPS, sucursal, nombre del encuestado) — eso vive en la
+// respuesta misma, no en el historial de este potenciador.
+type LogStatus = 'enviado' | 'no_enviado' | 'error'; // únicos 3 estados posibles de un envío
 interface Execution {
-  id: string;          // ID de interacción — lo único garantizado en cualquier estudio, sin importar su estructura
-  ts: number;          // epoch ms
-  status: LogStatus;
-  motivo: string;      // solo para no_enviado / error
-  nombre: string;       // '—' (→ "Anónimo") si el estudio no recolecta nombre, o si no se pudo enviar
-  correo: string;
-  sucursal: string | null; // null si el estudio no tiene el concepto de sucursal
-  canal: string;
-  npsScores: NpsScore[]; // 0, 1 o varias — un estudio puede no tener ninguna pregunta NPS, o tener más de una
-  ruleId: string;       // de qué regla vino — necesario en la vista agregada (todas las reglas)
+  id: string;            // ID de interacción que disparó el job
+  responseId: string;    // ID de la respuesta atada a esa interacción
+  ruleId: string;
   ruleName: string;
-}
-
-// Forma del estudio detrás de una regla — determina qué campos de la ejecución tienen sentido
-// mostrar. No todo estudio tiene sucursales, recolecta el nombre del encuestado, o incluye
-// alguna pregunta de tipo NPS (y puede tener más de una). Lo único universal es el ID de
-// interacción, que siempre se muestra. Semilla propia (distinta a la de las ejecuciones) para
-// que la forma sea estable por regla sin acoplarse al PRNG de cada ejecución individual.
-interface StudyShape { hasSucursal: boolean; hasRespondentName: boolean; npsQuestions: string[] }
-const NPS_LABELS = ['NPS General', 'NPS Atención al cliente', 'NPS Producto', 'NPS Proceso de compra'];
-function studyShapeFor(rule: AutoResponse): StudyShape {
-  const rand = mulberry32(hashStr(`${rule.id}:shape`));
-  const hasSucursal = rand() > 0.2;
-  const hasRespondentName = rand() > 0.15;
-  const npsCount = Math.floor(rand() * 3); // 0, 1 o 2 preguntas NPS — nunca asumir exactamente 1
-  const pool = [...NPS_LABELS];
-  const npsQuestions: string[] = [];
-  for (let i = 0; i < npsCount && pool.length; i++) {
-    npsQuestions.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]);
-  }
-  return { hasSucursal, hasRespondentName, npsQuestions };
+  ts: number;             // epoch ms — fecha/hora de ejecución del job
+  status: LogStatus;
+  observacion: string;    // del intento de envío — siempre poblado, incluso si status es "enviado"
+  recipientEmail: string; // correo al que se envió — vacío si status es "no_enviado" (no había a quién)
+  senderEmail: string;    // remitente configurado en la regla (rule.sender)
+  subject: string;        // asunto configurado en la regla (rule.subject)
 }
 
 const MOTIVOS_ERROR = [
@@ -47,14 +29,13 @@ const MOTIVOS_ERROR = [
   'Timeout al conectar con el servidor de correo',
   'Dirección de correo con formato inválido',
 ];
-const SUCURSALES = ['Quito Norte', 'Quito Sur', 'Guayaquil', 'Cuenca', 'Presencial'];
-const CANALES = ['Correo electrónico', 'WhatsApp', 'Enlace personalizado'];
-const NOMBRES = ['María R.', 'Carlos M.', 'Ana G.', 'Jorge P.', 'Lucía T.', 'Pedro A.', 'Sofía V.', 'Luis H.', 'Carmen B.', 'Rafael O.'];
+const EMAIL_DOMAINS_MOCK = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com'];
 const PAGE_SIZE = 15;
 
 // PRNG con semilla (mulberry32) para que las ejecuciones simuladas de una regla sean
 // estables entre renders — no se rebarajan cada vez que abres el historial. 100% mock,
-// no hay backend real en este prototipo.
+// no hay backend real en este prototipo — esta versión solo envía por correo, no por WhatsApp
+// u otro canal, así que el job no tiene un "canal de envío" que elegir.
 function hashStr(s: string): number {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -73,7 +54,6 @@ function mulberry32(seed: number): () => number {
 function generateLogs(rule: AutoResponse, now: number): Execution[] {
   // Una regla que nunca se ha activado no tiene ejecuciones.
   if (!rule.active && !rule.published) return [];
-  const shape = studyShapeFor(rule);
   const rand = mulberry32(hashStr(rule.id));
   const total = 20 + Math.floor(rand() * 70);
   const logs: Execution[] = [];
@@ -81,20 +61,25 @@ function generateLogs(rule: AutoResponse, now: number): Execution[] {
     const ts = now - Math.floor(rand() * 30 * 24 * 60 * 60 * 1000); // hasta 30 días atrás
     const r = rand();
     let status: LogStatus = 'enviado';
-    let motivo = '';
-    if (r >= 0.82 && r < 0.94) { status = 'no_enviado'; motivo = `${describeRecipientSource(rule.recipientVariable)} sin valor en la respuesta`; }
-    else if (r >= 0.94) { status = 'error'; motivo = MOTIVOS_ERROR[Math.floor(rand() * MOTIVOS_ERROR.length)]; }
-    const nombreReal = NOMBRES[Math.floor(rand() * NOMBRES.length)];
+    let observacion = 'Correo enviado correctamente.';
+    let recipientEmail = `respuesta${4500 + Math.floor(rand() * 5000)}@${EMAIL_DOMAINS_MOCK[Math.floor(rand() * EMAIL_DOMAINS_MOCK.length)]}`;
+    if (r >= 0.82 && r < 0.94) {
+      status = 'no_enviado';
+      observacion = `${describeRecipientSource(rule.recipientVariable)} sin valor en la respuesta.`;
+      recipientEmail = ''; // no había a quién enviarle — no es que el envío fallara
+    } else if (r >= 0.94) {
+      status = 'error';
+      observacion = MOTIVOS_ERROR[Math.floor(rand() * MOTIVOS_ERROR.length)];
+      // recipientEmail se mantiene: sí había un destinatario, el envío en sí falló
+    }
     logs.push({
       id: `#${4500 + Math.floor(rand() * 1000)}`,
-      ts, status, motivo,
-      nombre: status === 'enviado' && shape.hasRespondentName ? nombreReal : '—',
-      correo: status === 'enviado' ? `${nombreReal.toLowerCase().replace(/[^a-z]/g, '')}.${Math.floor(rand() * 99)}@email.com` : '',
-      sucursal: shape.hasSucursal ? SUCURSALES[Math.floor(rand() * SUCURSALES.length)] : null,
-      canal: CANALES[Math.floor(rand() * CANALES.length)],
-      npsScores: shape.npsQuestions.map(label => ({ label, value: Math.floor(rand() * 11) })),
+      responseId: `#${9000 + Math.floor(rand() * 3000)}`,
       ruleId: rule.id,
       ruleName: rule.name,
+      ts, status, observacion, recipientEmail,
+      senderEmail: rule.sender,
+      subject: rule.subject,
     });
   }
   return logs.sort((a, b) => b.ts - a.ts);
@@ -137,21 +122,22 @@ function StatusBadge({ status }: { status: LogStatus }) {
 }
 
 function LogRow({ exec, now, expanded, onToggle, showRule }: { exec: Execution; now: number; expanded: boolean; onToggle: () => void; showRule: boolean }) {
-  const detail = exec.status === 'enviado' ? `Enviado a ${exec.correo} · ${exec.canal}` : exec.motivo;
-  // El único dato garantizado en cualquier estudio es el ID de interacción — el resto depende de
-  // cómo esté armado ESE estudio en particular: no todos tienen sucursal, recolectan el nombre
-  // del encuestado, o incluyen alguna pregunta NPS (y puede haber más de una).
+  const detail = exec.status === 'enviado' ? `Enviado a ${exec.recipientEmail}` : exec.observacion;
+  // Todo el contenido "atado a un log" — el job (regla + sus IDs), el correo en sí (emisor,
+  // asunto, destino), el resultado (observación) y los IDs de lo que lo disparó. Regla/ID de
+  // regla se muestran siempre, no solo en la vista agregada — son datos del job, no un adorno
+  // de la vista de "todas las reglas".
   const rows: [string, string][] = [
     ['ID de interacción', exec.id],
-    ...(showRule ? ([['Regla', exec.ruleName]] as [string, string][]) : []),
-    ['Encuestado', exec.nombre !== '—' ? exec.nombre : 'Anónimo'],
-    ['Correo destino', exec.correo || '—'],
-    ['Canal de respuesta', exec.canal],
-    ...(exec.sucursal ? ([['Sucursal', exec.sucursal]] as [string, string][]) : []),
-    ...exec.npsScores.map(n => [n.label, `${n.value} de 10`] as [string, string]),
+    ['ID de respuesta', exec.responseId],
+    ['Regla', exec.ruleName],
+    ['ID de regla', exec.ruleId],
+    ['Correo emisor', exec.senderEmail],
+    ['Asunto', exec.subject],
+    ['Correo destino', exec.recipientEmail || '—'],
+    ['Observación', exec.observacion],
     ['Fecha y hora', new Date(exec.ts).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })],
   ];
-  if (exec.motivo) rows.push(['Motivo', exec.motivo]);
 
   return (
     <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, background: '#fff', padding: '10px 13px', display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -161,7 +147,7 @@ function LogRow({ exec, now, expanded, onToggle, showRule }: { exec: Execution; 
           {showRule && (
             <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 8px', borderRadius: 1000, background: '#f0f5ff', color: '#1890ff' }}>{exec.ruleName}</span>
           )}
-          <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>{exec.sucursal ? `${exec.sucursal} · ` : ''}{relativeTime(exec.ts, now)}</span>
+          <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>{relativeTime(exec.ts, now)}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <StatusBadge status={exec.status} />
