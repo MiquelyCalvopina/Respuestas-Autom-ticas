@@ -123,27 +123,25 @@ function StatusBadge({ status }: { status: LogStatus }) {
 
 function LogRow({ exec, now, expanded, onToggle, showRule }: { exec: Execution; now: number; expanded: boolean; onToggle: () => void; showRule: boolean }) {
   const detail = exec.status === 'enviado' ? `Enviado a ${exec.recipientEmail}` : exec.observacion;
-  // Todo el contenido "atado a un log" — el job (regla + sus IDs), el correo en sí (emisor,
-  // asunto, destino), el resultado (observación) y los IDs de lo que lo disparó. Regla/ID de
-  // regla se muestran siempre, no solo en la vista agregada — son datos del job, no un adorno
-  // de la vista de "todas las reglas".
-  const rows: [string, string][] = [
-    ['ID de interacción', exec.id],
-    ['ID de respuesta', exec.responseId],
-    ['Regla', exec.ruleName],
-    ['ID de regla', exec.ruleId],
-    ['Correo emisor', exec.senderEmail],
-    ['Asunto', exec.subject],
-    ['Correo destino', exec.recipientEmail || '—'],
-    ['Observación', exec.observacion],
-    ['Fecha y hora', new Date(exec.ts).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })],
+  const fecha = new Date(exec.ts).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' });
+  // Grupos en orden de lectura: cuándo/qué regla → el correo enviado → el resultado.
+  // Los identificadores técnicos van al final y aparte porque son para soporte/debug,
+  // no lo primero que alguien necesita para entender qué pasó con este envío.
+  const detailGroups: { label?: string; rows: [string, string][] }[] = [
+    { rows: [ ['Fecha y hora', fecha], ['Regla', exec.ruleName] ] },
+    { rows: [ ['Correo emisor', exec.senderEmail], ['Asunto', exec.subject], ['Correo destino', exec.recipientEmail || '—'] ] },
+    { rows: [ ['Observación', exec.observacion] ] },
+    { label: 'Identificadores', rows: [ ['Interacción', exec.id], ['Respuesta', exec.responseId], ['ID de regla', exec.ruleId] ] },
   ];
 
   return (
     <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, background: '#fff', padding: '10px 13px', display: 'flex', flexDirection: 'column', gap: 4 }}>
       <div onClick={onToggle} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexWrap: 'wrap' }}>
-          <code style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(0,0,0,0.85)' }}>{exec.id}</code>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, minWidth: 0, flexWrap: 'wrap' }}>
+          <span style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(0,0,0,0.35)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Interacción</span>
+            <code style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(0,0,0,0.85)' }}>{exec.id}</code>
+          </span>
           {showRule && (
             <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 8px', borderRadius: 1000, background: '#f0f5ff', color: '#1890ff' }}>{exec.ruleName}</span>
           )}
@@ -156,11 +154,29 @@ function LogRow({ exec, now, expanded, onToggle, showRule }: { exec: Execution; 
       </div>
       <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.65)' }}>{detail}</div>
       {expanded && (
-        <div style={{ marginTop: 4, padding: '10px 12px', background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {rows.map(([k, v]) => (
-            <div key={k} style={{ display: 'flex', gap: 8, fontSize: 12 }}>
-              <span style={{ color: 'rgba(0,0,0,0.45)', width: 130, flexShrink: 0, fontWeight: 500 }}>{k}</span>
-              <span style={{ color: 'rgba(0,0,0,0.75)' }}>{v}</span>
+        <div style={{ marginTop: 4, padding: '10px 12px', background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {detailGroups.map((group, gi) => (
+            <div
+              key={gi}
+              style={{
+                display: 'flex', flexDirection: 'column', gap: 5,
+                paddingTop: gi > 0 ? 8 : 0,
+                borderTop: gi > 0 ? '1px solid #eee' : 'none',
+              }}
+            >
+              {group.label && (
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(0,0,0,0.35)', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+                  {group.label}
+                </span>
+              )}
+              {group.rows.map(([k, v]) => (
+                <div key={k} style={{ display: 'flex', gap: 8, fontSize: 12 }}>
+                  <span style={{ color: 'rgba(0,0,0,0.45)', width: 110, flexShrink: 0, fontWeight: 500 }}>{k}</span>
+                  <span style={{ color: group.label ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.75)', fontFamily: group.label ? "'JetBrains Mono', monospace" : 'inherit' }}>
+                    {v}
+                  </span>
+                </div>
+              ))}
             </div>
           ))}
         </div>
