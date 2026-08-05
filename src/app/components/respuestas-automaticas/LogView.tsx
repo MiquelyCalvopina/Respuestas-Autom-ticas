@@ -1,25 +1,83 @@
 import { useState } from 'react';
 import { Button, Card, Tag, Typography, Empty, Alert, Space } from 'antd';
-import { LeftOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { LeftOutlined, InfoCircleOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import { AutoResponse } from './types';
 
 const { Title, Text } = Typography;
 
-interface Execution { id: string; responseId: string; status: 'sent' | 'not_sent'; timestamp: string; detail: string; }
+interface Execution {
+  interactionId: string;
+  responseId: string;
+  ruleId: string;
+  status: 'sent' | 'not_sent';
+  timestamp: string;
+  timestampFull: string;
+  detail: string;
+  senderEmail?: string;
+  destEmail?: string;
+  subject?: string;
+}
 
 const MOCK: Execution[] = [
-  { id: '1', responseId: '4821', status: 'sent',     timestamp: 'hace 3 min',   detail: 'Enviado a juan.perez@gmail.com' },
-  { id: '2', responseId: '4820', status: 'not_sent', timestamp: 'hace 12 min',  detail: 'correo_electronico vacío en la respuesta' },
-  { id: '3', responseId: '4819', status: 'sent',     timestamp: 'hace 18 min',  detail: 'Enviado a maria.gomez@outlook.com' },
-  { id: '4', responseId: '4817', status: 'sent',     timestamp: 'hace 35 min',  detail: 'Enviado a carlos.ruiz@empresa.com' },
-  { id: '5', responseId: '4815', status: 'not_sent', timestamp: 'hace 52 min',  detail: 'correo_electronico vacío en la respuesta' },
-  { id: '6', responseId: '4812', status: 'sent',     timestamp: 'hace 1 hora',  detail: 'Enviado a ana.torres@hotmail.com' },
+  { interactionId: '5311', responseId: '11107', ruleId: 'msgnr8tz-foavjezq2d', status: 'sent', timestamp: 'hace 3 min',  timestampFull: '5 ago 2026, 4:15 p.m.', detail: 'Enviado a juan.perez@gmail.com', senderEmail: 'cx@hircasa.com', destEmail: 'juan.perez@gmail.com', subject: 'Gracias por tu respuesta' },
+  { interactionId: '5310', responseId: '11104', ruleId: 'msgnr8tz-foavjezq2d', status: 'not_sent', timestamp: 'hace 12 min', timestampFull: '5 ago 2026, 4:06 p.m.', detail: 'correo_electronico vacío en la respuesta' },
+  { interactionId: '5309', responseId: '11098', ruleId: 'a91kd0pq-x7bzmw4e1f', status: 'sent', timestamp: 'hace 18 min', timestampFull: '5 ago 2026, 4:00 p.m.', detail: 'Enviado a maria.gomez@outlook.com', senderEmail: 'cx@hircasa.com', destEmail: 'maria.gomez@outlook.com', subject: 'Queremos saber más' },
+  { interactionId: '5307', responseId: '11090', ruleId: 'msgnr8tz-foavjezq2d', status: 'sent', timestamp: 'hace 35 min', timestampFull: '5 ago 2026, 3:43 p.m.', detail: 'Enviado a carlos.ruiz@empresa.com', senderEmail: 'cx@hircasa.com', destEmail: 'carlos.ruiz@empresa.com', subject: 'Gracias por tu respuesta' },
+  { interactionId: '5304', responseId: '11083', ruleId: 'a91kd0pq-x7bzmw4e1f', status: 'not_sent', timestamp: 'hace 52 min', timestampFull: '5 ago 2026, 3:26 p.m.', detail: 'correo_electronico vacío en la respuesta' },
+  { interactionId: '5301', responseId: '11071', ruleId: 'msgnr8tz-foavjezq2d', status: 'sent', timestamp: 'hace 1 hora', timestampFull: '5 ago 2026, 3:15 p.m.', detail: 'Enviado a ana.torres@hotmail.com', senderEmail: 'cx@hircasa.com', destEmail: 'ana.torres@hotmail.com', subject: 'Gracias por tu respuesta' },
 ];
 
 type Filter = 'all' | 'sent' | 'not_sent';
 
+// Orden de lectura de la tarjeta expandida: cuándo → por qué se disparó →
+// identificadores del evento → el correo en sí (de/asunto/para) → resultado.
+// Antes las propiedades venían en el orden en que se agregaron al modelo de
+// datos (ID de interacción, ID de respuesta, Regla, ID de regla, Correo
+// emisor, Asunto, Correo destino, Observación, Fecha y hora), sin relación
+// con cómo alguien realmente lee esta información para entender qué pasó.
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: 'flex', gap: 12 }}>
+      <Text type="secondary" style={{ fontSize: 12, width: 130, flexShrink: 0 }}>{label}</Text>
+      <Text style={{ fontSize: 12 }}>{value}</Text>
+    </div>
+  );
+}
+
+function ExecutionCard({ exec, ruleName, expanded, onToggle }: { exec: Execution; ruleName: string; expanded: boolean; onToggle: () => void }) {
+  return (
+    <div style={{ padding: '12px 0', borderBottom: '1px solid #f0f0f0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={onToggle}>
+        {/* El número por sí solo no dice nada: "Interacción #N" dice qué es antes de mostrar el valor. */}
+        <Text style={{ fontSize: 13, fontWeight: 700, minWidth: 110 }}>Interacción #{exec.interactionId}</Text>
+        <Text type="secondary" style={{ fontSize: 12 }}>{exec.timestamp}</Text>
+        <Tag color={exec.status === 'sent' ? 'success' : 'error'} style={{ marginInlineEnd: 0 }}>
+          {exec.status === 'sent' ? 'Enviado' : 'No enviado'}
+        </Tag>
+        <div style={{ flex: 1 }} />
+        <Button type="text" size="small" icon={expanded ? <UpOutlined /> : <DownOutlined />} onClick={e => { e.stopPropagation(); onToggle(); }} />
+      </div>
+      {!expanded && <Text style={{ fontSize: 12, display: 'block', marginTop: 4 }}>{exec.detail}</Text>}
+      {expanded && (
+        <div style={{ marginTop: 12, background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 8, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <DetailRow label="Fecha y hora" value={exec.timestampFull} />
+          <DetailRow label="Regla" value={ruleName} />
+          <DetailRow label="ID de regla" value={exec.ruleId} />
+          <DetailRow label="ID de interacción" value={`#${exec.interactionId}`} />
+          <DetailRow label="ID de respuesta" value={`#${exec.responseId}`} />
+          {exec.senderEmail && <DetailRow label="Correo emisor" value={exec.senderEmail} />}
+          {exec.subject && <DetailRow label="Asunto" value={exec.subject} />}
+          {exec.destEmail ? <DetailRow label="Correo destino" value={exec.destEmail} /> : null}
+          <DetailRow label="Observación" value={exec.status === 'sent' ? 'Correo enviado correctamente.' : exec.detail} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: () => void }) {
   const [filter, setFilter] = useState<Filter>('all');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const sent    = MOCK.filter(e => e.status === 'sent').length;
   const notSent = MOCK.filter(e => e.status === 'not_sent').length;
   const visible = filter === 'all' ? MOCK : MOCK.filter(e => e.status === (filter === 'sent' ? 'sent' : 'not_sent'));
@@ -57,19 +115,14 @@ export default function LogView({ rule, onBack }: { rule: AutoResponse; onBack: 
       <Card size="small" style={{ marginBottom: 16 }}>
         {visible.length === 0 ? (
           <Empty description="Sin ejecuciones" />
-        ) : visible.map((exec, i) => (
-          <div key={exec.id} style={{ padding: '10px 0', borderBottom: i < visible.length - 1 ? '1px solid #f0f0f0' : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <code style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 12, color: 'rgba(0,0,0,.85)', minWidth: 52 }}>
-              #{exec.responseId}
-            </code>
-            <Tag color={exec.status === 'sent' ? 'success' : 'error'} style={{ flexShrink: 0 }}>
-              {exec.status === 'sent' ? 'Enviado' : 'No enviado'}
-            </Tag>
-            <div style={{ flex: 1 }}>
-              <Text style={{ fontSize: 12, display: 'block' }}>{exec.detail}</Text>
-              <Text type="secondary" style={{ fontSize: 11 }}>{exec.timestamp}</Text>
-            </div>
-          </div>
+        ) : visible.map(exec => (
+          <ExecutionCard
+            key={exec.interactionId}
+            exec={exec}
+            ruleName={rule.name}
+            expanded={expandedId === exec.interactionId}
+            onToggle={() => setExpandedId(id => (id === exec.interactionId ? null : exec.interactionId))}
+          />
         ))}
       </Card>
 
